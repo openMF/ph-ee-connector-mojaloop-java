@@ -1,0 +1,25 @@
+camel:
+  server-port: 5000
+  springboot:
+    main-run-controller: true
+  dataformat:
+    json-jackson:
+      auto-discover-object-mapper: true
+
+bpmn:
+  flows:
+    party-lookup: "PayeePartyLookup-DFSPID"
+    quote: "PayeeQuoteTransfer-DFSPID"
+
+zeebe:
+  broker:
+    contactpoint: "127.0.0.1:26500"
+
+connector:
+  ilp-secret: h4on38bsDjKiat2783gnklgafikmeuu5123kpobb7jm99
+
+switch:
+  host: http://40.114.81.46
+  quote-service: quoting-service.local
+  account-lookup-service: account-lookup-service.local
+  transfer-service: ml-api-adapter.local
