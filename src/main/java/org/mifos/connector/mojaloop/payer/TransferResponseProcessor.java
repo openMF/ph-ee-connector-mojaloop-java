@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.zeebe.client.ZeebeClient;
 import org.apache.camel.Exchange;
 import org.apache.camel.Processor;
-import org.mifos.common.mojaloop.dto.TransferSwitchResponseDTO;
+import org.mifos.phee.common.mojaloop.dto.TransferSwitchResponseDTO;
 import org.mifos.connector.mojaloop.camel.config.CamelProperties;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
