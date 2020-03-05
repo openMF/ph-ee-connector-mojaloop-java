@@ -63,6 +63,7 @@ public class PayeeTransferWorkers {
 
                         Exchange exchange = new DefaultExchange(camelContext);
                         zeebeVariablesToCamelHeaders(variables, exchange,
+                                "tid",
                                 "fspiop-source",
                                 "fspiop-destination",
                                 "Date",
