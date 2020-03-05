@@ -1,12 +1,11 @@
 package org.mifos.connector.mojaloop.payee;
 
-import org.mifos.connector.mojaloop.camel.config.CamelProperties;
-import org.mifos.connector.mojaloop.zeebe.ZeebeeWorkers;
 import io.zeebe.client.ZeebeClient;
 import org.apache.camel.CamelContext;
 import org.apache.camel.Exchange;
 import org.apache.camel.ProducerTemplate;
 import org.apache.camel.support.DefaultExchange;
+import org.mifos.connector.mojaloop.camel.config.CamelProperties;
 import org.mifos.connector.mojaloop.zeebe.ZeebeProcessStarter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +16,9 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import java.util.List;
 import java.util.Map;
+
+import static org.mifos.phee.common.mojaloop.type.TransActionHeaders.FSPIOP_DESTINATION;
+import static org.mifos.phee.common.mojaloop.type.TransActionHeaders.FSPIOP_SOURCE;
 
 @Component
 public class PayeeQuoteWorkers {
@@ -63,8 +65,8 @@ public class PayeeQuoteWorkers {
                         Exchange exchange = new DefaultExchange(camelContext);
                         ZeebeProcessStarter.zeebeVariablesToCamelHeaders(variables, exchange,
                                 "qid",
-                                "fspiop-source",
-                                "fspiop-destination",
+                                FSPIOP_SOURCE.headerValue(),
+                                FSPIOP_DESTINATION.headerValue(),
                                 "Date",
                                 "traceparent"
                         );

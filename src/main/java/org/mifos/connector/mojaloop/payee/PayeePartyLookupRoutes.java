@@ -1,16 +1,14 @@
 package org.mifos.connector.mojaloop.payee;
 
 
+import org.apache.camel.LoggingLevel;
+import org.apache.camel.Processor;
+import org.mifos.connector.mojaloop.zeebe.ZeebeProcessStarter;
 import org.mifos.phee.common.camel.ErrorHandlerRouteBuilder;
 import org.mifos.phee.common.mojaloop.dto.Party;
 import org.mifos.phee.common.mojaloop.dto.PartyIdInfo;
 import org.mifos.phee.common.mojaloop.dto.PartySwitchResponseDTO;
 import org.mifos.phee.common.mojaloop.type.IdentifierType;
-import org.mifos.connector.mojaloop.zeebe.ZeebeProcessStarter;
-import org.apache.camel.LoggingLevel;
-import org.apache.camel.Processor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -19,13 +17,13 @@ import javax.annotation.PostConstruct;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.mifos.connector.mojaloop.interop.SwitchOutRouteBuilder.PARTIES_CONTENT_TYPE_HEADER;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeProcessStarter.camelHeadersToZeebeVariables;
+import static org.mifos.phee.common.mojaloop.type.TransActionHeaders.FSPIOP_DESTINATION;
+import static org.mifos.phee.common.mojaloop.type.TransActionHeaders.FSPIOP_SOURCE;
+import static org.mifos.phee.common.mojaloop.type.TransActionHeaders.PARTIES_CONTENT_TYPE;
 
 @Component
 public class PayeePartyLookupRoutes extends ErrorHandlerRouteBuilder {
-
-    private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Value("${switch.account-lookup-service}")
     private String accountLookupService;
@@ -54,7 +52,6 @@ public class PayeePartyLookupRoutes extends ErrorHandlerRouteBuilder {
 
     @Override
     public void configure() {
-        // inbound Party Lookup from SWITCH
         from("rest:GET:/switch/parties/{partyIdType}/{partyId}")
                 .log(LoggingLevel.WARN, "## SWITCH -> HUB inbound GET parties - STEP 2")
                 .process(exchange ->
@@ -62,7 +59,7 @@ public class PayeePartyLookupRoutes extends ErrorHandlerRouteBuilder {
                                 camelHeadersToZeebeVariables(exchange, variables,
                                         "partyIdType",
                                         "partyId",
-                                        "fspiop-source",
+                                        FSPIOP_SOURCE.headerValue(),
                                         "traceparent",
                                         "Date")
                         )
@@ -84,9 +81,9 @@ public class PayeePartyLookupRoutes extends ErrorHandlerRouteBuilder {
                     exchange.setProperty("partyIdType", partyIdType);
 
                     Map<String, Object> headers = new HashMap<>();
-                    headers.put("Content-Type", PARTIES_CONTENT_TYPE_HEADER);
-                    headers.put("fspiop-source", exchange.getIn().getHeader("fspiop-source"));
-                    headers.put("fspiop-destination", exchange.getIn().getHeader("fspiop-source"));
+                    headers.put("Content-Type", PARTIES_CONTENT_TYPE.headerValue());
+                    headers.put(FSPIOP_SOURCE.headerValue(), exchange.getIn().getHeader(FSPIOP_SOURCE.headerValue()));
+                    headers.put(FSPIOP_DESTINATION.headerValue(), exchange.getIn().getHeader(FSPIOP_SOURCE.headerValue()));
                     headers.put("Host", accountLookupService);
                     headers.put("Date", exchange.getIn().getHeader("Date"));
                     headers.put("traceparent", exchange.getIn().getHeader("traceparent"));

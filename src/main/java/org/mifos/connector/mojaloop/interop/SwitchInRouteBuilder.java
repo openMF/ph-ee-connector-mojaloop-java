@@ -60,7 +60,6 @@ public class SwitchInRouteBuilder extends ErrorHandlerRouteBuilder {
                 .process(quoteResponseProcessor);
 
         from("rest:PUT:/switch/transfers/{tid}")
-                .log(LoggingLevel.WARN, "######## SWITCH -> PAYER - response for transfer request - STEP 3")
                 .unmarshal().json(JsonLibrary.Jackson, TransferSwitchResponseDTO.class)
                 .process(getCachedTransactionIdProcessor)
                 .process(transferResponseProcessor);

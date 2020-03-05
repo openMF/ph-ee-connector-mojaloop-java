@@ -1,22 +1,17 @@
 package org.mifos.connector.mojaloop.payee;
 
+import io.zeebe.client.ZeebeClient;
+import org.apache.camel.LoggingLevel;
+import org.apache.camel.Processor;
+import org.apache.camel.model.dataformat.JsonLibrary;
+import org.mifos.connector.mojaloop.camel.config.CamelProperties;
+import org.mifos.connector.mojaloop.ilp.IlpBuilder;
 import org.mifos.phee.common.camel.ErrorHandlerRouteBuilder;
 import org.mifos.phee.common.mojaloop.dto.TransferSwitchRequestDTO;
 import org.mifos.phee.common.mojaloop.dto.TransferSwitchResponseDTO;
 import org.mifos.phee.common.mojaloop.ilp.Ilp;
 import org.mifos.phee.common.mojaloop.type.TransferState;
 import org.mifos.phee.common.util.ContextUtil;
-import org.mifos.connector.mojaloop.camel.config.CamelProperties;
-import org.mifos.connector.mojaloop.ilp.IlpBuilder;
-
-import org.mifos.connector.mojaloop.interop.SwitchOutRouteBuilder;
-
-import io.zeebe.client.ZeebeClient;
-import org.apache.camel.LoggingLevel;
-import org.apache.camel.Processor;
-import org.apache.camel.model.dataformat.JsonLibrary;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -24,10 +19,12 @@ import org.springframework.stereotype.Component;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.mifos.phee.common.mojaloop.type.TransActionHeaders.FSPIOP_DESTINATION;
+import static org.mifos.phee.common.mojaloop.type.TransActionHeaders.FSPIOP_SOURCE;
+import static org.mifos.phee.common.mojaloop.type.TransActionHeaders.TRANSFERS_CONTENT_TYPE;
+
 @Component
 public class PayeeTransferRoutes extends ErrorHandlerRouteBuilder {
-
-    private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Value("${switch.transfer-service}")
     private String transferService;
@@ -58,8 +55,8 @@ public class PayeeTransferRoutes extends ErrorHandlerRouteBuilder {
                     Map<String, Object> variables = new HashMap<>();
                     variables.put(CamelProperties.TRANSACTION_REQUEST, exchange.getProperty("savedBody"));
                     variables.put("tid", ilp.getTransaction().getTransactionId());
-                    variables.put("fspiop-source", request.getPayeeFsp());
-                    variables.put("fspiop-destination", request.getPayerFsp());
+                    variables.put(FSPIOP_SOURCE.headerValue(), request.getPayeeFsp());
+                    variables.put(FSPIOP_DESTINATION.headerValue(), request.getPayerFsp());
                     variables.put("Date", exchange.getIn().getHeader("Date"));
                     variables.put("traceparent", exchange.getIn().getHeader("traceparent"));
 
@@ -85,7 +82,7 @@ public class PayeeTransferRoutes extends ErrorHandlerRouteBuilder {
 
                     Map<String, Object> headers = new HashMap<>();
 
-                    headers.put("Content-Type", SwitchOutRouteBuilder.TRANSFERS_CONTENT_TYPE_HEADER);
+                    headers.put("Content-Type", TRANSFERS_CONTENT_TYPE.headerValue());
                     Object tracestate = exchange.getIn().getHeader("tracestate");
                     if (tracestate != null) {
                         headers.put("tracestate", tracestate);

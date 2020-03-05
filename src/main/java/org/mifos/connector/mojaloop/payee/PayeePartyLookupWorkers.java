@@ -5,7 +5,6 @@ import org.apache.camel.CamelContext;
 import org.apache.camel.Exchange;
 import org.apache.camel.ProducerTemplate;
 import org.apache.camel.support.DefaultExchange;
-import org.mifos.connector.mojaloop.zeebe.ZeebeeWorkers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.mifos.connector.mojaloop.zeebe.ZeebeProcessStarter.zeebeVariablesToCamelHeaders;
+import static org.mifos.phee.common.mojaloop.type.TransActionHeaders.FSPIOP_SOURCE;
 
 @Component
 public class PayeePartyLookupWorkers {
@@ -71,7 +71,7 @@ public class PayeePartyLookupWorkers {
                         zeebeVariablesToCamelHeaders(variables, exchange,
                                 "partyIdType",
                                 "partyId",
-                                "fspiop-source",
+                                FSPIOP_SOURCE.headerValue(),
                                 "traceparent",
                                 "Date"
                         );

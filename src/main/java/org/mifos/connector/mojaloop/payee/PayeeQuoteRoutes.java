@@ -1,17 +1,15 @@
 package org.mifos.connector.mojaloop.payee;
 
+import org.apache.camel.LoggingLevel;
+import org.apache.camel.Processor;
+import org.apache.camel.model.dataformat.JsonLibrary;
+import org.mifos.connector.mojaloop.ilp.IlpBuilder;
+import org.mifos.connector.mojaloop.zeebe.ZeebeProcessStarter;
 import org.mifos.phee.common.camel.ErrorHandlerRouteBuilder;
 import org.mifos.phee.common.mojaloop.dto.MoneyData;
 import org.mifos.phee.common.mojaloop.dto.QuoteSwitchRequestDTO;
 import org.mifos.phee.common.mojaloop.dto.QuoteSwitchResponseDTO;
 import org.mifos.phee.common.mojaloop.ilp.Ilp;
-import org.mifos.connector.mojaloop.ilp.IlpBuilder;
-
-import org.mifos.connector.mojaloop.interop.SwitchOutRouteBuilder;
-import org.mifos.connector.mojaloop.zeebe.ZeebeProcessStarter;
-import org.apache.camel.LoggingLevel;
-import org.apache.camel.Processor;
-import org.apache.camel.model.dataformat.JsonLibrary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +19,10 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+
+import static org.mifos.phee.common.mojaloop.type.TransActionHeaders.FSPIOP_DESTINATION;
+import static org.mifos.phee.common.mojaloop.type.TransActionHeaders.FSPIOP_SOURCE;
+import static org.mifos.phee.common.mojaloop.type.TransActionHeaders.QUOTES_CONTENT_TYPE;
 
 @Component
 public class PayeeQuoteRoutes extends ErrorHandlerRouteBuilder {
@@ -57,8 +59,8 @@ public class PayeeQuoteRoutes extends ErrorHandlerRouteBuilder {
 
                             zeebeProcessStarter.startZeebeWorkflow(quoteFlow, exchange.getProperty("savedBody", String.class), variables -> {
                                 variables.put("qid", request.getQuoteId());
-                                variables.put("fspiop-source", request.getPayee().getPartyIdInfo().getFspId());
-                                variables.put("fspiop-destination", request.getPayer().getPartyIdInfo().getFspId());
+                                variables.put(FSPIOP_SOURCE.headerValue(), request.getPayee().getPartyIdInfo().getFspId());
+                                variables.put(FSPIOP_DESTINATION.headerValue(), request.getPayer().getPartyIdInfo().getFspId());
                                 variables.put("transactionId", request.getTransactionId());
 
                                 ZeebeProcessStarter.camelHeadersToZeebeVariables(exchange, variables,
@@ -97,9 +99,9 @@ public class PayeeQuoteRoutes extends ErrorHandlerRouteBuilder {
 
                     Map<String, Object> headers = new HashMap<>();
                     headers.put("qid", request.getQuoteId());
-                    headers.put("Content-Type", SwitchOutRouteBuilder.QUOTES_CONTENT_TYPE_HEADER);
-                    headers.put("fspiop-source", request.getPayee().getPartyIdInfo().getFspId());
-                    headers.put("fspiop-destination", request.getPayer().getPartyIdInfo().getFspId());
+                    headers.put("Content-Type", QUOTES_CONTENT_TYPE.headerValue());
+                    headers.put(FSPIOP_SOURCE.headerValue(), request.getPayee().getPartyIdInfo().getFspId());
+                    headers.put(FSPIOP_DESTINATION.headerValue(), request.getPayer().getPartyIdInfo().getFspId());
                     headers.put("Date", exchange.getIn().getHeader("Date"));
                     headers.put("traceparent", exchange.getIn().getHeader("traceparent"));
                     Object tracestate = exchange.getIn().getHeader("tracestate");

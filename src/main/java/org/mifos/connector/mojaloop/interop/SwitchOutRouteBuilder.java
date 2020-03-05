@@ -2,6 +2,11 @@ package org.mifos.connector.mojaloop.interop;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ilp.conditions.models.pdp.Transaction;
+import org.apache.camel.LoggingLevel;
+import org.apache.camel.Processor;
+import org.apache.camel.model.dataformat.JsonLibrary;
+import org.mifos.connector.mojaloop.camel.config.CamelProperties;
+import org.mifos.connector.mojaloop.ilp.IlpBuilder;
 import org.mifos.phee.common.camel.ErrorHandlerRouteBuilder;
 import org.mifos.phee.common.channel.dto.TransactionChannelRequestDTO;
 import org.mifos.phee.common.mojaloop.dto.MoneyData;
@@ -13,14 +18,6 @@ import org.mifos.phee.common.mojaloop.dto.TransactionType;
 import org.mifos.phee.common.mojaloop.dto.TransferSwitchRequestDTO;
 import org.mifos.phee.common.mojaloop.ilp.Ilp;
 import org.mifos.phee.common.util.ContextUtil;
-import org.mifos.connector.mojaloop.ilp.IlpBuilder;
-
-import org.apache.camel.LoggingLevel;
-import org.apache.camel.Processor;
-import org.apache.camel.model.dataformat.JsonLibrary;
-import org.mifos.connector.mojaloop.camel.config.CamelProperties;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -29,23 +26,18 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import static org.mifos.phee.common.mojaloop.type.TransActionHeaders.FSPIOP_DESTINATION;
+import static org.mifos.phee.common.mojaloop.type.TransActionHeaders.FSPIOP_SOURCE;
+import static org.mifos.phee.common.mojaloop.type.TransActionHeaders.PARTIES_ACCEPT_TYPE;
+import static org.mifos.phee.common.mojaloop.type.TransActionHeaders.PARTIES_CONTENT_TYPE;
+import static org.mifos.phee.common.mojaloop.type.TransActionHeaders.QUOTES_ACCEPT_TYPE;
+import static org.mifos.phee.common.mojaloop.type.TransActionHeaders.QUOTES_CONTENT_TYPE;
+import static org.mifos.phee.common.mojaloop.type.TransActionHeaders.TRANSFERS_ACCEPT_TYPE;
+import static org.mifos.phee.common.mojaloop.type.TransActionHeaders.TRANSFERS_CONTENT_TYPE;
+
 
 @Component
 public class SwitchOutRouteBuilder extends ErrorHandlerRouteBuilder {
-
-    private Logger logger = LoggerFactory.getLogger(this.getClass());
-
-    public static final String DFSP_ID_FROM = "localdev01";
-    private static final String MSISDN_FROM = "27710501999"; // localdev01
-    private static final String MSISDN_TO = "27710601999"; // Acefintech / localdev02
-    public static final String PARTIES_CONTENT_TYPE_HEADER = "application/vnd.interoperability.parties+json;version=1.0";
-    public static final String QUOTES_CONTENT_TYPE_HEADER = "application/vnd.interoperability.quotes+json;version=1.0";
-    public static final String TRANSFERS_CONTENT_TYPE_HEADER = "application/vnd.interoperability.transfers+json;version=1.0";
-//    private static final String MSISDN = "27710102999"; // Lion
-//    private static final String MSISDN = "27710101999"; // Buffalo
-//    private static final String MSISDN = "27710203999"; // Rhino
-//    private static final String MSISDN = "27710305999"; // Leopard not registered
-//    private static final String MSISDN = "27710306999"; // Gorilla
 
     @Value("${switch.quote-service}")
     private String quoteService;
@@ -86,9 +78,9 @@ public class SwitchOutRouteBuilder extends ErrorHandlerRouteBuilder {
                 })
                 .removeHeaders("*")
                 .process(addTraceHeaderProcessor)
-                .setHeader("Accept", constant(PARTIES_CONTENT_TYPE_HEADER))
-                .setHeader("Content-Type", constant(PARTIES_CONTENT_TYPE_HEADER))
-                .setHeader("fspiop-source", exchangeProperty(CamelProperties.PAYER_FSP_ID))
+                .setHeader("Accept", constant(PARTIES_ACCEPT_TYPE.headerValue()))
+                .setHeader("Content-Type", constant(PARTIES_CONTENT_TYPE.headerValue()))
+                .setHeader(FSPIOP_SOURCE.headerValue(), exchangeProperty(CamelProperties.PAYER_FSP_ID))
                 .setHeader("Host", constant(accountLookupService))
                 .toD("rest:GET:/parties/${exchangeProperty." + CamelProperties.PAYEE_PARTY_ID_TYPE
                         + "}/${exchangeProperty." + CamelProperties.PAYEE_PARTY_IDENTIFIER + "}?host={{switch.host}}");
@@ -142,10 +134,10 @@ public class SwitchOutRouteBuilder extends ErrorHandlerRouteBuilder {
                 .process(pojoToString)
                 .removeHeaders("*")
                 .process(addTraceHeaderProcessor)
-                .setHeader("Accept", constant(QUOTES_CONTENT_TYPE_HEADER))
-                .setHeader("Content-Type", constant(QUOTES_CONTENT_TYPE_HEADER))
-                .setHeader("fspiop-source", exchangeProperty(CamelProperties.PAYER_FSP_ID))
-                .setHeader("fspiop-destination", exchangeProperty(CamelProperties.PAYEE_FSP_ID))
+                .setHeader("Accept", constant(QUOTES_ACCEPT_TYPE.headerValue()))
+                .setHeader("Content-Type", constant(QUOTES_CONTENT_TYPE.headerValue()))
+                .setHeader(FSPIOP_SOURCE.headerValue(), exchangeProperty(CamelProperties.PAYER_FSP_ID))
+                .setHeader(FSPIOP_DESTINATION.headerValue(), exchangeProperty(CamelProperties.PAYEE_FSP_ID))
                 .setHeader("Host", constant(quoteService))
                 .toD("rest:POST:/quotes?host={{switch.host}}");
 
@@ -171,10 +163,10 @@ public class SwitchOutRouteBuilder extends ErrorHandlerRouteBuilder {
                     exchange.getIn().setBody(request);
 
                     Map<String, Object> headers = new HashMap<>();
-                    headers.put("Accept", TRANSFERS_CONTENT_TYPE_HEADER);
-                    headers.put("Content-Type", TRANSFERS_CONTENT_TYPE_HEADER);
-                    headers.put("fspiop-source", transaction.getPayer().getPartyIdInfo().getFspId());
-                    headers.put("fspiop-destination", transaction.getPayee().getPartyIdInfo().getFspId());
+                    headers.put("Accept", TRANSFERS_ACCEPT_TYPE.headerValue());
+                    headers.put("Content-Type", TRANSFERS_CONTENT_TYPE.headerValue());
+                    headers.put(FSPIOP_SOURCE.headerValue(), transaction.getPayer().getPartyIdInfo().getFspId());
+                    headers.put(FSPIOP_DESTINATION.headerValue(), transaction.getPayee().getPartyIdInfo().getFspId());
                     headers.put("Host", transferService);
                     exchange.getIn().removeHeaders("*");
                     exchange.getIn().setHeaders(headers);
