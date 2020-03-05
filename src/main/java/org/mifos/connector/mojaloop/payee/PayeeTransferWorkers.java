@@ -17,8 +17,8 @@ import java.util.List;
 import java.util.Map;
 
 import static org.mifos.connector.mojaloop.zeebe.ZeebeProcessStarter.zeebeVariablesToCamelHeaders;
-import static org.mifos.phee.common.mojaloop.type.TransActionHeaders.FSPIOP_DESTINATION;
-import static org.mifos.phee.common.mojaloop.type.TransActionHeaders.FSPIOP_SOURCE;
+import static org.mifos.phee.common.mojaloop.type.MojaloopHeaders.FSPIOP_DESTINATION;
+import static org.mifos.phee.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
 
 @Component
 public class PayeeTransferWorkers {
@@ -65,8 +65,8 @@ public class PayeeTransferWorkers {
                         Exchange exchange = new DefaultExchange(camelContext);
                         zeebeVariablesToCamelHeaders(variables, exchange,
                                 "tid",
-                                FSPIOP_SOURCE.headerValue(),
-                                FSPIOP_DESTINATION.headerValue(),
+                                FSPIOP_SOURCE.headerName(),
+                                FSPIOP_DESTINATION.headerName(),
                                 "Date",
                                 "traceparent"
                         );

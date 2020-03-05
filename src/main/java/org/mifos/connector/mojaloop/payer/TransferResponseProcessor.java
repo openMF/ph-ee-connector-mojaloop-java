@@ -15,7 +15,7 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.mifos.phee.common.mojaloop.type.TransActionHeaders.FSPIOP_DESTINATION;
+import static org.mifos.phee.common.mojaloop.type.MojaloopHeaders.FSPIOP_DESTINATION;
 
 
 @Component
@@ -31,7 +31,7 @@ public class TransferResponseProcessor implements Processor {
 
     @Override
     public void process(Exchange exchange) {
-        logger.info("######## SWITCH -> {} - response for transfer request - STEP 3", exchange.getIn().getHeader(FSPIOP_DESTINATION.headerValue()));
+        logger.info("######## SWITCH -> {} - response for transfer request - STEP 3", exchange.getIn().getHeader(FSPIOP_DESTINATION.headerName()));
         TransferSwitchResponseDTO response = exchange.getIn().getBody(TransferSwitchResponseDTO.class);
 
         String cachedTransactionId = exchange.getProperty(CamelProperties.CACHED_TRANSACTION_ID, String.class);

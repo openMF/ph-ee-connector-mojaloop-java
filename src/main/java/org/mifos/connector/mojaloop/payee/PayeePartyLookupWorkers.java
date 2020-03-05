@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.mifos.connector.mojaloop.zeebe.ZeebeProcessStarter.zeebeVariablesToCamelHeaders;
-import static org.mifos.phee.common.mojaloop.type.TransActionHeaders.FSPIOP_SOURCE;
+import static org.mifos.phee.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
 
 @Component
 public class PayeePartyLookupWorkers {
@@ -71,7 +71,7 @@ public class PayeePartyLookupWorkers {
                         zeebeVariablesToCamelHeaders(variables, exchange,
                                 "partyIdType",
                                 "partyId",
-                                FSPIOP_SOURCE.headerValue(),
+                                FSPIOP_SOURCE.headerName(),
                                 "traceparent",
                                 "Date"
                         );

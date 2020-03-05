@@ -18,9 +18,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.mifos.connector.mojaloop.zeebe.ZeebeProcessStarter.camelHeadersToZeebeVariables;
-import static org.mifos.phee.common.mojaloop.type.TransActionHeaders.FSPIOP_DESTINATION;
-import static org.mifos.phee.common.mojaloop.type.TransActionHeaders.FSPIOP_SOURCE;
-import static org.mifos.phee.common.mojaloop.type.TransActionHeaders.PARTIES_CONTENT_TYPE;
+import static org.mifos.phee.common.mojaloop.type.MojaloopHeaders.FSPIOP_DESTINATION;
+import static org.mifos.phee.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
+import static org.mifos.phee.common.mojaloop.type.InteroperabilityType.PARTIES_CONTENT_TYPE;
 
 @Component
 public class PayeePartyLookupRoutes extends ErrorHandlerRouteBuilder {
@@ -59,7 +59,7 @@ public class PayeePartyLookupRoutes extends ErrorHandlerRouteBuilder {
                                 camelHeadersToZeebeVariables(exchange, variables,
                                         "partyIdType",
                                         "partyId",
-                                        FSPIOP_SOURCE.headerValue(),
+                                        FSPIOP_SOURCE.headerName(),
                                         "traceparent",
                                         "Date")
                         )
@@ -82,8 +82,8 @@ public class PayeePartyLookupRoutes extends ErrorHandlerRouteBuilder {
 
                     Map<String, Object> headers = new HashMap<>();
                     headers.put("Content-Type", PARTIES_CONTENT_TYPE.headerValue());
-                    headers.put(FSPIOP_SOURCE.headerValue(), exchange.getIn().getHeader(FSPIOP_SOURCE.headerValue()));
-                    headers.put(FSPIOP_DESTINATION.headerValue(), exchange.getIn().getHeader(FSPIOP_SOURCE.headerValue()));
+                    headers.put(FSPIOP_SOURCE.headerName(), exchange.getIn().getHeader(FSPIOP_SOURCE.headerName()));
+                    headers.put(FSPIOP_DESTINATION.headerName(), exchange.getIn().getHeader(FSPIOP_SOURCE.headerName()));
                     headers.put("Host", accountLookupService);
                     headers.put("Date", exchange.getIn().getHeader("Date"));
                     headers.put("traceparent", exchange.getIn().getHeader("traceparent"));

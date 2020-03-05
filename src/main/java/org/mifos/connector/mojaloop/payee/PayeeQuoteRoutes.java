@@ -20,9 +20,9 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.mifos.phee.common.mojaloop.type.TransActionHeaders.FSPIOP_DESTINATION;
-import static org.mifos.phee.common.mojaloop.type.TransActionHeaders.FSPIOP_SOURCE;
-import static org.mifos.phee.common.mojaloop.type.TransActionHeaders.QUOTES_CONTENT_TYPE;
+import static org.mifos.phee.common.mojaloop.type.MojaloopHeaders.FSPIOP_DESTINATION;
+import static org.mifos.phee.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
+import static org.mifos.phee.common.mojaloop.type.InteroperabilityType.QUOTES_CONTENT_TYPE;
 
 @Component
 public class PayeeQuoteRoutes extends ErrorHandlerRouteBuilder {
@@ -59,8 +59,8 @@ public class PayeeQuoteRoutes extends ErrorHandlerRouteBuilder {
 
                             zeebeProcessStarter.startZeebeWorkflow(quoteFlow, exchange.getProperty("savedBody", String.class), variables -> {
                                 variables.put("qid", request.getQuoteId());
-                                variables.put(FSPIOP_SOURCE.headerValue(), request.getPayee().getPartyIdInfo().getFspId());
-                                variables.put(FSPIOP_DESTINATION.headerValue(), request.getPayer().getPartyIdInfo().getFspId());
+                                variables.put(FSPIOP_SOURCE.headerName(), request.getPayee().getPartyIdInfo().getFspId());
+                                variables.put(FSPIOP_DESTINATION.headerName(), request.getPayer().getPartyIdInfo().getFspId());
                                 variables.put("transactionId", request.getTransactionId());
 
                                 ZeebeProcessStarter.camelHeadersToZeebeVariables(exchange, variables,
@@ -100,8 +100,8 @@ public class PayeeQuoteRoutes extends ErrorHandlerRouteBuilder {
                     Map<String, Object> headers = new HashMap<>();
                     headers.put("qid", request.getQuoteId());
                     headers.put("Content-Type", QUOTES_CONTENT_TYPE.headerValue());
-                    headers.put(FSPIOP_SOURCE.headerValue(), request.getPayee().getPartyIdInfo().getFspId());
-                    headers.put(FSPIOP_DESTINATION.headerValue(), request.getPayer().getPartyIdInfo().getFspId());
+                    headers.put(FSPIOP_SOURCE.headerName(), request.getPayee().getPartyIdInfo().getFspId());
+                    headers.put(FSPIOP_DESTINATION.headerName(), request.getPayer().getPartyIdInfo().getFspId());
                     headers.put("Date", exchange.getIn().getHeader("Date"));
                     headers.put("traceparent", exchange.getIn().getHeader("traceparent"));
                     Object tracestate = exchange.getIn().getHeader("tracestate");

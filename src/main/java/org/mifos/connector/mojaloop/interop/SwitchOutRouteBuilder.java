@@ -26,14 +26,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import static org.mifos.phee.common.mojaloop.type.TransActionHeaders.FSPIOP_DESTINATION;
-import static org.mifos.phee.common.mojaloop.type.TransActionHeaders.FSPIOP_SOURCE;
-import static org.mifos.phee.common.mojaloop.type.TransActionHeaders.PARTIES_ACCEPT_TYPE;
-import static org.mifos.phee.common.mojaloop.type.TransActionHeaders.PARTIES_CONTENT_TYPE;
-import static org.mifos.phee.common.mojaloop.type.TransActionHeaders.QUOTES_ACCEPT_TYPE;
-import static org.mifos.phee.common.mojaloop.type.TransActionHeaders.QUOTES_CONTENT_TYPE;
-import static org.mifos.phee.common.mojaloop.type.TransActionHeaders.TRANSFERS_ACCEPT_TYPE;
-import static org.mifos.phee.common.mojaloop.type.TransActionHeaders.TRANSFERS_CONTENT_TYPE;
+import static org.mifos.phee.common.mojaloop.type.MojaloopHeaders.FSPIOP_DESTINATION;
+import static org.mifos.phee.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
+import static org.mifos.phee.common.mojaloop.type.InteroperabilityType.PARTIES_ACCEPT_TYPE;
+import static org.mifos.phee.common.mojaloop.type.InteroperabilityType.PARTIES_CONTENT_TYPE;
+import static org.mifos.phee.common.mojaloop.type.InteroperabilityType.QUOTES_ACCEPT_TYPE;
+import static org.mifos.phee.common.mojaloop.type.InteroperabilityType.QUOTES_CONTENT_TYPE;
+import static org.mifos.phee.common.mojaloop.type.InteroperabilityType.TRANSFERS_ACCEPT_TYPE;
+import static org.mifos.phee.common.mojaloop.type.InteroperabilityType.TRANSFERS_CONTENT_TYPE;
 
 
 @Component
@@ -80,7 +80,7 @@ public class SwitchOutRouteBuilder extends ErrorHandlerRouteBuilder {
                 .process(addTraceHeaderProcessor)
                 .setHeader("Accept", constant(PARTIES_ACCEPT_TYPE.headerValue()))
                 .setHeader("Content-Type", constant(PARTIES_CONTENT_TYPE.headerValue()))
-                .setHeader(FSPIOP_SOURCE.headerValue(), exchangeProperty(CamelProperties.PAYER_FSP_ID))
+                .setHeader(FSPIOP_SOURCE.headerName(), exchangeProperty(CamelProperties.PAYER_FSP_ID))
                 .setHeader("Host", constant(accountLookupService))
                 .toD("rest:GET:/parties/${exchangeProperty." + CamelProperties.PAYEE_PARTY_ID_TYPE
                         + "}/${exchangeProperty." + CamelProperties.PAYEE_PARTY_IDENTIFIER + "}?host={{switch.host}}");
@@ -136,8 +136,8 @@ public class SwitchOutRouteBuilder extends ErrorHandlerRouteBuilder {
                 .process(addTraceHeaderProcessor)
                 .setHeader("Accept", constant(QUOTES_ACCEPT_TYPE.headerValue()))
                 .setHeader("Content-Type", constant(QUOTES_CONTENT_TYPE.headerValue()))
-                .setHeader(FSPIOP_SOURCE.headerValue(), exchangeProperty(CamelProperties.PAYER_FSP_ID))
-                .setHeader(FSPIOP_DESTINATION.headerValue(), exchangeProperty(CamelProperties.PAYEE_FSP_ID))
+                .setHeader(FSPIOP_SOURCE.headerName(), exchangeProperty(CamelProperties.PAYER_FSP_ID))
+                .setHeader(FSPIOP_DESTINATION.headerName(), exchangeProperty(CamelProperties.PAYEE_FSP_ID))
                 .setHeader("Host", constant(quoteService))
                 .toD("rest:POST:/quotes?host={{switch.host}}");
 
@@ -165,8 +165,8 @@ public class SwitchOutRouteBuilder extends ErrorHandlerRouteBuilder {
                     Map<String, Object> headers = new HashMap<>();
                     headers.put("Accept", TRANSFERS_ACCEPT_TYPE.headerValue());
                     headers.put("Content-Type", TRANSFERS_CONTENT_TYPE.headerValue());
-                    headers.put(FSPIOP_SOURCE.headerValue(), transaction.getPayer().getPartyIdInfo().getFspId());
-                    headers.put(FSPIOP_DESTINATION.headerValue(), transaction.getPayee().getPartyIdInfo().getFspId());
+                    headers.put(FSPIOP_SOURCE.headerName(), transaction.getPayer().getPartyIdInfo().getFspId());
+                    headers.put(FSPIOP_DESTINATION.headerName(), transaction.getPayee().getPartyIdInfo().getFspId());
                     headers.put("Host", transferService);
                     exchange.getIn().removeHeaders("*");
                     exchange.getIn().setHeaders(headers);

@@ -19,9 +19,9 @@ import org.springframework.stereotype.Component;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.mifos.phee.common.mojaloop.type.TransActionHeaders.FSPIOP_DESTINATION;
-import static org.mifos.phee.common.mojaloop.type.TransActionHeaders.FSPIOP_SOURCE;
-import static org.mifos.phee.common.mojaloop.type.TransActionHeaders.TRANSFERS_CONTENT_TYPE;
+import static org.mifos.phee.common.mojaloop.type.MojaloopHeaders.FSPIOP_DESTINATION;
+import static org.mifos.phee.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
+import static org.mifos.phee.common.mojaloop.type.InteroperabilityType.TRANSFERS_CONTENT_TYPE;
 
 @Component
 public class PayeeTransferRoutes extends ErrorHandlerRouteBuilder {
@@ -55,8 +55,8 @@ public class PayeeTransferRoutes extends ErrorHandlerRouteBuilder {
                     Map<String, Object> variables = new HashMap<>();
                     variables.put(CamelProperties.TRANSACTION_REQUEST, exchange.getProperty("savedBody"));
                     variables.put("tid", ilp.getTransaction().getTransactionId());
-                    variables.put(FSPIOP_SOURCE.headerValue(), request.getPayeeFsp());
-                    variables.put(FSPIOP_DESTINATION.headerValue(), request.getPayerFsp());
+                    variables.put(FSPIOP_SOURCE.headerName(), request.getPayeeFsp());
+                    variables.put(FSPIOP_DESTINATION.headerName(), request.getPayerFsp());
                     variables.put("Date", exchange.getIn().getHeader("Date"));
                     variables.put("traceparent", exchange.getIn().getHeader("traceparent"));
 
