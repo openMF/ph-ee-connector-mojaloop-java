@@ -13,7 +13,7 @@ bpmn:
 
 zeebe:
   broker:
-    contactpoint: "127.0.0.1:26500"
+    contactpoint: "ph-ee-zeebe:26500"
 
 connector:
   ilp-secret: h4on38bsDjKiat2783gnklgafikmeuu5123kpobb7jm99
