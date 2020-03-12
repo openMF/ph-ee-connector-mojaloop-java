@@ -3,6 +3,7 @@ package org.mifos.connector.mojaloop.payee;
 
 import org.apache.camel.LoggingLevel;
 import org.apache.camel.Processor;
+import org.mifos.connector.mojaloop.properties.PartyProperties;
 import org.mifos.connector.mojaloop.zeebe.ZeebeProcessStarter;
 import org.mifos.phee.common.camel.ErrorHandlerRouteBuilder;
 import org.mifos.phee.common.mojaloop.dto.Party;
@@ -37,17 +38,11 @@ public class PayeePartyLookupRoutes extends ErrorHandlerRouteBuilder {
     @Autowired
     private ZeebeProcessStarter zeebeProcessStarter;
 
-    /* TODO remove mock lookup response from this map */
-    private Map<String, String> msisdnFspIdMap = new HashMap<>();
+    @Autowired
+    private PartyProperties partyProperties;
 
     public PayeePartyLookupRoutes() {
         super.configure();
-    }
-
-    @PostConstruct
-    public void setup() {
-        msisdnFspIdMap.put("27710501999", "localdev01");
-        msisdnFspIdMap.put("27710502999", "localdev02");
     }
 
     @Override
@@ -69,7 +64,10 @@ public class PayeePartyLookupRoutes extends ErrorHandlerRouteBuilder {
                 .process(exchange -> {
                     String partyId = exchange.getIn().getHeader("partyId", String.class);
                     String partyIdType = exchange.getIn().getHeader("partyIdType", String.class);
-                    String targetFspId = msisdnFspIdMap.get(partyId);
+                    String targetFspId = partyProperties.getParty(partyIdType, partyId).getDfspId();
+                    if(targetFspId == null) {
+                        throw new RuntimeException("Unable to determine dfspid for partyIdType: " + partyIdType + ", partyId: " + partyId);
+                    }
 
                     Party party = new Party(
                             new PartyIdInfo(IdentifierType.valueOf(partyIdType),
