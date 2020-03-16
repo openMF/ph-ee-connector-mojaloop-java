@@ -8,6 +8,7 @@ import org.apache.camel.model.dataformat.JsonLibrary;
 import org.mifos.connector.mojaloop.camel.config.CamelProperties;
 import org.mifos.connector.mojaloop.ilp.IlpBuilder;
 import org.mifos.phee.common.camel.ErrorHandlerRouteBuilder;
+import org.mifos.phee.common.channel.dto.ChannelPartyIdInfo;
 import org.mifos.phee.common.channel.dto.TransactionChannelRequestDTO;
 import org.mifos.phee.common.mojaloop.dto.MoneyData;
 import org.mifos.phee.common.mojaloop.dto.Party;
@@ -26,14 +27,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import static org.mifos.phee.common.mojaloop.type.MojaloopHeaders.FSPIOP_DESTINATION;
-import static org.mifos.phee.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
 import static org.mifos.phee.common.mojaloop.type.InteroperabilityType.PARTIES_ACCEPT_TYPE;
 import static org.mifos.phee.common.mojaloop.type.InteroperabilityType.PARTIES_CONTENT_TYPE;
 import static org.mifos.phee.common.mojaloop.type.InteroperabilityType.QUOTES_ACCEPT_TYPE;
 import static org.mifos.phee.common.mojaloop.type.InteroperabilityType.QUOTES_CONTENT_TYPE;
 import static org.mifos.phee.common.mojaloop.type.InteroperabilityType.TRANSFERS_ACCEPT_TYPE;
 import static org.mifos.phee.common.mojaloop.type.InteroperabilityType.TRANSFERS_CONTENT_TYPE;
+import static org.mifos.phee.common.mojaloop.type.MojaloopHeaders.FSPIOP_DESTINATION;
+import static org.mifos.phee.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
 
 
 @Component
@@ -96,7 +97,7 @@ public class SwitchOutRouteBuilder extends ErrorHandlerRouteBuilder {
                     transactionType.setInitiatorType(trRequest.getTransactionType().getInitiatorType());
                     transactionType.setScenario(trRequest.getTransactionType().getScenario());
 
-                    PartyIdInfo requestPayerPartyIdInfo = trRequest.getPayer().getPartyIdInfo();
+                    ChannelPartyIdInfo requestPayerPartyIdInfo = trRequest.getPayer().getPartyIdInfo();
                     String payerFspId = requestPayerPartyIdInfo.getFspId();
                     Party payer = new Party(
                             new PartyIdInfo(requestPayerPartyIdInfo.getPartyIdType(),
