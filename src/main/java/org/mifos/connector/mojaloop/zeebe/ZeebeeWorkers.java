@@ -20,10 +20,14 @@ import java.util.Map;
 
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PAYEE_FSP_ID;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.ORIGIN_DATE;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.SWITCH_TRANSFER_REQUEST;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TIMEOUT_QUOTE_RETRY_COUNT;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TIMEOUT_TRANSFER_RETRY_COUNT;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TRANSACTION_ID;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TRANSACTION_REQUEST;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeProcessStarter.zeebeVariablesToCamelHeaders;
+import static org.mifos.phee.common.mojaloop.type.MojaloopHeaders.FSPIOP_DESTINATION;
+import static org.mifos.phee.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
 
 
 @Component
@@ -39,6 +43,9 @@ public class ZeebeeWorkers {
 
     @Autowired
     private CamelContext camelContext;
+
+    @Value("#{'${dfspids}'.split(',')}")
+    private List<String> dfspids;
 
     @PostConstruct
     public void setupWorkers() {
@@ -110,31 +117,33 @@ public class ZeebeeWorkers {
                 }).open();
 
         zeebeClient.newWorker()
-                .jobType("send-error-to-channel")
-                .handler((client, job) -> {
-                    logger.info("send-error-to-channel task done");
-                    client.newCompleteCommand(job.getKey()).send();
-                }).open();
-
-        zeebeClient.newWorker()
-                .jobType("send-success-to-channel")
-                .handler((client, job) -> {
-                    logger.info("send-success-to-channel task done");
-                    client.newCompleteCommand(job.getKey()).send();
-                }).open();
-
-        zeebeClient.newWorker()
-                .jobType("send-unknown-to-channel")
-                .handler((client, job) -> {
-                    logger.info("send-unknown-to-channel task done");
-                    client.newCompleteCommand(job.getKey()).send();
-                }).open();
-
-        zeebeClient.newWorker()
                 .jobType("send-to-operator")
                 .handler((client, job) -> {
                     logger.info("send-to-operator task done");
                     client.newCompleteCommand(job.getKey()).send();
                 }).open();
+
+        for(String dfspid : dfspids) {
+            logger.info("## generating payee-transfer-response-{} worker", dfspid);
+            zeebeClient.newWorker()
+                    .jobType("payee-transfer-response-" + dfspid)
+                    .handler((client, job) -> {
+                        logger.info("Job '{}' started from process '{}' with key {}", job.getType(), job.getBpmnProcessId(), job.getKey());
+                        Map<String, Object> variables = job.getVariablesAsMap();
+
+                        Exchange exchange = new DefaultExchange(camelContext);
+                        zeebeVariablesToCamelHeaders(variables, exchange,
+                                TRANSACTION_ID,
+                                FSPIOP_SOURCE.headerName(),
+                                FSPIOP_DESTINATION.headerName(),
+                                "Date",
+                                "traceparent"
+                        );
+                        exchange.getIn().setBody(variables.get(SWITCH_TRANSFER_REQUEST));
+
+                        producerTemplate.send("seda:send-transfer-to-switch", exchange);
+                        client.newCompleteCommand(job.getKey()).send();
+                    }).open();
+        }
     }
 }

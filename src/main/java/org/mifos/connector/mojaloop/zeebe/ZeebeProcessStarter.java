@@ -29,7 +29,9 @@ public class ZeebeProcessStarter {
 
         Map<String, Object> variables = new HashMap<>();
         variables.put(CamelProperties.TRANSACTION_ID, transactionId);
-        variables.put(CamelProperties.TRANSACTION_REQUEST, request);
+        if(request != null) {
+            variables.put(CamelProperties.TRANSACTION_REQUEST, request);
+        }
         variables.put(CamelProperties.ORIGIN_DATE, Instant.now().toEpochMilli());
         variablesLambda.accept(variables);
 
@@ -50,6 +52,16 @@ public class ZeebeProcessStarter {
                 logger.error("failed to find Zeebe variable name {}", name);
             }
             exchange.getIn().setHeader(name, value);
+        }
+    }
+
+    public static void zeebeVariablesToCamelProperties(Map<String, Object> variables, Exchange exchange, String... names) {
+        for (String name : names) {
+            Object value = variables.get(name);
+            if (value == null) {
+                logger.error("failed to find Zeebe variable name {}", name);
+            }
+            exchange.setProperty(name, value);
         }
     }
 

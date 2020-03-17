@@ -19,6 +19,8 @@ import org.springframework.stereotype.Component;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.SWITCH_TRANSFER_REQUEST;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TRANSACTION_ID;
 import static org.mifos.phee.common.mojaloop.type.MojaloopHeaders.FSPIOP_DESTINATION;
 import static org.mifos.phee.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
 import static org.mifos.phee.common.mojaloop.type.InteroperabilityType.TRANSFERS_CONTENT_TYPE;
@@ -46,15 +48,15 @@ public class PayeeTransferRoutes extends ErrorHandlerRouteBuilder {
     public void configure() {
         from("rest:POST:/switch/transfers")
                 .log(LoggingLevel.WARN, "######## SWITCH -> PAYEE - forward transfer request - STEP 2")
-                .setProperty("savedBody", bodyAs(String.class))
+                .setProperty(SWITCH_TRANSFER_REQUEST, bodyAs(String.class))
                 .unmarshal().json(JsonLibrary.Jackson, TransferSwitchRequestDTO.class)
                 .process(exchange -> {
                     TransferSwitchRequestDTO request = exchange.getIn().getBody(TransferSwitchRequestDTO.class);
                     Ilp ilp = ilpBuilder.parse(request.getIlpPacket(), request.getCondition());
 
                     Map<String, Object> variables = new HashMap<>();
-                    variables.put(CamelProperties.TRANSACTION_REQUEST, exchange.getProperty("savedBody"));
-                    variables.put("tid", ilp.getTransaction().getTransactionId());
+                    variables.put(SWITCH_TRANSFER_REQUEST, exchange.getProperty(SWITCH_TRANSFER_REQUEST));
+                    variables.put(TRANSACTION_ID, ilp.getTransaction().getTransactionId());
                     variables.put(FSPIOP_SOURCE.headerName(), request.getPayeeFsp());
                     variables.put(FSPIOP_DESTINATION.headerName(), request.getPayerFsp());
                     variables.put("Date", exchange.getIn().getHeader("Date"));
@@ -91,8 +93,8 @@ public class PayeeTransferRoutes extends ErrorHandlerRouteBuilder {
                     exchange.getIn().getHeaders().putAll(headers);
                 })
                 .process(pojoToString)
-                .log(LoggingLevel.WARN, "calling PUT:/transfers/${header.tid}?host={{switch.host}}")
-                .toD("rest:PUT:/transfers/${header.tid}?host={{switch.host}}");
+                .log(LoggingLevel.WARN, "calling PUT:/transfers/${header."+TRANSACTION_ID+"}?host={{switch.host}}")
+                .toD("rest:PUT:/transfers/${header."+TRANSACTION_ID+"}?host={{switch.host}}");
 
     }
 }
