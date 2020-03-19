@@ -8,6 +8,7 @@ import org.mifos.connector.mojaloop.ilp.IlpBuilder;
 import org.mifos.connector.mojaloop.zeebe.ZeebeProcessStarter;
 import org.mifos.phee.common.ams.dto.QuoteFspResponseDTO;
 import org.mifos.phee.common.camel.ErrorHandlerRouteBuilder;
+import org.mifos.phee.common.mojaloop.dto.FspMoneyData;
 import org.mifos.phee.common.mojaloop.dto.MoneyData;
 import org.mifos.phee.common.mojaloop.dto.QuoteSwitchRequestDTO;
 import org.mifos.phee.common.mojaloop.dto.QuoteSwitchResponseDTO;
@@ -94,13 +95,15 @@ public class PayeeQuoteRoutes extends ErrorHandlerRouteBuilder {
                             request.getAmount().getAmountDecimal());
 
                     QuoteFspResponseDTO localQuoteResponse = objectMapper.readValue(exchange.getIn().getHeader(LOCAL_QUOTE_RESPONSE, String.class), QuoteFspResponseDTO.class);
+                    FspMoneyData fspFee = localQuoteResponse.getFspFee();
+                    FspMoneyData fspCommission = localQuoteResponse.getFspCommission();
                     QuoteSwitchResponseDTO response = new QuoteSwitchResponseDTO(
                             request.getAmount(),
                             request.getAmount(), // TODO calculated from: amount - fee - comission
-                            new MoneyData(localQuoteResponse.getFspFee().getAmount().toString(),
-                                    localQuoteResponse.getFspFee().getCurrency()),
-                            new MoneyData(localQuoteResponse.getFspCommission().getAmount().toString(),
-                                    localQuoteResponse.getFspCommission().getCurrency()),
+                            fspFee != null ? new MoneyData(fspFee.getAmount().toString(),
+                                    fspFee.getCurrency()) : new MoneyData("0", request.getAmount().getCurrency()),
+                            fspCommission != null ? new MoneyData(fspCommission.getAmount().toString(),
+                                    fspCommission.getCurrency()) : new MoneyData("0", request.getAmount().getCurrency()),
                             LocalDateTime.now().plusHours(1),
                             null,
                             ilp.getPacket(),
