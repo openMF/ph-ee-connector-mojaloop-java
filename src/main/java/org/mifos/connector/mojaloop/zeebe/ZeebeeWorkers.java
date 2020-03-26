@@ -84,7 +84,7 @@ public class ZeebeeWorkers {
                 .open();
 
         zeebeClient.newWorker()
-                .jobType("transfer-prepare")
+                .jobType("send-transfer-request")
                 .handler((client, job) -> {
                     logger.info("Job '{}' started from process '{}' with key {}", job.getType(), job.getBpmnProcessId(), job.getKey());
                     Exchange exchange = new DefaultExchange(camelContext);

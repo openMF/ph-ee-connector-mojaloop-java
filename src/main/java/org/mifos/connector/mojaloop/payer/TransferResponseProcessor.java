@@ -40,7 +40,7 @@ public class TransferResponseProcessor implements Processor {
         variables.put("transactionStatus", "200");
 
         zeebeClient.newPublishMessageCommand()
-                .messageName("transfer-prepare")
+                .messageName("transfer-response")
                 .correlationKey(cachedTransactionId)
                 .timeToLive(Duration.ofMillis(30000))
                 .variables(variables)
