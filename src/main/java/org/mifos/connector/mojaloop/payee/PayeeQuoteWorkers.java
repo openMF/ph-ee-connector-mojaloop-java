@@ -68,6 +68,7 @@ public class PayeeQuoteWorkers {
                         producerTemplate.send("direct:send-quote-to-switch", exchange);
                         client.newCompleteCommand(job.getKey()).send();
                     })
+                    .maxJobsActive(10)
                     .open();
         }
     }

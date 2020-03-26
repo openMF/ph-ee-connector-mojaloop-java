@@ -51,6 +51,7 @@ public class PayeePartyLookupWorkers {
                                 .variables(variables)
                                 .send();
                     })
+                    .maxJobsActive(10)
                     .open();
 
             zeebeClient.newWorker()
@@ -59,6 +60,7 @@ public class PayeePartyLookupWorkers {
                         logger.error("Job '{}' started from process '{}' with key {}", job.getType(), job.getBpmnProcessId(), job.getKey());
                         client.newCompleteCommand(job.getKey()).send();
                     })
+                    .maxJobsActive(10)
                     .open();
 
             zeebeClient.newWorker()
@@ -79,6 +81,7 @@ public class PayeePartyLookupWorkers {
                         producerTemplate.send("direct:send-parties-callback", exchange);
                         client.newCompleteCommand(job.getKey()).send();
                     })
+                    .maxJobsActive(10)
                     .open();
         }
     }

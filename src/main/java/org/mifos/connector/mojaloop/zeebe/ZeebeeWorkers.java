@@ -60,7 +60,7 @@ public class ZeebeeWorkers {
                     producerTemplate.send("seda:send-party-lookup", exchange);
                     client.newCompleteCommand(job.getKey()).send();
                 })
-                .maxJobsActive(100_000)
+                .maxJobsActive(10)
                 .open();
 
         zeebeClient.newWorker()
@@ -80,7 +80,7 @@ public class ZeebeeWorkers {
                             .variables(variables)
                             .send();
                 })
-                .maxJobsActive(100_000)
+                .maxJobsActive(10)
                 .open();
 
         zeebeClient.newWorker()
@@ -97,7 +97,9 @@ public class ZeebeeWorkers {
                     client.newCompleteCommand(job.getKey())
                             .variables(variables)
                             .send();
-                }).open();
+                })
+                .maxJobsActive(10)
+                .open();
 
         zeebeClient.newWorker()
                 .jobType("payer-request-confirm")
@@ -114,14 +116,18 @@ public class ZeebeeWorkers {
                             .timeToLive(Duration.ofMillis(30000))
                             .variables(variables)
                             .send();
-                }).open();
+                })
+                .maxJobsActive(10)
+                .open();
 
         zeebeClient.newWorker()
                 .jobType("send-to-operator")
                 .handler((client, job) -> {
                     logger.info("send-to-operator task done");
                     client.newCompleteCommand(job.getKey()).send();
-                }).open();
+                })
+                .maxJobsActive(10)
+                .open();
 
         for(String dfspid : dfspids) {
             logger.info("## generating payee-transfer-response-{} worker", dfspid);
@@ -143,7 +149,9 @@ public class ZeebeeWorkers {
 
                         producerTemplate.send("seda:send-transfer-to-switch", exchange);
                         client.newCompleteCommand(job.getKey()).send();
-                    }).open();
+                    })
+                    .maxJobsActive(10)
+                    .open();
         }
     }
 }
