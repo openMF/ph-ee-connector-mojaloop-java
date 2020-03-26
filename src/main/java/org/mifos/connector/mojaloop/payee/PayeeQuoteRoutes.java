@@ -101,14 +101,14 @@ public class PayeeQuoteRoutes extends ErrorHandlerRouteBuilder {
                     FspMoneyData fspCommission = localQuoteResponse.getFspCommission();
 
                     // amount format: ^([0]|([1-9][0-9]{0,17}))([.][0-9]{0,3}[1-9])?$
-                    BigDecimal fspFeeAmount = fspFee != null ? fspFee.getAmount() : ZERO;
+                    BigDecimal fspFeeAmount = (fspFee != null ? fspFee.getAmount() : ZERO).stripTrailingZeros();
                     String fspFeeCurrency = fspFee != null ? fspFee.getCurrency() : request.getAmount().getCurrency();
-                    BigDecimal fspCommissionAmount = fspCommission != null ? fspCommission.getAmount() : ZERO;
+                    BigDecimal fspCommissionAmount = (fspCommission != null ? fspCommission.getAmount() : ZERO).stripTrailingZeros();
                     String fspCommissionCurrency = fspCommission != null ? fspCommission.getCurrency() : request.getAmount().getCurrency();
 
                     QuoteSwitchResponseDTO response = new QuoteSwitchResponseDTO(
                             request.getAmount(),
-                            new MoneyData(request.getAmount().getAmountDecimal().subtract(fspFeeAmount).subtract(fspCommissionAmount).toString(),
+                            new MoneyData(request.getAmount().getAmountDecimal().subtract(fspFeeAmount).subtract(fspCommissionAmount).stripTrailingZeros().toString(),
                                     request.getAmount().getCurrency()),
                             new MoneyData(fspFeeAmount.compareTo(ZERO) == 0 ? "0" : fspFeeAmount.toString(), fspFeeCurrency),
                             new MoneyData(fspCommissionAmount.compareTo(ZERO) == 0 ? "0" : fspCommissionAmount.toString(), fspCommissionCurrency),
