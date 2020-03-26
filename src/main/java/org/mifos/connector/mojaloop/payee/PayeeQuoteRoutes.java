@@ -19,10 +19,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
+import static java.math.BigDecimal.ZERO;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.LOCAL_QUOTE_RESPONSE;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.QUOTE_ID;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.QUOTE_SWITCH_REQUEST;
@@ -97,13 +99,19 @@ public class PayeeQuoteRoutes extends ErrorHandlerRouteBuilder {
                     QuoteFspResponseDTO localQuoteResponse = objectMapper.readValue(exchange.getIn().getHeader(LOCAL_QUOTE_RESPONSE, String.class), QuoteFspResponseDTO.class);
                     FspMoneyData fspFee = localQuoteResponse.getFspFee();
                     FspMoneyData fspCommission = localQuoteResponse.getFspCommission();
+
+                    // amount format: ^([0]|([1-9][0-9]{0,17}))([.][0-9]{0,3}[1-9])?$
+                    BigDecimal fspFeeAmount = fspFee != null ? fspFee.getAmount() : ZERO;
+                    String fspFeeCurrency = fspFee != null ? fspFee.getCurrency() : request.getAmount().getCurrency();
+                    BigDecimal fspCommissionAmount = fspCommission != null ? fspCommission.getAmount() : ZERO;
+                    String fspCommissionCurrency = fspCommission != null ? fspCommission.getCurrency() : request.getAmount().getCurrency();
+
                     QuoteSwitchResponseDTO response = new QuoteSwitchResponseDTO(
                             request.getAmount(),
-                            request.getAmount(), // TODO calculated from: amount - fee - comission
-                            fspFee != null ? new MoneyData(fspFee.getAmount().toString(),
-                                    fspFee.getCurrency()) : new MoneyData("0", request.getAmount().getCurrency()),
-                            fspCommission != null ? new MoneyData(fspCommission.getAmount().toString(),
-                                    fspCommission.getCurrency()) : new MoneyData("0", request.getAmount().getCurrency()),
+                            new MoneyData(request.getAmount().getAmountDecimal().subtract(fspFeeAmount).subtract(fspCommissionAmount).toString(),
+                                    request.getAmount().getCurrency()),
+                            new MoneyData(fspFeeAmount.compareTo(ZERO) == 0 ? "0" : fspFeeAmount.toString(), fspFeeCurrency),
+                            new MoneyData(fspCommissionAmount.compareTo(ZERO) == 0 ? "0" : fspCommissionAmount.toString(), fspCommissionCurrency),
                             LocalDateTime.now().plusHours(1),
                             null,
                             ilp.getPacket(),
