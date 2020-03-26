@@ -41,20 +41,6 @@ public class PayeePartyLookupWorkers {
             logger.info("## generating payee party Zeebe workers for DFSPID: {}", dfspId);
 
             zeebeClient.newWorker()
-                    .jobType("payee-party-lookup-" + dfspId)
-                    .handler((client, job) -> {
-                        logger.info("Job '{}' started from process '{}' with key {}", job.getType(), job.getBpmnProcessId(), job.getKey());
-                        Map<String, Object> variables = job.getVariablesAsMap();
-                        variables.put("partyIdLookupResult", "SUCCESS"); // TODO
-
-                        client.newCompleteCommand(job.getKey())
-                                .variables(variables)
-                                .send();
-                    })
-                    .maxJobsActive(10)
-                    .open();
-
-            zeebeClient.newWorker()
                     .jobType("payee-party-lookup-error-" + dfspId)
                     .handler((client, job) -> { // TODO implement error handler
                         logger.error("Job '{}' started from process '{}' with key {}", job.getType(), job.getBpmnProcessId(), job.getKey());
