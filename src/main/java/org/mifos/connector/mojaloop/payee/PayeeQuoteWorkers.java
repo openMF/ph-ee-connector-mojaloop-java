@@ -1,6 +1,5 @@
 package org.mifos.connector.mojaloop.payee;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.zeebe.client.ZeebeClient;
 import org.apache.camel.CamelContext;
 import org.apache.camel.Exchange;
@@ -37,9 +36,6 @@ public class PayeeQuoteWorkers {
     @Autowired
     private CamelContext camelContext;
 
-    @Autowired
-    private ObjectMapper objectMapper;
-
     @Value("#{'${dfspids}'.split(',')}")
     private List<String> dfspids;
 
@@ -68,6 +64,7 @@ public class PayeeQuoteWorkers {
                         producerTemplate.send("direct:send-quote-to-switch", exchange);
                         client.newCompleteCommand(job.getKey()).send();
                     })
+                    .name("payee-quote-response-" + dfspId)
                     .maxJobsActive(10)
                     .open();
         }

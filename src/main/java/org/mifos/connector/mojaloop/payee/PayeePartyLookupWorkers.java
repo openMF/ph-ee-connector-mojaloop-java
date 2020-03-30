@@ -46,6 +46,7 @@ public class PayeePartyLookupWorkers {
                         logger.error("Job '{}' started from process '{}' with key {}", job.getType(), job.getBpmnProcessId(), job.getKey());
                         client.newCompleteCommand(job.getKey()).send();
                     })
+                    .name("payee-party-lookup-error-" + dfspId)
                     .maxJobsActive(10)
                     .open();
 
@@ -67,6 +68,7 @@ public class PayeePartyLookupWorkers {
                         producerTemplate.send("direct:send-parties-callback", exchange);
                         client.newCompleteCommand(job.getKey()).send();
                     })
+                    .name("payee-party-lookup-response-" + dfspId)
                     .maxJobsActive(10)
                     .open();
         }

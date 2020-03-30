@@ -60,6 +60,7 @@ public class ZeebeeWorkers {
                     producerTemplate.send("seda:send-party-lookup", exchange);
                     client.newCompleteCommand(job.getKey()).send();
                 })
+                .name("payee-user-lookup")
                 .maxJobsActive(10)
                 .open();
 
@@ -80,6 +81,7 @@ public class ZeebeeWorkers {
                             .variables(variables)
                             .send();
                 })
+                .name("quote")
                 .maxJobsActive(10)
                 .open();
 
@@ -98,6 +100,7 @@ public class ZeebeeWorkers {
                             .variables(variables)
                             .send();
                 })
+                .name("send-transfer-request")
                 .maxJobsActive(10)
                 .open();
 
@@ -117,6 +120,7 @@ public class ZeebeeWorkers {
                             .variables(variables)
                             .send();
                 })
+                .name("payer-request-confirm")
                 .maxJobsActive(10)
                 .open();
 
@@ -126,6 +130,7 @@ public class ZeebeeWorkers {
                     logger.info("send-to-operator task done");
                     client.newCompleteCommand(job.getKey()).send();
                 })
+                .name("send-to-operator")
                 .maxJobsActive(10)
                 .open();
 
@@ -150,6 +155,7 @@ public class ZeebeeWorkers {
                         producerTemplate.send("seda:send-transfer-to-switch", exchange);
                         client.newCompleteCommand(job.getKey()).send();
                     })
+                    .name("payee-transfer-response-" + dfspid)
                     .maxJobsActive(10)
                     .open();
         }
