@@ -69,7 +69,7 @@ public class PayeeTransferRoutes extends ErrorHandlerRouteBuilder {
                             .send();
                 });
 
-        from("seda:send-transfer-to-switch")
+        from("direct:send-transfer-to-switch")
                 .unmarshal().json(JsonLibrary.Jackson, TransferSwitchRequestDTO.class)
                 .process(exchange -> {
                     TransferSwitchRequestDTO request = exchange.getIn().getBody(TransferSwitchRequestDTO.class);

@@ -57,7 +57,7 @@ public class ZeebeeWorkers {
                     exchange.setProperty(TRANSACTION_ID, job.getVariablesAsMap().get(TRANSACTION_ID));
                     exchange.setProperty(TRANSACTION_REQUEST, job.getVariablesAsMap().get(TRANSACTION_REQUEST));
                     exchange.setProperty(ORIGIN_DATE, job.getVariablesAsMap().get(ORIGIN_DATE));
-                    producerTemplate.send("seda:send-party-lookup", exchange);
+                    producerTemplate.send("direct:send-party-lookup", exchange);
                     client.newCompleteCommand(job.getKey()).send();
                 })
                 .name("payee-user-lookup")
@@ -76,7 +76,7 @@ public class ZeebeeWorkers {
                     exchange.setProperty(TRANSACTION_REQUEST, variables.get(TRANSACTION_REQUEST));
                     exchange.setProperty(ORIGIN_DATE, variables.get(ORIGIN_DATE));
                     exchange.setProperty(PAYEE_FSP_ID, variables.get(PAYEE_FSP_ID));
-                    producerTemplate.send("seda:send-quote", exchange);
+                    producerTemplate.send("direct:send-quote", exchange);
                     client.newCompleteCommand(job.getKey())
                             .variables(variables)
                             .send();
@@ -95,7 +95,7 @@ public class ZeebeeWorkers {
                     exchange.setProperty(TRANSACTION_ID, variables.get(TRANSACTION_ID));
                     exchange.setProperty(ORIGIN_DATE, variables.get(ORIGIN_DATE));
                     exchange.getIn().setBody(variables.get("quoteResponse"));
-                    producerTemplate.send("seda:send-transfer", exchange);
+                    producerTemplate.send("direct:send-transfer", exchange);
                     client.newCompleteCommand(job.getKey())
                             .variables(variables)
                             .send();
@@ -152,7 +152,7 @@ public class ZeebeeWorkers {
                         );
                         exchange.getIn().setBody(variables.get(SWITCH_TRANSFER_REQUEST));
 
-                        producerTemplate.send("seda:send-transfer-to-switch", exchange);
+                        producerTemplate.send("direct:send-transfer-to-switch", exchange);
                         client.newCompleteCommand(job.getKey()).send();
                     })
                     .name("payee-transfer-response-" + dfspid)

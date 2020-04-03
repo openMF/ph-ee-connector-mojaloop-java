@@ -15,6 +15,9 @@ import javax.annotation.PostConstruct;
 import java.util.List;
 import java.util.Map;
 
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PARTY_ID;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PARTY_ID_TYPE;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PAYEE_PARTY_RESPONSE;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeProcessStarter.zeebeVariablesToCamelHeaders;
 import static org.mifos.phee.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
 
@@ -44,6 +47,16 @@ public class PayeePartyLookupWorkers {
                     .jobType("payee-party-lookup-error-" + dfspId)
                     .handler((client, job) -> { // TODO implement error handler
                         logger.error("Job '{}' started from process '{}' with key {}", job.getType(), job.getBpmnProcessId(), job.getKey());
+                        Exchange exchange = new DefaultExchange(camelContext);
+                        zeebeVariablesToCamelHeaders(job.getVariablesAsMap(), exchange,
+                                FSPIOP_SOURCE.headerName(),
+                                PARTY_ID_TYPE,
+                                PARTY_ID,
+                                "traceparent",
+                                "Date"
+                        );
+
+                        producerTemplate.send("direct:send-parties-callback-error", exchange);
                         client.newCompleteCommand(job.getKey()).send();
                     })
                     .name("payee-party-lookup-error-" + dfspId)
@@ -58,14 +71,13 @@ public class PayeePartyLookupWorkers {
 
                         Exchange exchange = new DefaultExchange(camelContext);
                         zeebeVariablesToCamelHeaders(variables, exchange,
-                                "partyIdType",
-                                "partyId",
                                 FSPIOP_SOURCE.headerName(),
                                 "traceparent",
                                 "Date"
                         );
+                        exchange.setProperty(PAYEE_PARTY_RESPONSE, variables.get(PAYEE_PARTY_RESPONSE));
 
-                        producerTemplate.send("direct:send-parties-callback", exchange);
+                        producerTemplate.send("direct:send-parties-callback-response", exchange);
                         client.newCompleteCommand(job.getKey()).send();
                     })
                     .name("payee-party-lookup-response-" + dfspId)

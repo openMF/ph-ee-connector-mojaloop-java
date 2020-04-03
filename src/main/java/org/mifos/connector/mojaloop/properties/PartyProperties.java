@@ -25,12 +25,12 @@ public class PartyProperties {
 
     public Party getParty(String partyIdType, String partyId) {
         if (partyIdType == null || partyId == null) {
-            return null;
+            throw new RuntimeException("Tenant with partyIdType: " + partyIdType + ", partyId: " + partyId + ", not configuerd!");
         }
 
         return getParties().stream()
                 .filter(t -> t.getPartyIdType().equals(partyIdType) && t.getPartyId().equals(partyId))
                 .findFirst()
-                .orElse(null);
+                .orElseThrow(() -> new RuntimeException("Tenant with partyIdType: " + partyIdType + ", partyId: " + partyId + ", not configuerd!"));
     }
 }

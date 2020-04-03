@@ -29,19 +29,19 @@ dfspids: "DFSPID"
 parties:
   - partyIdType: MSISDN
     partyId: 27710101999
-    dfspId: in01tn01
+    tenantId: tn01
   - partyIdType: MSISDN
     partyId: 27710102999
-    dfspId: in01tn02
+    tenantId: tn02
   - partyIdType: MSISDN
     partyId: 27710203999
-    dfspId: in02tn03
+    tenantId: tn03
   - partyIdType: MSISDN
     partyId: 27710204999
-    dfspId: in02tn04
+    tenantId: tn04
   - partyIdType: MSISDN
     partyId: 27710305999
-    dfspId: in03tn05
+    tenantId: tn05
   - partyIdType: MSISDN
     partyId: 27710306999
-    dfspId: in03tn06
+    tenantId: tn06

@@ -27,6 +27,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PARTY_ID;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PARTY_ID_TYPE;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PAYER_FSP_ID;
 import static org.mifos.phee.common.mojaloop.type.InteroperabilityType.PARTIES_ACCEPT_TYPE;
 import static org.mifos.phee.common.mojaloop.type.InteroperabilityType.PARTIES_CONTENT_TYPE;
 import static org.mifos.phee.common.mojaloop.type.InteroperabilityType.QUOTES_ACCEPT_TYPE;
@@ -67,26 +70,25 @@ public class SwitchOutRouteBuilder extends ErrorHandlerRouteBuilder {
 
     @Override
     public void configure() {
-        from("seda:send-party-lookup")
+        from("direct:send-party-lookup")
                 .id("send-party-lookup")
                 .log(LoggingLevel.INFO, "######## PAYER -> SWITCH - party lookup request - STEP 1")
                 .process(e -> {
                     TransactionChannelRequestDTO request = objectMapper.readValue(e.getProperty(CamelProperties.TRANSACTION_REQUEST, String.class), TransactionChannelRequestDTO.class);
                     PartyIdInfo payeePartyIdInfo = request.getPayee().getPartyIdInfo();
-                    e.setProperty(CamelProperties.PAYEE_PARTY_ID_TYPE, payeePartyIdInfo.getPartyIdType());
-                    e.setProperty(CamelProperties.PAYEE_PARTY_IDENTIFIER, payeePartyIdInfo.getPartyIdentifier());
-                    e.setProperty(CamelProperties.PAYER_FSP_ID, request.getPayer().getPartyIdInfo().getFspId());
+                    e.setProperty(PARTY_ID_TYPE, payeePartyIdInfo.getPartyIdType());
+                    e.setProperty(PARTY_ID, payeePartyIdInfo.getPartyIdentifier());
+                    e.setProperty(PAYER_FSP_ID, request.getPayer().getPartyIdInfo().getFspId());
                 })
                 .removeHeaders("*")
                 .process(addTraceHeaderProcessor)
                 .setHeader("Accept", constant(PARTIES_ACCEPT_TYPE.headerValue()))
                 .setHeader("Content-Type", constant(PARTIES_CONTENT_TYPE.headerValue()))
-                .setHeader(FSPIOP_SOURCE.headerName(), exchangeProperty(CamelProperties.PAYER_FSP_ID))
+                .setHeader(FSPIOP_SOURCE.headerName(), exchangeProperty(PAYER_FSP_ID))
                 .setHeader("Host", constant(accountLookupService))
-                .toD("rest:GET:/parties/${exchangeProperty." + CamelProperties.PAYEE_PARTY_ID_TYPE
-                        + "}/${exchangeProperty." + CamelProperties.PAYEE_PARTY_IDENTIFIER + "}?host={{switch.host}}");
+                .toD("rest:GET:/parties/${exchangeProperty." + PARTY_ID_TYPE + "}/${exchangeProperty." + PARTY_ID + "}?host={{switch.host}}");
 
-        from("seda:send-quote")
+        from("direct:send-quote")
                 .id("send-quote")
                 .log(LoggingLevel.INFO, "######## PAYER -> SWITCH - quote request - STEP 1")
                 .process(exchange -> {
@@ -111,7 +113,7 @@ public class SwitchOutRouteBuilder extends ErrorHandlerRouteBuilder {
                             null,
                             null,
                             null);
-                    exchange.setProperty(CamelProperties.PAYER_FSP_ID, payerFspId);
+                    exchange.setProperty(PAYER_FSP_ID, payerFspId);
 
                     PartyIdInfo requestPayeePartyIdInfo = trRequest.getPayee().getPartyIdInfo();
                     Party payee = new Party(
@@ -137,12 +139,12 @@ public class SwitchOutRouteBuilder extends ErrorHandlerRouteBuilder {
                 .process(addTraceHeaderProcessor)
                 .setHeader("Accept", constant(QUOTES_ACCEPT_TYPE.headerValue()))
                 .setHeader("Content-Type", constant(QUOTES_CONTENT_TYPE.headerValue()))
-                .setHeader(FSPIOP_SOURCE.headerName(), exchangeProperty(CamelProperties.PAYER_FSP_ID))
+                .setHeader(FSPIOP_SOURCE.headerName(), exchangeProperty(PAYER_FSP_ID))
                 .setHeader(FSPIOP_DESTINATION.headerName(), exchangeProperty(CamelProperties.PAYEE_FSP_ID))
                 .setHeader("Host", constant(quoteService))
                 .toD("rest:POST:/quotes?host={{switch.host}}");
 
-        from("seda:send-transfer")
+        from("direct:send-transfer")
                 .id("send-transfer")
                 .log(LoggingLevel.INFO, "######## PAYER -> SWITCH - transfer request - STEP 1")
                 .unmarshal().json(JsonLibrary.Jackson, QuoteSwitchResponseDTO.class)

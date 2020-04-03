@@ -2,7 +2,7 @@ package org.mifos.connector.mojaloop.properties;
 
 public class Party {
 
-    private String partyIdType, partyId, dfspId;
+    private String partyIdType, partyId, tenantId;
 
     public Party() {
     }
@@ -23,11 +23,11 @@ public class Party {
         this.partyId = partyId;
     }
 
-    public String getDfspId() {
-        return dfspId;
+    public String getTenantId() {
+        return tenantId;
     }
 
-    public void setDfspId(String dfspId) {
-        this.dfspId = dfspId;
+    public void setTenantId(String tenantId) {
+        this.tenantId = tenantId;
     }
 }

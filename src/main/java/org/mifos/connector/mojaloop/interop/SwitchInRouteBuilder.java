@@ -66,11 +66,11 @@ public class SwitchInRouteBuilder extends ErrorHandlerRouteBuilder {
 
         // ERROR callback urls
         from("rest:PUT:/switch/quotes/{qid}/error")
-                .log(LoggingLevel.ERROR, "######## SWITCH -> PAYEE/PAYER - quote error")
+                .log(LoggingLevel.ERROR, "######## SWITCH -> PAYER - quote error")
                 .process(e -> logger.error(e.getIn().getBody(String.class)));
 
         from("rest:PUT:/switch/parties/MSISDN/{phone}/error")
-                .log(LoggingLevel.ERROR, "######## SWITCH -> PAYEE/PAYER - parties error")
+                .log(LoggingLevel.ERROR, "######## SWITCH -> PAYER - parties error")
                 .process(e -> logger.error(e.getIn().getBody(String.class)));
     }
 }
