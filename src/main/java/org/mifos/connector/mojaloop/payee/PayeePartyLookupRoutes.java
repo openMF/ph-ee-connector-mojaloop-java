@@ -77,8 +77,8 @@ public class PayeePartyLookupRoutes extends ErrorHandlerRouteBuilder {
                 .process(exchange -> {
                     Party party = objectMapper.readValue(exchange.getProperty(PAYEE_PARTY_RESPONSE, String.class), Party.class);
 
-                    exchange.setProperty(PARTY_ID, party.getPartyIdInfo().getPartyIdType().name());
-                    exchange.setProperty(PARTY_ID_TYPE, party.getPartyIdInfo().getPartyIdentifier());
+                    exchange.setProperty(PARTY_ID, party.getPartyIdInfo().getPartyIdentifier());
+                    exchange.setProperty(PARTY_ID_TYPE, party.getPartyIdInfo().getPartyIdType().name());
                     exchange.getIn().setBody(new PartySwitchResponseDTO(party));
                 })
                 .to("direct:send-parties-callback");
