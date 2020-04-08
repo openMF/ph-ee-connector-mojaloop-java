@@ -25,10 +25,7 @@ public class ZeebeProcessStarter {
     private ZeebeClient zeebeClient;
 
     public void startZeebeWorkflow(String workflowId, String request, Consumer<Map<String, Object>> variablesLambda) {
-        String transactionId = generateTransactionId();
-
         Map<String, Object> variables = new HashMap<>();
-        variables.put(CamelProperties.TRANSACTION_ID, transactionId);
         if(request != null) {
             variables.put(CamelProperties.TRANSACTION_REQUEST, request);
         }
@@ -42,7 +39,7 @@ public class ZeebeProcessStarter {
                 .send()
                 .join();
 
-        logger.debug("zeebee workflow instance {} of type {} created with transactionId {}", instance.getWorkflowInstanceKey(), workflowId, transactionId);
+        logger.debug("zeebee workflow instance {} of type {} started", instance.getWorkflowInstanceKey(), workflowId);
     }
 
     public static void zeebeVariablesToCamelHeaders(Map<String, Object> variables, Exchange exchange, String... names) {
@@ -55,16 +52,6 @@ public class ZeebeProcessStarter {
         }
     }
 
-    public static void zeebeVariablesToCamelProperties(Map<String, Object> variables, Exchange exchange, String... names) {
-        for (String name : names) {
-            Object value = variables.get(name);
-            if (value == null) {
-                logger.error("failed to find Zeebe variable name {}", name);
-            }
-            exchange.setProperty(name, value);
-        }
-    }
-
     public static void camelHeadersToZeebeVariables(Exchange exchange, Map<String, Object> variables, String... names) {
         for (String name : names) {
             String header = exchange.getIn().getHeader(name, String.class);
@@ -73,10 +60,5 @@ public class ZeebeProcessStarter {
             }
             variables.put(name, header);
         }
-    }
-
-    // TODO generate proper cluster-safe transaction id
-    private String generateTransactionId() {
-        return UUID.randomUUID().toString();
     }
 }

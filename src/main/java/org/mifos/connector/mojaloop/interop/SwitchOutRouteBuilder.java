@@ -105,11 +105,7 @@ public class SwitchOutRouteBuilder extends ErrorHandlerRouteBuilder {
                             new PartyIdInfo(requestPayerPartyIdInfo.getPartyIdType(),
                                     requestPayerPartyIdInfo.getPartyIdentifier(),
                                     null,
-                                    payerFspId), // TODO !!! MUST BE CHANGED LATER
-                            /* payer fspId - is currently coming from the request body but
-                             *  there are multiple scenarios how to obtain this information by calling to the mojaloop parties flow twice
-                             *  or provide it with a tenant - fsp mapping in the PH or calling the PH's own fineract
-                             */
+                                    payerFspId), // TODO this should be queried somehow
                             null,
                             null,
                             null);

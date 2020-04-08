@@ -25,23 +25,3 @@ switch:
   transfer-service: ml-api-adapter.local
 
 dfspids: "DFSPID"
-
-parties:
-  - partyIdType: MSISDN
-    partyId: 27710101999
-    tenantId: tn01
-  - partyIdType: MSISDN
-    partyId: 27710102999
-    tenantId: tn02
-  - partyIdType: MSISDN
-    partyId: 27710203999
-    tenantId: tn03
-  - partyIdType: MSISDN
-    partyId: 27710204999
-    tenantId: tn04
-  - partyIdType: MSISDN
-    partyId: 27710305999
-    tenantId: tn05
-  - partyIdType: MSISDN
-    partyId: 27710306999
-    tenantId: tn06

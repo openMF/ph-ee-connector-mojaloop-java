@@ -1,0 +1,7 @@
+parties:
+  - partyIdType: MSISDN
+    partyId: 27710203999
+    tenantId: tn03
+  - partyIdType: MSISDN
+    partyId: 27710204999
+    tenantId: tn04

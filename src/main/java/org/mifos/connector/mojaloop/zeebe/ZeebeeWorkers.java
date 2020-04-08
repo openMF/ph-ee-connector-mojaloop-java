@@ -20,6 +20,7 @@ import java.util.Map;
 
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PAYEE_FSP_ID;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.ORIGIN_DATE;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PAYEE_QUOTE_RESPONSE;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.SWITCH_TRANSFER_REQUEST;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TIMEOUT_QUOTE_RETRY_COUNT;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TIMEOUT_TRANSFER_RETRY_COUNT;
@@ -89,12 +90,14 @@ public class ZeebeeWorkers {
                 .jobType("send-transfer-request")
                 .handler((client, job) -> {
                     logger.info("Job '{}' started from process '{}' with key {}", job.getType(), job.getBpmnProcessId(), job.getKey());
-                    Exchange exchange = new DefaultExchange(camelContext);
                     Map<String, Object> variables = job.getVariablesAsMap();
                     variables.put(TIMEOUT_TRANSFER_RETRY_COUNT, 1 + (Integer) variables.getOrDefault(TIMEOUT_TRANSFER_RETRY_COUNT, -1));
+
+                    Exchange exchange = new DefaultExchange(camelContext);
                     exchange.setProperty(TRANSACTION_ID, variables.get(TRANSACTION_ID));
                     exchange.setProperty(ORIGIN_DATE, variables.get(ORIGIN_DATE));
-                    exchange.getIn().setBody(variables.get("quoteResponse"));
+                    exchange.getIn().setBody(variables.get(PAYEE_QUOTE_RESPONSE));
+
                     producerTemplate.send("direct:send-transfer", exchange);
                     client.newCompleteCommand(job.getKey())
                             .variables(variables)

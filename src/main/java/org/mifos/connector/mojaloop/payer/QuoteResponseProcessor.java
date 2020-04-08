@@ -15,6 +15,8 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PAYEE_QUOTE_RESPONSE;
+
 @Component
 public class QuoteResponseProcessor implements Processor {
 
@@ -37,7 +39,7 @@ public class QuoteResponseProcessor implements Processor {
         String transactionId = ilp.getTransaction().getTransactionId();
 
         Map<String, Object> variables = new HashMap<>();
-        variables.put("quoteResponse", objectMapper.writeValueAsString(response));
+        variables.put(PAYEE_QUOTE_RESPONSE, objectMapper.writeValueAsString(response));
 
         zeebeClient.newPublishMessageCommand()
                 .messageName("quote")
