@@ -108,10 +108,10 @@ public class PayeeQuoteRoutes extends ErrorHandlerRouteBuilder {
 
                     QuoteSwitchResponseDTO response = new QuoteSwitchResponseDTO(
                             request.getAmount(),
-                            new MoneyData(request.getAmount().getAmountDecimal().subtract(fspFeeAmount).subtract(fspCommissionAmount).stripTrailingZeros().toString(),
+                            new MoneyData(request.getAmount().getAmountDecimal().subtract(fspFeeAmount).subtract(fspCommissionAmount).stripTrailingZeros().toPlainString(),
                                     request.getAmount().getCurrency()),
-                            new MoneyData(fspFeeAmount.compareTo(ZERO) == 0 ? "0" : fspFeeAmount.toString(), fspFeeCurrency),
-                            new MoneyData(fspCommissionAmount.compareTo(ZERO) == 0 ? "0" : fspCommissionAmount.toString(), fspCommissionCurrency),
+                            new MoneyData(fspFeeAmount.compareTo(ZERO) == 0 ? "0" : fspFeeAmount.toPlainString(), fspFeeCurrency),
+                            new MoneyData(fspCommissionAmount.compareTo(ZERO) == 0 ? "0" : fspCommissionAmount.toPlainString(), fspCommissionCurrency),
                             LocalDateTime.now().plusHours(1),
                             null,
                             ilp.getPacket(),
