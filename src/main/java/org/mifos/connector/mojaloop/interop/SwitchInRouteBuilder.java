@@ -70,7 +70,7 @@ public class SwitchInRouteBuilder extends ErrorHandlerRouteBuilder {
 
         from("rest:PUT:/switch/quotes/{qid}/error")
                 .log(LoggingLevel.ERROR, "######## SWITCH -> PAYER - quote error")
-//                .process(getCachedTransactionIdProcessor)
+                .process(getCachedTransactionIdProcessor)
                 .setProperty(PAYEE_QUOTE_FAILED, constant(true))
                 .process(quoteResponseProcessor);
 
