@@ -19,11 +19,11 @@ public class GetCachedTransactionIdProcessor implements Processor {
     public void process(Exchange exchange) {
         String transactionIdKey = null;
         String traceparent = exchange.getIn().getHeader("traceparent", String.class);
-        logger.debug("trace parent header: {}", traceparent);
+        logger.info("trace parent header: {}", traceparent);
 
         String transactionId = resolveTransactionIdFromTraceparent(traceparent);
 
-        logger.debug("resolved parent {} to transactionId {}", traceparent, transactionId);
+        logger.info("resolved parent {} to transactionId {}", traceparent, transactionId);
         exchange.setProperty(CamelProperties.CACHED_TRANSACTION_ID, transactionId);
 
         if (transactionId == null) {

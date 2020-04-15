@@ -6,6 +6,7 @@ import org.apache.camel.LoggingLevel;
 import org.apache.camel.Processor;
 import org.apache.camel.model.dataformat.JsonLibrary;
 import org.mifos.connector.mojaloop.camel.config.CamelProperties;
+import org.mifos.connector.mojaloop.camel.trace.QuoteTransactionCache;
 import org.mifos.connector.mojaloop.ilp.IlpBuilder;
 import org.mifos.phee.common.camel.ErrorHandlerRouteBuilder;
 import org.mifos.phee.common.channel.dto.ChannelPartyIdInfo;
@@ -64,6 +65,9 @@ public class SwitchOutRouteBuilder extends ErrorHandlerRouteBuilder {
     @Autowired
     private Processor pojoToString;
 
+    @Autowired
+    private QuoteTransactionCache quoteTransactionCache;
+
     public SwitchOutRouteBuilder() {
         super.configure();
     }
@@ -121,9 +125,12 @@ public class SwitchOutRouteBuilder extends ErrorHandlerRouteBuilder {
                             null,
                             null);
 
+                    String quoteId = UUID.randomUUID().toString();
+                    String transactionId = exchange.getProperty(CamelProperties.TRANSACTION_ID, String.class);
+                    quoteTransactionCache.add(quoteId, transactionId);
                     exchange.getIn().setBody(new QuoteSwitchRequestDTO(
-                            exchange.getProperty(CamelProperties.TRANSACTION_ID, String.class),
-                            UUID.randomUUID().toString(),
+                            transactionId,
+                            quoteId,
                             payee,
                             payer,
                             trRequest.getAmountType(),
