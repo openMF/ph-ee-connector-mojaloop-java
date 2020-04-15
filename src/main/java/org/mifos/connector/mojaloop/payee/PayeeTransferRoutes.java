@@ -20,6 +20,8 @@ import java.util.Map;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.ERROR_INFORMATION;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.SWITCH_TRANSFER_REQUEST;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TRANSACTION_ID;
+import static org.mifos.phee.common.mojaloop.type.InteroperabilityType.PARTIES_ACCEPT_TYPE;
+import static org.mifos.phee.common.mojaloop.type.InteroperabilityType.TRANSFERS_ACCEPT_TYPE;
 import static org.mifos.phee.common.mojaloop.type.MojaloopHeaders.FSPIOP_DESTINATION;
 import static org.mifos.phee.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
 
@@ -75,6 +77,7 @@ public class PayeeTransferRoutes extends ErrorHandlerRouteBuilder {
                     TransferSwitchRequestDTO request = e.getIn().getBody(TransferSwitchRequestDTO.class);
                     Ilp ilp = ilpBuilder.parse(request.getIlpPacket(), request.getCondition());
                     mojaloopUtil.setTransferHeaders(e, ilp.getTransaction());
+                    e.getIn().setHeader("Accept", TRANSFERS_ACCEPT_TYPE.headerValue());
                 })
                 .toD("rest:PUT:/transfers/${header."+TRANSACTION_ID+"}/error?host={{switch.host}}");
 

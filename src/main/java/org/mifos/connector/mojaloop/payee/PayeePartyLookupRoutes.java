@@ -19,6 +19,9 @@ import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PARTY_ID
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PAYEE_PARTY_RESPONSE;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TENANT_ID;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeProcessStarter.camelHeadersToZeebeVariables;
+import static org.mifos.phee.common.mojaloop.type.InteroperabilityType.PARTIES_ACCEPT_TYPE;
+import static org.mifos.phee.common.mojaloop.type.InteroperabilityType.PARTIES_CONTENT_TYPE;
+import static org.mifos.phee.common.mojaloop.type.InteroperabilityType.QUOTES_ACCEPT_TYPE;
 import static org.mifos.phee.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
 
 @Component
@@ -84,6 +87,7 @@ public class PayeePartyLookupRoutes extends ErrorHandlerRouteBuilder {
                     exchange.setProperty(PARTY_ID_TYPE, exchange.getIn().getHeader(PARTY_ID_TYPE));
                     exchange.getIn().setBody(exchange.getProperty(ERROR_INFORMATION));
                     mojaloopUtil.setPartyHeaders(exchange);
+                    exchange.getIn().setHeader("Accept", PARTIES_ACCEPT_TYPE.headerValue());
                 })
                 .toD("rest:PUT:/parties/${exchangeProperty."+PARTY_ID_TYPE+"}/${exchangeProperty."+PARTY_ID+"}/error?host={{switch.host}}");
     }
