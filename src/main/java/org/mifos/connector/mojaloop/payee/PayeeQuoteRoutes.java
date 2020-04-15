@@ -82,8 +82,8 @@ public class PayeeQuoteRoutes extends ErrorHandlerRouteBuilder {
                 .id("send-quote-error-to-switch")
                 .unmarshal().json(JsonLibrary.Jackson, QuoteSwitchRequestDTO.class)
                 .process(e -> {
-                    e.getIn().setBody(e.getProperty(ERROR_INFORMATION));
                     mojaloopUtil.setQuoteHeaders(e, e.getIn().getBody(QuoteSwitchRequestDTO.class));
+                    e.getIn().setBody(e.getProperty(ERROR_INFORMATION));
                 })
                 .toD("rest:PUT:/quotes/${header."+QUOTE_ID+"}/error?host={{switch.host}}");
 
@@ -123,8 +123,8 @@ public class PayeeQuoteRoutes extends ErrorHandlerRouteBuilder {
                             null
                     );
 
-                    exchange.getIn().setBody(response);
                     mojaloopUtil.setQuoteHeaders(exchange, request);
+                    exchange.getIn().setBody(response);
                 })
                 .process(pojoToString)
                 .toD("rest:PUT:/quotes/${header."+QUOTE_ID+"}?host={{switch.host}}");
