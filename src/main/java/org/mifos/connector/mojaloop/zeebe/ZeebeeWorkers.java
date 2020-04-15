@@ -13,24 +13,20 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.time.Duration;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.ERROR_INFORMATION;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PAYEE_FSP_ID;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.ORIGIN_DATE;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PAYEE_FSP_ID;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PAYEE_QUOTE_RESPONSE;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.QUOTE_SWITCH_REQUEST;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.SWITCH_TRANSFER_REQUEST;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TIMEOUT_QUOTE_RETRY_COUNT;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TIMEOUT_TRANSFER_RETRY_COUNT;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TRANSACTION_ID;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TRANSACTION_REQUEST;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeProcessStarter.zeebeVariablesToCamelHeaders;
-import static org.mifos.phee.common.mojaloop.type.MojaloopHeaders.FSPIOP_DESTINATION;
-import static org.mifos.phee.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
 
 
 @Component

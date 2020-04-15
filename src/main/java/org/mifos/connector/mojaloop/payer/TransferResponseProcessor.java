@@ -1,12 +1,9 @@
 package org.mifos.connector.mojaloop.payer;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.zeebe.client.ZeebeClient;
 import org.apache.camel.Exchange;
 import org.apache.camel.Processor;
 import org.mifos.phee.common.mojaloop.dto.TransferSwitchResponseDTO;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -15,28 +12,26 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.CACHED_TRANSACTION_ID;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.ERROR_INFORMATION;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PAYEE_TRANSFER_FAILED;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TRANSFER_STATE;
-import static org.mifos.phee.common.mojaloop.type.MojaloopHeaders.FSPIOP_DESTINATION;
 
 
 @Component
 public class TransferResponseProcessor implements Processor {
 
-    private Logger logger = LoggerFactory.getLogger(this.getClass());
-
     @Autowired
     private ZeebeClient zeebeClient;
 
-    @Autowired
-    private ObjectMapper objectMapper;
-
     @Override
     public void process(Exchange exchange) {
-        logger.info("######## SWITCH -> {} - response for transfer request - STEP 3", exchange.getIn().getHeader(FSPIOP_DESTINATION.headerName()));
-        TransferSwitchResponseDTO response = exchange.getIn().getBody(TransferSwitchResponseDTO.class);
-
         Map<String, Object> variables = new HashMap<>();
-        variables.put(TRANSFER_STATE, response.getTransferState().name());
+        if (exchange.getProperty(PAYEE_TRANSFER_FAILED, Boolean.class)) {
+            variables.put(ERROR_INFORMATION, exchange.getIn().getBody(String.class));
+            variables.put(PAYEE_TRANSFER_FAILED, true);
+        } else {
+            variables.put(TRANSFER_STATE, exchange.getIn().getBody(TransferSwitchResponseDTO.class).getTransferState().name());
+        }
 
         zeebeClient.newPublishMessageCommand()
                 .messageName("transfer-response")
