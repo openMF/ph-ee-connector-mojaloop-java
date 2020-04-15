@@ -15,9 +15,11 @@ import javax.annotation.PostConstruct;
 import java.util.List;
 import java.util.Map;
 
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.ERROR_INFORMATION;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PARTY_ID;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PARTY_ID_TYPE;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PAYEE_PARTY_RESPONSE;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.QUOTE_SWITCH_REQUEST;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeProcessStarter.zeebeVariablesToCamelHeaders;
 import static org.mifos.phee.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
 
@@ -45,7 +47,7 @@ public class PayeePartyLookupWorkers {
 
             zeebeClient.newWorker()
                     .jobType("payee-party-lookup-error-" + dfspId)
-                    .handler((client, job) -> { // TODO implement error handler
+                    .handler((client, job) -> {
                         logger.error("Job '{}' started from process '{}' with key {}", job.getType(), job.getBpmnProcessId(), job.getKey());
                         Exchange exchange = new DefaultExchange(camelContext);
                         zeebeVariablesToCamelHeaders(job.getVariablesAsMap(), exchange,
@@ -57,7 +59,9 @@ public class PayeePartyLookupWorkers {
                         );
 
                         producerTemplate.send("direct:send-parties-callback-error", exchange);
-                        client.newCompleteCommand(job.getKey()).send();
+
+                        client.newCompleteCommand(job.getKey())
+                                .send();
                     })
                     .name("payee-party-lookup-error-" + dfspId)
                     .maxJobsActive(10)
@@ -67,18 +71,33 @@ public class PayeePartyLookupWorkers {
                     .jobType("payee-party-lookup-response-" + dfspId)
                     .handler((client, job) -> {
                         logger.info("Job '{}' started from process '{}' with key {}", job.getType(), job.getBpmnProcessId(), job.getKey());
-                        Map<String, Object> variables = job.getVariablesAsMap();
+                        Map<String, Object> existingVariables = job.getVariablesAsMap();
 
                         Exchange exchange = new DefaultExchange(camelContext);
-                        zeebeVariablesToCamelHeaders(variables, exchange,
-                                FSPIOP_SOURCE.headerName(),
-                                "traceparent",
-                                "Date"
-                        );
-                        exchange.setProperty(PAYEE_PARTY_RESPONSE, variables.get(PAYEE_PARTY_RESPONSE));
+                        exchange.getIn().setBody(existingVariables.get(QUOTE_SWITCH_REQUEST));
+                        Object errorInformation = existingVariables.get(ERROR_INFORMATION);
+                        if(errorInformation != null) {
+                            zeebeVariablesToCamelHeaders(existingVariables, exchange,
+                                    FSPIOP_SOURCE.headerName(),
+                                    "traceparent",
+                                    "Date"
+                            );
+                            exchange.setProperty(ERROR_INFORMATION, errorInformation);
 
-                        producerTemplate.send("direct:send-parties-callback-response", exchange);
-                        client.newCompleteCommand(job.getKey()).send();
+                            producerTemplate.send("direct:send-parties-error-response", exchange);
+                        } else {
+                            zeebeVariablesToCamelHeaders(existingVariables, exchange,
+                                    FSPIOP_SOURCE.headerName(),
+                                    "traceparent",
+                                    "Date"
+                            );
+                            exchange.setProperty(PAYEE_PARTY_RESPONSE, existingVariables.get(PAYEE_PARTY_RESPONSE));
+
+                            producerTemplate.send("direct:send-parties-response", exchange);
+                        }
+
+                        client.newCompleteCommand(job.getKey())
+                                .send();
                     })
                     .name("payee-party-lookup-response-" + dfspId)
                     .maxJobsActive(10)

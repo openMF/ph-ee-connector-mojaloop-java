@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.zeebe.client.ZeebeClient;
 import org.apache.camel.Exchange;
 import org.apache.camel.Processor;
-import org.mifos.connector.mojaloop.camel.config.CamelProperties;
 import org.mifos.phee.common.mojaloop.dto.TransferSwitchResponseDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +14,8 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.CACHED_TRANSACTION_ID;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TRANSFER_STATE;
 import static org.mifos.phee.common.mojaloop.type.MojaloopHeaders.FSPIOP_DESTINATION;
 
 
@@ -34,14 +35,12 @@ public class TransferResponseProcessor implements Processor {
         logger.info("######## SWITCH -> {} - response for transfer request - STEP 3", exchange.getIn().getHeader(FSPIOP_DESTINATION.headerName()));
         TransferSwitchResponseDTO response = exchange.getIn().getBody(TransferSwitchResponseDTO.class);
 
-        String cachedTransactionId = exchange.getProperty(CamelProperties.CACHED_TRANSACTION_ID, String.class);
-
         Map<String, Object> variables = new HashMap<>();
-        variables.put("transactionStatus", "200");
+        variables.put(TRANSFER_STATE, response.getTransferState().name());
 
         zeebeClient.newPublishMessageCommand()
                 .messageName("transfer-response")
-                .correlationKey(cachedTransactionId)
+                .correlationKey(exchange.getProperty(CACHED_TRANSACTION_ID, String.class))
                 .timeToLive(Duration.ofMillis(30000))
                 .variables(variables)
                 .send();

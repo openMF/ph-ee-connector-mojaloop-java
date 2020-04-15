@@ -1,21 +1,21 @@
 package org.mifos.connector.mojaloop.interop;
 
 import org.apache.camel.LoggingLevel;
-import org.apache.camel.Processor;
 import org.apache.camel.model.dataformat.JsonLibrary;
+import org.mifos.connector.mojaloop.camel.trace.GetCachedTransactionIdProcessor;
+import org.mifos.connector.mojaloop.payer.PartiesResponseProcessor;
+import org.mifos.connector.mojaloop.payer.QuoteResponseProcessor;
+import org.mifos.connector.mojaloop.payer.TransferResponseProcessor;
 import org.mifos.phee.common.camel.ErrorHandlerRouteBuilder;
 import org.mifos.phee.common.mojaloop.dto.PartySwitchResponseDTO;
 import org.mifos.phee.common.mojaloop.dto.QuoteSwitchResponseDTO;
 import org.mifos.phee.common.mojaloop.dto.TransferSwitchResponseDTO;
-import org.mifos.connector.mojaloop.camel.trace.GetCachedTransactionIdProcessor;
-import org.mifos.connector.mojaloop.ilp.IlpBuilder;
-import org.mifos.connector.mojaloop.payer.PartiesResponseProcessor;
-import org.mifos.connector.mojaloop.payer.QuoteResponseProcessor;
-import org.mifos.connector.mojaloop.payer.TransferResponseProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import static org.mifos.phee.common.ams.dto.InteropIdentifierType.MSISDN;
 
 
 @Component
@@ -33,12 +33,6 @@ public class SwitchInRouteBuilder extends ErrorHandlerRouteBuilder {
     private TransferResponseProcessor transferResponseProcessor;
 
     @Autowired
-    private Processor pojoToString;
-
-    @Autowired
-    private IlpBuilder ilpBuilder;
-
-    @Autowired
     private QuoteResponseProcessor quoteResponseProcessor;
 
     public SwitchInRouteBuilder() {
@@ -47,7 +41,7 @@ public class SwitchInRouteBuilder extends ErrorHandlerRouteBuilder {
 
     @Override
     public void configure() {
-        from("rest:PUT:/switch/parties/MSISDN/{phone}")
+        from("rest:PUT:/switch/parties/" + MSISDN + "/{partyId}")
                 .log(LoggingLevel.WARN, "######## SWITCH -> PAYER - response for parties request  - STEP 3")
                 .unmarshal().json(JsonLibrary.Jackson, PartySwitchResponseDTO.class)
                 .process(getCachedTransactionIdProcessor)
@@ -65,12 +59,16 @@ public class SwitchInRouteBuilder extends ErrorHandlerRouteBuilder {
                 .process(transferResponseProcessor);
 
         // ERROR callback urls
+        from("rest:PUT:/switch/parties/" + MSISDN + "/{partyId}/error")
+                .log(LoggingLevel.ERROR, "######## SWITCH -> PAYER - parties error")
+                .process(e -> logger.error(e.getIn().getBody(String.class)));
+
         from("rest:PUT:/switch/quotes/{qid}/error")
                 .log(LoggingLevel.ERROR, "######## SWITCH -> PAYER - quote error")
                 .process(e -> logger.error(e.getIn().getBody(String.class)));
 
-        from("rest:PUT:/switch/parties/MSISDN/{phone}/error")
-                .log(LoggingLevel.ERROR, "######## SWITCH -> PAYER - parties error")
+        from("rest:PUT:/switch/transfers/{tid}/error")
+                .log(LoggingLevel.ERROR, "######## SWITCH -> PAYER - transfer error")
                 .process(e -> logger.error(e.getIn().getBody(String.class)));
     }
 }

@@ -13,33 +13,24 @@ import org.mifos.phee.common.mojaloop.dto.MoneyData;
 import org.mifos.phee.common.mojaloop.dto.QuoteSwitchRequestDTO;
 import org.mifos.phee.common.mojaloop.dto.QuoteSwitchResponseDTO;
 import org.mifos.phee.common.mojaloop.ilp.Ilp;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
 
 import static java.math.BigDecimal.ZERO;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.ERROR_INFORMATION;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.LOCAL_QUOTE_RESPONSE;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.QUOTE_ID;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.QUOTE_SWITCH_REQUEST;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TRANSACTION_ID;
-import static org.mifos.phee.common.mojaloop.type.InteroperabilityType.QUOTES_CONTENT_TYPE;
 import static org.mifos.phee.common.mojaloop.type.MojaloopHeaders.FSPIOP_DESTINATION;
 import static org.mifos.phee.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
 
 @Component
 public class PayeeQuoteRoutes extends ErrorHandlerRouteBuilder {
-
-    private Logger logger = LoggerFactory.getLogger(this.getClass());
-
-    @Value("${switch.quote-service}")
-    private String switchQuoteService;
 
     @Value("${bpmn.flows.quote}")
     private String quoteFlow;
@@ -55,6 +46,9 @@ public class PayeeQuoteRoutes extends ErrorHandlerRouteBuilder {
 
     @Autowired
     private ZeebeProcessStarter zeebeProcessStarter;
+
+    @Autowired
+    private MojaloopUtil mojaloopUtil;
 
     public PayeeQuoteRoutes() {
         super.configure();
@@ -84,7 +78,17 @@ public class PayeeQuoteRoutes extends ErrorHandlerRouteBuilder {
                         }
                 );
 
+        from("direct:send-quote-error-to-switch")
+                .id("send-quote-error-to-switch")
+                .unmarshal().json(JsonLibrary.Jackson, QuoteSwitchRequestDTO.class)
+                .process(e -> {
+                    e.getIn().setBody(e.getProperty(ERROR_INFORMATION));
+                    mojaloopUtil.setQuoteHeaders(e, e.getIn().getBody(QuoteSwitchRequestDTO.class));
+                })
+                .toD("rest:PUT:/quotes/${header."+QUOTE_ID+"}/error?host={{switch.host}}");
+
         from("direct:send-quote-to-switch")
+                .id("send-quote-to-switch")
                 .unmarshal().json(JsonLibrary.Jackson, QuoteSwitchRequestDTO.class)
                 .process(exchange -> {
                     QuoteSwitchRequestDTO request = exchange.getIn().getBody(QuoteSwitchRequestDTO.class);
@@ -120,23 +124,11 @@ public class PayeeQuoteRoutes extends ErrorHandlerRouteBuilder {
                     );
 
                     exchange.getIn().setBody(response);
-
-                    Map<String, Object> headers = new HashMap<>();
-                    headers.put(QUOTE_ID, request.getQuoteId());
-                    headers.put("Content-Type", QUOTES_CONTENT_TYPE.headerValue());
-                    headers.put(FSPIOP_SOURCE.headerName(), request.getPayee().getPartyIdInfo().getFspId());
-                    headers.put(FSPIOP_DESTINATION.headerName(), request.getPayer().getPartyIdInfo().getFspId());
-                    headers.put("Date", exchange.getIn().getHeader("Date"));
-                    headers.put("traceparent", exchange.getIn().getHeader("traceparent"));
-                    Object tracestate = exchange.getIn().getHeader("tracestate");
-                    if (tracestate != null) {
-                        headers.put("tracestate", tracestate);
-                    }
-                    headers.put("Host", switchQuoteService);
-                    exchange.getIn().removeHeaders("*");
-                    exchange.getIn().setHeaders(headers);
+                    mojaloopUtil.setQuoteHeaders(exchange, request);
                 })
                 .process(pojoToString)
                 .toD("rest:PUT:/quotes/${header."+QUOTE_ID+"}?host={{switch.host}}");
     }
+
+
 }

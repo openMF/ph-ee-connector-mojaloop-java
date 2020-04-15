@@ -13,9 +13,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.ERROR_INFORMATION;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.LOCAL_QUOTE_RESPONSE;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.QUOTE_ID;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.QUOTE_SWITCH_REQUEST;
@@ -48,21 +50,34 @@ public class PayeeQuoteWorkers {
                     .jobType("payee-quote-response-" + dfspId)
                     .handler((client, job) -> {
                         logger.info("Job '{}' started from process '{}' with key {}", job.getType(), job.getBpmnProcessId(), job.getKey());
-                        Map<String, Object> variables = job.getVariablesAsMap();
+                        Map<String, Object> existingVariables = job.getVariablesAsMap();
 
                         Exchange exchange = new DefaultExchange(camelContext);
-                        ZeebeProcessStarter.zeebeVariablesToCamelHeaders(variables, exchange,
-                                QUOTE_ID,
-                                FSPIOP_SOURCE.headerName(),
-                                FSPIOP_DESTINATION.headerName(),
-                                "Date",
-                                "traceparent",
-                                LOCAL_QUOTE_RESPONSE
-                        );
-                        exchange.getIn().setBody(variables.get(QUOTE_SWITCH_REQUEST));
+                        exchange.getIn().setBody(existingVariables.get(QUOTE_SWITCH_REQUEST));
+                        Object errorInformation = existingVariables.get(ERROR_INFORMATION);
+                        if(errorInformation != null) {
+                            ZeebeProcessStarter.zeebeVariablesToCamelHeaders(existingVariables, exchange,
+                                    FSPIOP_SOURCE.headerName(),
+                                    FSPIOP_DESTINATION.headerName(),
+                                    "Date",
+                                    "traceparent"
+                            );
 
-                        producerTemplate.send("direct:send-quote-to-switch", exchange);
-                        client.newCompleteCommand(job.getKey()).send();
+                            exchange.setProperty(ERROR_INFORMATION, errorInformation);
+                            producerTemplate.send("direct:send-quote-error-to-switch", exchange);
+                        } else {
+                            ZeebeProcessStarter.zeebeVariablesToCamelHeaders(existingVariables, exchange,
+                                    FSPIOP_SOURCE.headerName(),
+                                    FSPIOP_DESTINATION.headerName(),
+                                    "Date",
+                                    "traceparent",
+                                    LOCAL_QUOTE_RESPONSE
+                            );
+
+                            producerTemplate.send("direct:send-quote-to-switch", exchange);
+                        }
+                        client.newCompleteCommand(job.getKey())
+                                .send();
                     })
                     .name("payee-quote-response-" + dfspId)
                     .maxJobsActive(10)

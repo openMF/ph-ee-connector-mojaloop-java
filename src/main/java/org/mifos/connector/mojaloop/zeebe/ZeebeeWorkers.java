@@ -18,9 +18,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.ERROR_INFORMATION;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PAYEE_FSP_ID;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.ORIGIN_DATE;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PAYEE_QUOTE_RESPONSE;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.QUOTE_SWITCH_REQUEST;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.SWITCH_TRANSFER_REQUEST;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TIMEOUT_QUOTE_RETRY_COUNT;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TIMEOUT_TRANSFER_RETRY_COUNT;
@@ -127,35 +129,33 @@ public class ZeebeeWorkers {
                 .maxJobsActive(10)
                 .open();
 
-        zeebeClient.newWorker()
-                .jobType("send-to-operator")
-                .handler((client, job) -> {
-                    logger.info("send-to-operator task done");
-                    client.newCompleteCommand(job.getKey()).send();
-                })
-                .name("send-to-operator")
-                .maxJobsActive(10)
-                .open();
-
         for(String dfspid : dfspids) {
             logger.info("## generating payee-transfer-response-{} worker", dfspid);
             zeebeClient.newWorker()
                     .jobType("payee-transfer-response-" + dfspid)
                     .handler((client, job) -> {
                         logger.info("Job '{}' started from process '{}' with key {}", job.getType(), job.getBpmnProcessId(), job.getKey());
-                        Map<String, Object> variables = job.getVariablesAsMap();
+                        Map<String, Object> existingVariables = job.getVariablesAsMap();
 
                         Exchange exchange = new DefaultExchange(camelContext);
-                        zeebeVariablesToCamelHeaders(variables, exchange,
-                                TRANSACTION_ID,
-                                FSPIOP_SOURCE.headerName(),
-                                FSPIOP_DESTINATION.headerName(),
-                                "Date",
-                                "traceparent"
-                        );
-                        exchange.getIn().setBody(variables.get(SWITCH_TRANSFER_REQUEST));
+                        exchange.getIn().setBody(existingVariables.get(SWITCH_TRANSFER_REQUEST));
+                        Object errorInformation = existingVariables.get(ERROR_INFORMATION);
+                        if(errorInformation != null) {
+                            zeebeVariablesToCamelHeaders(existingVariables, exchange,
+                                    "Date",
+                                    "traceparent"
+                            );
 
-                        producerTemplate.send("direct:send-transfer-to-switch", exchange);
+                            exchange.setProperty(ERROR_INFORMATION, errorInformation);
+                            producerTemplate.send("direct:send-transfer-error-to-switch", exchange);
+                        } else {
+                            zeebeVariablesToCamelHeaders(existingVariables, exchange,
+                                    "Date",
+                                    "traceparent"
+                            );
+
+                            producerTemplate.send("direct:send-transfer-to-switch", exchange);
+                        }
                         client.newCompleteCommand(job.getKey()).send();
                     })
                     .name("payee-transfer-response-" + dfspid)

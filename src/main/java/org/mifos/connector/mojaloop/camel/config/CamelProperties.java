@@ -5,6 +5,7 @@ public class CamelProperties {
     private CamelProperties() {}
 
     public static final String CACHED_TRANSACTION_ID = "CACHED_TRANSACTION_ID";
+    public static final String ERROR_INFORMATION = "errorInformation";
     public static final String LOCAL_QUOTE_RESPONSE = "localQuoteResponse";
     public static final String ORIGIN_DATE = "originDate";
     public static final String PARTY_ID = "partyId";
@@ -19,6 +20,7 @@ public class CamelProperties {
     public static final String TIMEOUT_TRANSFER_RETRY_COUNT = "timeoutTransferRetryCount";
     public static final String TRANSACTION_ID = "transactionId";
     public static final String TRANSACTION_REQUEST = "transactionRequest";
+    public static final String TRANSFER_STATE = "transferState";
     public static final String QUOTE_ID = "quoteId";
     public static final String QUOTE_SWITCH_REQUEST = "quoteSwitchRequest";
 }
