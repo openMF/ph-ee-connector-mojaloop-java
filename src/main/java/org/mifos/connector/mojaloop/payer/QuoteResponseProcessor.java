@@ -34,7 +34,8 @@ public class QuoteResponseProcessor implements Processor {
     @Override
     public void process(Exchange exchange) throws JsonProcessingException {
         Map<String, Object> variables = new HashMap<>();
-        if (exchange.getProperty(PAYEE_QUOTE_FAILED, Boolean.class)) {
+        Object isPayeeQuoteFailed = exchange.getProperty(PAYEE_QUOTE_FAILED);
+        if (isPayeeQuoteFailed != null && (boolean)isPayeeQuoteFailed) {
             variables.put(ERROR_INFORMATION, exchange.getIn().getBody(String.class));
             variables.put(PAYEE_QUOTE_FAILED, true);
         } else {

@@ -26,7 +26,8 @@ public class TransferResponseProcessor implements Processor {
     @Override
     public void process(Exchange exchange) {
         Map<String, Object> variables = new HashMap<>();
-        if (exchange.getProperty(PAYEE_TRANSFER_FAILED, Boolean.class)) {
+        Object isPayeeTransferFailed = exchange.getProperty(PAYEE_TRANSFER_FAILED);
+        if (isPayeeTransferFailed != null && (boolean)isPayeeTransferFailed) {
             variables.put(ERROR_INFORMATION, exchange.getIn().getBody(String.class));
             variables.put(PAYEE_TRANSFER_FAILED, true);
         } else {

@@ -25,7 +25,8 @@ public class PartiesResponseProcessor implements Processor {
     @Override
     public void process(Exchange exchange) {
         Map<String, Object> variables = new HashMap<>();
-        if(exchange.getProperty(PAYEE_PARTY_LOOKUP_FAILED, Boolean.class)) {
+        Object isPayeePartyLookupFailed = exchange.getProperty(PAYEE_PARTY_LOOKUP_FAILED);
+        if(isPayeePartyLookupFailed != null && (boolean)isPayeePartyLookupFailed) {
             variables.put(ERROR_INFORMATION, exchange.getIn().getBody(String.class));
             variables.put(PAYEE_PARTY_LOOKUP_FAILED, true);
         } else {
