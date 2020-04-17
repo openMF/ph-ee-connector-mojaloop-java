@@ -25,12 +25,12 @@ public class PartyProperties {
 
     public Party getParty(String partyIdType, String partyId) {
         if (partyIdType == null || partyId == null) {
-            throw new RuntimeException("Party with type: " + partyIdType + ", id: " + partyId + ", not configuerd!");
+            throw new RuntimeException("Party with type: " + partyIdType + ", id: " + partyId + ", not configured!");
         }
 
         return getParties().stream()
                 .filter(t -> t.getPartyIdType().equals(partyIdType) && t.getPartyId().equals(partyId))
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("Party with type: " + partyIdType + ", id: " + partyId + ", not configuerd!"));
+                .orElseThrow(() -> new RuntimeException("Party with type: " + partyIdType + ", id: " + partyId + ", not configured!"));
     }
 }

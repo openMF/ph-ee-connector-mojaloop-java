@@ -8,7 +8,6 @@ import org.apache.camel.Processor;
 import org.mifos.connector.mojaloop.camel.trace.QuoteTransactionCache;
 import org.mifos.connector.mojaloop.ilp.IlpBuilder;
 import org.mifos.phee.common.mojaloop.dto.QuoteSwitchResponseDTO;
-import org.mifos.phee.common.mojaloop.ilp.Ilp;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -16,10 +15,10 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.CACHED_TRANSACTION_ID;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.ERROR_INFORMATION;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PAYEE_QUOTE_FAILED;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PAYEE_QUOTE_RESPONSE;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeExpressionVariables.QUOTE_FAILED;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeMessages.QUOTE;
 
 @Component
 public class QuoteResponseProcessor implements Processor {
@@ -39,11 +38,11 @@ public class QuoteResponseProcessor implements Processor {
     @Override
     public void process(Exchange exchange) throws JsonProcessingException {
         Map<String, Object> variables = new HashMap<>();
-        Object isPayeeQuoteFailed = exchange.getProperty(PAYEE_QUOTE_FAILED);
+        Object isPayeeQuoteFailed = exchange.getProperty(QUOTE_FAILED);
 
         if (isPayeeQuoteFailed != null && (boolean)isPayeeQuoteFailed) {
             variables.put(ERROR_INFORMATION, exchange.getIn().getBody(String.class));
-            variables.put(PAYEE_QUOTE_FAILED, true);
+            variables.put(QUOTE_FAILED, true);
         } else {
             QuoteSwitchResponseDTO response = exchange.getIn().getBody(QuoteSwitchResponseDTO.class);
             if (!ilpBuilder.isValidPacketAgainstCondition(response.getIlpPacket(), response.getCondition())) {
@@ -53,7 +52,7 @@ public class QuoteResponseProcessor implements Processor {
         }
 
         zeebeClient.newPublishMessageCommand()
-                .messageName("quote")
+                .messageName(QUOTE)
                 .correlationKey(quoteTransactionCache.get(exchange.getIn().getHeader("qid", String.class)))
                 .timeToLive(Duration.ofMillis(30000))
                 .variables(variables)

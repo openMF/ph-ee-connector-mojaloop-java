@@ -20,15 +20,19 @@ import static org.mifos.connector.mojaloop.camel.config.CamelProperties.ERROR_IN
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.LOCAL_QUOTE_RESPONSE;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.ORIGIN_DATE;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PAYEE_FSP_ID;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PAYEE_QUOTE_RESPONSE;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.QUOTE_SWITCH_REQUEST;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.SWITCH_TRANSFER_REQUEST;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TRANSACTION_ID;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TRANSACTION_REQUEST;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeExpressionVariables.TIMEOUT_QUOTE_RETRY_COUNT;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeExpressionVariables.TIMEOUT_TRANSFER_RETRY_COUNT;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeProcessStarter.zeebeVariablesToCamelHeaders;
 import static org.mifos.phee.common.mojaloop.type.MojaloopHeaders.FSPIOP_DESTINATION;
 import static org.mifos.phee.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
 
 @Component
-public class PayeeQuoteWorkers {
+public class PayeeTransferWorkers {
 
     private Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -47,63 +51,56 @@ public class PayeeQuoteWorkers {
     @PostConstruct
     public void setupWorkers() {
         zeebeClient.newWorker()
-                .jobType("quote")
+                .jobType("send-transfer-request")
                 .handler((client, job) -> {
                     logger.info("Job '{}' started from process '{}' with key {}", job.getType(), job.getBpmnProcessId(), job.getKey());
-                    Exchange exchange = new DefaultExchange(camelContext);
                     Map<String, Object> variables = job.getVariablesAsMap();
-                    variables.put(TIMEOUT_QUOTE_RETRY_COUNT, 1 + (Integer) variables.getOrDefault(TIMEOUT_QUOTE_RETRY_COUNT, -1));
+                    variables.put(TIMEOUT_TRANSFER_RETRY_COUNT, 1 + (Integer) variables.getOrDefault(TIMEOUT_TRANSFER_RETRY_COUNT, -1));
 
+                    Exchange exchange = new DefaultExchange(camelContext);
                     exchange.setProperty(TRANSACTION_ID, variables.get(TRANSACTION_ID));
-                    exchange.setProperty(TRANSACTION_REQUEST, variables.get(TRANSACTION_REQUEST));
                     exchange.setProperty(ORIGIN_DATE, variables.get(ORIGIN_DATE));
-                    exchange.setProperty(PAYEE_FSP_ID, variables.get(PAYEE_FSP_ID));
-                    producerTemplate.send("direct:send-quote", exchange);
+                    exchange.getIn().setBody(variables.get(PAYEE_QUOTE_RESPONSE));
 
+                    producerTemplate.send("direct:send-transfer", exchange);
                     client.newCompleteCommand(job.getKey())
                             .variables(variables)
                             .send();
                 })
-                .name("quote")
+                .name("send-transfer-request")
                 .maxJobsActive(10)
                 .open();
 
-        for (String dfspId : dfspids) {
-            logger.info("## generating payee-quote-response-{} zeebe worker", dfspId);
+        for(String dfspid : dfspids) {
+            logger.info("## generating payee-transfer-response-{} zeebe worker", dfspid);
             zeebeClient.newWorker()
-                    .jobType("payee-quote-response-" + dfspId)
+                    .jobType("payee-transfer-response-" + dfspid)
                     .handler((client, job) -> {
                         logger.info("Job '{}' started from process '{}' with key {}", job.getType(), job.getBpmnProcessId(), job.getKey());
                         Map<String, Object> existingVariables = job.getVariablesAsMap();
 
                         Exchange exchange = new DefaultExchange(camelContext);
-                        exchange.getIn().setBody(existingVariables.get(QUOTE_SWITCH_REQUEST));
+                        exchange.getIn().setBody(existingVariables.get(SWITCH_TRANSFER_REQUEST));
                         Object errorInformation = existingVariables.get(ERROR_INFORMATION);
                         if(errorInformation != null) {
-                            ZeebeProcessStarter.zeebeVariablesToCamelHeaders(existingVariables, exchange,
-                                    FSPIOP_SOURCE.headerName(),
-                                    FSPIOP_DESTINATION.headerName(),
+                            zeebeVariablesToCamelHeaders(existingVariables, exchange,
                                     "Date",
                                     "traceparent"
                             );
 
                             exchange.setProperty(ERROR_INFORMATION, errorInformation);
-                            producerTemplate.send("direct:send-quote-error-to-switch", exchange);
+                            producerTemplate.send("direct:send-transfer-error-to-switch", exchange);
                         } else {
-                            ZeebeProcessStarter.zeebeVariablesToCamelHeaders(existingVariables, exchange,
-                                    FSPIOP_SOURCE.headerName(),
-                                    FSPIOP_DESTINATION.headerName(),
+                            zeebeVariablesToCamelHeaders(existingVariables, exchange,
                                     "Date",
-                                    "traceparent",
-                                    LOCAL_QUOTE_RESPONSE
+                                    "traceparent"
                             );
 
-                            producerTemplate.send("direct:send-quote-to-switch", exchange);
+                            producerTemplate.send("direct:send-transfer-to-switch", exchange);
                         }
-                        client.newCompleteCommand(job.getKey())
-                                .send();
+                        client.newCompleteCommand(job.getKey()).send();
                     })
-                    .name("payee-quote-response-" + dfspId)
+                    .name("payee-transfer-response-" + dfspid)
                     .maxJobsActive(10)
                     .open();
         }

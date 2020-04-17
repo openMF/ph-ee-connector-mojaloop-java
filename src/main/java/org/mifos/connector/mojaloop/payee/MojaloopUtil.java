@@ -12,6 +12,7 @@ import java.util.Map;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.QUOTE_ID;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TRANSACTION_ID;
 import static org.mifos.phee.common.mojaloop.type.InteroperabilityType.PARTIES_CONTENT_TYPE;
+import static org.mifos.phee.common.mojaloop.type.InteroperabilityType.QUOTES_ACCEPT_TYPE;
 import static org.mifos.phee.common.mojaloop.type.InteroperabilityType.QUOTES_CONTENT_TYPE;
 import static org.mifos.phee.common.mojaloop.type.InteroperabilityType.TRANSFERS_CONTENT_TYPE;
 import static org.mifos.phee.common.mojaloop.type.MojaloopHeaders.FSPIOP_DESTINATION;
@@ -44,6 +45,7 @@ public class MojaloopUtil {
         headers.put(FSPIOP_SOURCE.headerName(), request.getPayee().getPartyIdInfo().getFspId());
         headers.put(FSPIOP_DESTINATION.headerName(), request.getPayer().getPartyIdInfo().getFspId());
         headers.put("Content-Type", QUOTES_CONTENT_TYPE.headerValue());
+        headers.put("Accept", QUOTES_ACCEPT_TYPE.headerValue());
         headers.put("Host", switchQuoteService);
         setCommonHeaders(e, headers);
     }

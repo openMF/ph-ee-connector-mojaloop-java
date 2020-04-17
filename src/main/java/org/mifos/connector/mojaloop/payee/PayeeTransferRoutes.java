@@ -20,7 +20,7 @@ import java.util.Map;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.ERROR_INFORMATION;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.SWITCH_TRANSFER_REQUEST;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TRANSACTION_ID;
-import static org.mifos.phee.common.mojaloop.type.InteroperabilityType.PARTIES_ACCEPT_TYPE;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeMessages.TRANSFER_MESSAGE;
 import static org.mifos.phee.common.mojaloop.type.InteroperabilityType.TRANSFERS_ACCEPT_TYPE;
 import static org.mifos.phee.common.mojaloop.type.MojaloopHeaders.FSPIOP_DESTINATION;
 import static org.mifos.phee.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
@@ -63,7 +63,7 @@ public class PayeeTransferRoutes extends ErrorHandlerRouteBuilder {
                     variables.put("traceparent", exchange.getIn().getHeader("traceparent"));
 
                     zeebeClient.newPublishMessageCommand()
-                            .messageName("TransferMessage-DFSPID")  // TODO externalize
+                            .messageName(TRANSFER_MESSAGE)
                             .correlationKey(ilp.getTransaction().getTransactionId())
                             .variables(variables)
                             .send();

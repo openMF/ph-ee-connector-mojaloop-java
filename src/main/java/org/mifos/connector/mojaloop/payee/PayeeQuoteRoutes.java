@@ -26,7 +26,6 @@ import static org.mifos.connector.mojaloop.camel.config.CamelProperties.LOCAL_QU
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.QUOTE_ID;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.QUOTE_SWITCH_REQUEST;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TRANSACTION_ID;
-import static org.mifos.phee.common.mojaloop.type.InteroperabilityType.QUOTES_ACCEPT_TYPE;
 import static org.mifos.phee.common.mojaloop.type.MojaloopHeaders.FSPIOP_DESTINATION;
 import static org.mifos.phee.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
 
@@ -84,7 +83,6 @@ public class PayeeQuoteRoutes extends ErrorHandlerRouteBuilder {
                 .unmarshal().json(JsonLibrary.Jackson, QuoteSwitchRequestDTO.class)
                 .process(e -> {
                     mojaloopUtil.setQuoteHeaders(e, e.getIn().getBody(QuoteSwitchRequestDTO.class));
-                    e.getIn().setHeader("Accept", QUOTES_ACCEPT_TYPE.headerValue());
                     e.getIn().setBody(e.getProperty(ERROR_INFORMATION));
                 })
                 .toD("rest:PUT:/quotes/${header."+QUOTE_ID+"}/error?host={{switch.host}}");
@@ -131,6 +129,4 @@ public class PayeeQuoteRoutes extends ErrorHandlerRouteBuilder {
                 .process(pojoToString)
                 .toD("rest:PUT:/quotes/${header."+QUOTE_ID+"}?host={{switch.host}}");
     }
-
-
 }

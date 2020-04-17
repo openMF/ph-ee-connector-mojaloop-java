@@ -15,9 +15,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PAYEE_PARTY_LOOKUP_FAILED;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PAYEE_QUOTE_FAILED;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PAYEE_TRANSFER_FAILED;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeExpressionVariables.PARTY_LOOKUP_FAILED;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeExpressionVariables.QUOTE_FAILED;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeExpressionVariables.TRANSFER_FAILED;
 import static org.mifos.phee.common.ams.dto.InteropIdentifierType.MSISDN;
 
 
@@ -66,19 +66,19 @@ public class SwitchInRouteBuilder extends ErrorHandlerRouteBuilder {
         from("rest:PUT:/switch/parties/" + MSISDN + "/{partyId}/error")
                 .log(LoggingLevel.ERROR, "######## SWITCH -> PAYER - parties error")
                 .process(getCachedTransactionIdProcessor)
-                .setProperty(PAYEE_PARTY_LOOKUP_FAILED, constant(true))
+                .setProperty(PARTY_LOOKUP_FAILED, constant(true))
                 .process(partiesResponseProcessor);
 
         from("rest:PUT:/switch/quotes/{qid}/error")
                 .log(LoggingLevel.ERROR, "######## SWITCH -> PAYER - quote error")
                 .process(getCachedTransactionIdProcessor)
-                .setProperty(PAYEE_QUOTE_FAILED, constant(true))
+                .setProperty(QUOTE_FAILED, constant(true))
                 .process(quoteResponseProcessor);
 
         from("rest:PUT:/switch/transfers/{tid}/error")
                 .log(LoggingLevel.ERROR, "######## SWITCH -> PAYER - transfer error")
                 .process(getCachedTransactionIdProcessor)
-                .setProperty(PAYEE_TRANSFER_FAILED, constant(true))
+                .setProperty(TRANSFER_FAILED, constant(true))
                 .process(transferResponseProcessor);
     }
 }
