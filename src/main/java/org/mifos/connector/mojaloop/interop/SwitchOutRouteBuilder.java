@@ -6,7 +6,6 @@ import org.apache.camel.LoggingLevel;
 import org.apache.camel.Processor;
 import org.apache.camel.model.dataformat.JsonLibrary;
 import org.mifos.connector.mojaloop.camel.config.CamelProperties;
-import org.mifos.connector.mojaloop.camel.trace.QuoteTransactionCache;
 import org.mifos.connector.mojaloop.ilp.IlpBuilder;
 import org.mifos.phee.common.camel.ErrorHandlerRouteBuilder;
 import org.mifos.phee.common.channel.dto.ChannelPartyIdInfo;
@@ -26,11 +25,12 @@ import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PARTY_ID;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PARTY_ID_TYPE;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PAYER_FSP_ID;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.QUOTE_ID;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TRANSACTION_ID;
 import static org.mifos.phee.common.mojaloop.type.InteroperabilityType.PARTIES_ACCEPT_TYPE;
 import static org.mifos.phee.common.mojaloop.type.InteroperabilityType.PARTIES_CONTENT_TYPE;
 import static org.mifos.phee.common.mojaloop.type.InteroperabilityType.QUOTES_ACCEPT_TYPE;
@@ -64,9 +64,6 @@ public class SwitchOutRouteBuilder extends ErrorHandlerRouteBuilder {
 
     @Autowired
     private Processor pojoToString;
-
-    @Autowired
-    private QuoteTransactionCache quoteTransactionCache;
 
     public SwitchOutRouteBuilder() {
         super.configure();
@@ -125,12 +122,9 @@ public class SwitchOutRouteBuilder extends ErrorHandlerRouteBuilder {
                             null,
                             null);
 
-                    String quoteId = UUID.randomUUID().toString();
-                    String transactionId = exchange.getProperty(CamelProperties.TRANSACTION_ID, String.class);
-                    quoteTransactionCache.add(quoteId, transactionId);
                     exchange.getIn().setBody(new QuoteSwitchRequestDTO(
-                            transactionId,
-                            quoteId,
+                            exchange.getProperty(TRANSACTION_ID, String.class),
+                            exchange.getProperty(QUOTE_ID, String.class),
                             payee,
                             payer,
                             trRequest.getAmountType(),

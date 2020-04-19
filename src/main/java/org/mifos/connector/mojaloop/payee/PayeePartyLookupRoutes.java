@@ -87,7 +87,6 @@ public class PayeePartyLookupRoutes extends ErrorHandlerRouteBuilder {
                     exchange.setProperty(PARTY_ID_TYPE, exchange.getIn().getHeader(PARTY_ID_TYPE));
                     exchange.getIn().setBody(exchange.getProperty(ERROR_INFORMATION));
                     mojaloopUtil.setPartyHeaders(exchange);
-                    exchange.getIn().setHeader("Accept", PARTIES_ACCEPT_TYPE.headerValue());
                 })
                 .toD("rest:PUT:/parties/${exchangeProperty."+PARTY_ID_TYPE+"}/${exchangeProperty."+PARTY_ID+"}/error?host={{switch.host}}");
     }

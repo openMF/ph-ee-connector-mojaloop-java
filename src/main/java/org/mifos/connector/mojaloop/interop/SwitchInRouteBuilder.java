@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.QUOTE_ID;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeExpressionVariables.PARTY_LOOKUP_FAILED;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeExpressionVariables.QUOTE_FAILED;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeExpressionVariables.TRANSFER_FAILED;
@@ -50,7 +51,7 @@ public class SwitchInRouteBuilder extends ErrorHandlerRouteBuilder {
                 .process(getCachedTransactionIdProcessor)
                 .process(partiesResponseProcessor);
 
-        from("rest:PUT:/switch/quotes/{qid}")
+        from("rest:PUT:/switch/quotes/{"+QUOTE_ID+"}")
                 .log(LoggingLevel.WARN, "######## SWITCH -> PAYER - response for quote request - STEP 3")
                 .unmarshal().json(JsonLibrary.Jackson, QuoteSwitchResponseDTO.class)
                 .process(getCachedTransactionIdProcessor)
@@ -69,7 +70,7 @@ public class SwitchInRouteBuilder extends ErrorHandlerRouteBuilder {
                 .setProperty(PARTY_LOOKUP_FAILED, constant(true))
                 .process(partiesResponseProcessor);
 
-        from("rest:PUT:/switch/quotes/{qid}/error")
+        from("rest:PUT:/switch/quotes/{"+QUOTE_ID+"}/error")
                 .log(LoggingLevel.ERROR, "######## SWITCH -> PAYER - quote error")
                 .process(getCachedTransactionIdProcessor)
                 .setProperty(QUOTE_FAILED, constant(true))

@@ -15,11 +15,13 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.ERROR_INFORMATION;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.LOCAL_QUOTE_RESPONSE;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.ORIGIN_DATE;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PAYEE_FSP_ID;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.QUOTE_ID;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.QUOTE_SWITCH_REQUEST;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TRANSACTION_ID;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TRANSACTION_REQUEST;
@@ -58,6 +60,13 @@ public class PayeeQuoteWorkers {
                     exchange.setProperty(TRANSACTION_REQUEST, variables.get(TRANSACTION_REQUEST));
                     exchange.setProperty(ORIGIN_DATE, variables.get(ORIGIN_DATE));
                     exchange.setProperty(PAYEE_FSP_ID, variables.get(PAYEE_FSP_ID));
+                    Object quoteId = variables.get(QUOTE_ID);
+                    if(quoteId == null) {
+                        quoteId = UUID.randomUUID().toString();
+                        variables.put(QUOTE_ID, quoteId);
+                    }
+                    exchange.setProperty(QUOTE_ID, quoteId);
+
                     producerTemplate.send("direct:send-quote", exchange);
 
                     client.newCompleteCommand(job.getKey())

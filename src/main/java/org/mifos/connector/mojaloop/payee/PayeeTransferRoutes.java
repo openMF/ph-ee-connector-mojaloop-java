@@ -73,11 +73,9 @@ public class PayeeTransferRoutes extends ErrorHandlerRouteBuilder {
                 .id("send-transfer-error-to-switch")
                 .unmarshal().json(JsonLibrary.Jackson, TransferSwitchRequestDTO.class)
                 .process(e -> {
-                    e.getIn().setBody(e.getProperty(ERROR_INFORMATION));
                     TransferSwitchRequestDTO request = e.getIn().getBody(TransferSwitchRequestDTO.class);
-                    Ilp ilp = ilpBuilder.parse(request.getIlpPacket(), request.getCondition());
-                    mojaloopUtil.setTransferHeaders(e, ilp.getTransaction());
-                    e.getIn().setHeader("Accept", TRANSFERS_ACCEPT_TYPE.headerValue());
+                    mojaloopUtil.setTransferHeaders(e, ilpBuilder.parse(request.getIlpPacket(), request.getCondition()).getTransaction());
+                    e.getIn().setBody(e.getProperty(ERROR_INFORMATION));
                 })
                 .toD("rest:PUT:/transfers/${header."+TRANSACTION_ID+"}/error?host={{switch.host}}");
 

@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.zeebe.client.ZeebeClient;
 import org.apache.camel.Exchange;
 import org.apache.camel.Processor;
-import org.mifos.connector.mojaloop.camel.trace.QuoteTransactionCache;
 import org.mifos.connector.mojaloop.ilp.IlpBuilder;
 import org.mifos.phee.common.mojaloop.dto.QuoteSwitchResponseDTO;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +16,7 @@ import java.util.Map;
 
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.ERROR_INFORMATION;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PAYEE_QUOTE_RESPONSE;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.QUOTE_ID;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeExpressionVariables.QUOTE_FAILED;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeMessages.QUOTE;
 
@@ -31,9 +31,6 @@ public class QuoteResponseProcessor implements Processor {
 
     @Autowired
     private ObjectMapper objectMapper;
-
-    @Autowired
-    private QuoteTransactionCache quoteTransactionCache;
 
     @Override
     public void process(Exchange exchange) throws JsonProcessingException {
@@ -53,7 +50,7 @@ public class QuoteResponseProcessor implements Processor {
 
         zeebeClient.newPublishMessageCommand()
                 .messageName(QUOTE)
-                .correlationKey(quoteTransactionCache.get(exchange.getIn().getHeader("qid", String.class)))
+                .correlationKey(exchange.getIn().getHeader(QUOTE_ID, String.class))
                 .timeToLive(Duration.ofMillis(30000))
                 .variables(variables)
                 .send();
