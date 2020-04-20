@@ -17,6 +17,7 @@ import org.mifos.phee.common.mojaloop.dto.QuoteSwitchResponseDTO;
 import org.mifos.phee.common.mojaloop.dto.TransactionType;
 import org.mifos.phee.common.mojaloop.dto.TransferSwitchRequestDTO;
 import org.mifos.phee.common.mojaloop.ilp.Ilp;
+import org.mifos.phee.common.mojaloop.type.AmountType;
 import org.mifos.phee.common.util.ContextUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,6 +31,7 @@ import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PARTY_ID
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PAYER_FSP_ID;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.QUOTE_ID;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TRANSACTION_ID;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TRANSACTION_REQUEST;
 import static org.mifos.phee.common.mojaloop.type.InteroperabilityType.PARTIES_ACCEPT_TYPE;
 import static org.mifos.phee.common.mojaloop.type.InteroperabilityType.PARTIES_CONTENT_TYPE;
 import static org.mifos.phee.common.mojaloop.type.InteroperabilityType.QUOTES_ACCEPT_TYPE;
@@ -74,11 +76,11 @@ public class SwitchOutRouteBuilder extends ErrorHandlerRouteBuilder {
                 .id("send-party-lookup")
                 .log(LoggingLevel.INFO, "######## PAYER -> SWITCH - party lookup request - STEP 1")
                 .process(e -> {
-                    TransactionChannelRequestDTO request = objectMapper.readValue(e.getProperty(CamelProperties.TRANSACTION_REQUEST, String.class), TransactionChannelRequestDTO.class);
-                    PartyIdInfo payeePartyIdInfo = request.getPayee().getPartyIdInfo();
+                    TransactionChannelRequestDTO channelRequest = objectMapper.readValue(e.getProperty(TRANSACTION_REQUEST, String.class), TransactionChannelRequestDTO.class);
+                    PartyIdInfo payeePartyIdInfo = channelRequest.getPayee().getPartyIdInfo();
                     e.setProperty(PARTY_ID_TYPE, payeePartyIdInfo.getPartyIdType());
                     e.setProperty(PARTY_ID, payeePartyIdInfo.getPartyIdentifier());
-                    e.setProperty(PAYER_FSP_ID, request.getPayer().getPartyIdInfo().getFspId());
+                    e.setProperty(PAYER_FSP_ID, channelRequest.getPayer().getPartyIdInfo().getFspId());
                 })
                 .removeHeaders("*")
                 .process(addTraceHeaderProcessor)
@@ -92,14 +94,14 @@ public class SwitchOutRouteBuilder extends ErrorHandlerRouteBuilder {
                 .id("send-quote")
                 .log(LoggingLevel.INFO, "######## PAYER -> SWITCH - quote request - STEP 1")
                 .process(exchange -> {
-                    TransactionChannelRequestDTO trRequest = objectMapper.readValue(exchange.getProperty(CamelProperties.TRANSACTION_REQUEST, String.class), TransactionChannelRequestDTO.class);
+                    TransactionChannelRequestDTO channelRequest = objectMapper.readValue(exchange.getProperty(TRANSACTION_REQUEST, String.class), TransactionChannelRequestDTO.class);
 
                     TransactionType transactionType = new TransactionType();
-                    transactionType.setInitiator(trRequest.getTransactionType().getInitiator());
-                    transactionType.setInitiatorType(trRequest.getTransactionType().getInitiatorType());
-                    transactionType.setScenario(trRequest.getTransactionType().getScenario());
+                    transactionType.setInitiator(channelRequest.getTransactionType().getInitiator());
+                    transactionType.setInitiatorType(channelRequest.getTransactionType().getInitiatorType());
+                    transactionType.setScenario(channelRequest.getTransactionType().getScenario());
 
-                    PartyIdInfo payerParty = trRequest.getPayer().getPartyIdInfo();
+                    PartyIdInfo payerParty = channelRequest.getPayer().getPartyIdInfo();
                     String payerFspId = payerParty.getFspId();
                     Party payer = new Party(
                             new PartyIdInfo(payerParty.getPartyIdType(),
@@ -111,7 +113,7 @@ public class SwitchOutRouteBuilder extends ErrorHandlerRouteBuilder {
                             null);
                     exchange.setProperty(PAYER_FSP_ID, payerFspId);
 
-                    PartyIdInfo requestPayeePartyIdInfo = trRequest.getPayee().getPartyIdInfo();
+                    PartyIdInfo requestPayeePartyIdInfo = channelRequest.getPayee().getPartyIdInfo();
                     Party payee = new Party(
                             new PartyIdInfo(requestPayeePartyIdInfo.getPartyIdType(),
                                     requestPayeePartyIdInfo.getPartyIdentifier(),
@@ -126,8 +128,8 @@ public class SwitchOutRouteBuilder extends ErrorHandlerRouteBuilder {
                             exchange.getProperty(QUOTE_ID, String.class),
                             payee,
                             payer,
-                            trRequest.getAmountType(),
-                            trRequest.getAmount(),
+                            AmountType.RECEIVE,
+                            channelRequest.getAmount(),
                             transactionType));
                 })
                 .process(pojoToString)
