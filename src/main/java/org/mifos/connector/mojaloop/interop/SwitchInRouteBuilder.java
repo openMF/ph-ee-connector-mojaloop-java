@@ -54,7 +54,6 @@ public class SwitchInRouteBuilder extends ErrorHandlerRouteBuilder {
         from("rest:PUT:/switch/quotes/{"+QUOTE_ID+"}")
                 .log(LoggingLevel.WARN, "######## SWITCH -> PAYER - response for quote request - STEP 3")
                 .unmarshal().json(JsonLibrary.Jackson, QuoteSwitchResponseDTO.class)
-                .process(getCachedTransactionIdProcessor)
                 .process(quoteResponseProcessor);
 
         from("rest:PUT:/switch/transfers/{tid}")
@@ -72,7 +71,6 @@ public class SwitchInRouteBuilder extends ErrorHandlerRouteBuilder {
 
         from("rest:PUT:/switch/quotes/{"+QUOTE_ID+"}/error")
                 .log(LoggingLevel.ERROR, "######## SWITCH -> PAYER - quote error")
-                .process(getCachedTransactionIdProcessor)
                 .setProperty(QUOTE_FAILED, constant(true))
                 .process(quoteResponseProcessor);
 
