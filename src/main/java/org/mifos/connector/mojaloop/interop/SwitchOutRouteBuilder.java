@@ -8,7 +8,6 @@ import org.apache.camel.model.dataformat.JsonLibrary;
 import org.mifos.connector.mojaloop.camel.config.CamelProperties;
 import org.mifos.connector.mojaloop.ilp.IlpBuilder;
 import org.mifos.phee.common.camel.ErrorHandlerRouteBuilder;
-import org.mifos.phee.common.channel.dto.ChannelPartyIdInfo;
 import org.mifos.phee.common.channel.dto.TransactionChannelRequestDTO;
 import org.mifos.phee.common.mojaloop.dto.MoneyData;
 import org.mifos.phee.common.mojaloop.dto.Party;
@@ -100,11 +99,11 @@ public class SwitchOutRouteBuilder extends ErrorHandlerRouteBuilder {
                     transactionType.setInitiatorType(trRequest.getTransactionType().getInitiatorType());
                     transactionType.setScenario(trRequest.getTransactionType().getScenario());
 
-                    ChannelPartyIdInfo requestPayerPartyIdInfo = trRequest.getPayer().getPartyIdInfo();
-                    String payerFspId = requestPayerPartyIdInfo.getFspId();
+                    PartyIdInfo payerParty = trRequest.getPayer().getPartyIdInfo();
+                    String payerFspId = payerParty.getFspId();
                     Party payer = new Party(
-                            new PartyIdInfo(requestPayerPartyIdInfo.getPartyIdType(),
-                                    requestPayerPartyIdInfo.getPartyIdentifier(),
+                            new PartyIdInfo(payerParty.getPartyIdType(),
+                                    payerParty.getPartyIdentifier(),
                                     null,
                                     payerFspId), // TODO this should be queried somehow
                             null,
