@@ -59,7 +59,8 @@ public class PayeePartyLookupWorkers {
 
                     client.newCompleteCommand(job.getKey())
                             .variables(variables)
-                            .send();
+                            .send()
+                            .join();
                 })
                 .name("payee-user-lookup")
                 .maxJobsActive(10)
@@ -97,7 +98,8 @@ public class PayeePartyLookupWorkers {
                         }
 
                         client.newCompleteCommand(job.getKey())
-                                .send();
+                                .send()
+                                .join();
                     })
                     .name("payee-party-lookup-response-" + dfspId)
                     .maxJobsActive(10)

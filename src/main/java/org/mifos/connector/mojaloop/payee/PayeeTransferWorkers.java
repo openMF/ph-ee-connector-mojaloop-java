@@ -65,7 +65,8 @@ public class PayeeTransferWorkers {
                     producerTemplate.send("direct:send-transfer", exchange);
                     client.newCompleteCommand(job.getKey())
                             .variables(variables)
-                            .send();
+                            .send()
+                            .join();
                 })
                 .name("send-transfer-request")
                 .maxJobsActive(10)
@@ -98,7 +99,9 @@ public class PayeeTransferWorkers {
 
                             producerTemplate.send("direct:send-transfer-to-switch", exchange);
                         }
-                        client.newCompleteCommand(job.getKey()).send();
+                        client.newCompleteCommand(job.getKey())
+                                .send()
+                                .join();
                     })
                     .name("payee-transfer-response-" + dfspid)
                     .maxJobsActive(10)

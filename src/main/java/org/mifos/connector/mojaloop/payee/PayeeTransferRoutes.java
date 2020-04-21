@@ -66,7 +66,8 @@ public class PayeeTransferRoutes extends ErrorHandlerRouteBuilder {
                             .messageName(TRANSFER_MESSAGE)
                             .correlationKey(ilp.getTransaction().getTransactionId())
                             .variables(variables)
-                            .send();
+                            .send()
+                            .join();
                 });
 
         from("direct:send-transfer-error-to-switch")

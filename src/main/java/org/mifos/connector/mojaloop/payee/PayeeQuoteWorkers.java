@@ -71,7 +71,8 @@ public class PayeeQuoteWorkers {
 
                     client.newCompleteCommand(job.getKey())
                             .variables(variables)
-                            .send();
+                            .send()
+                            .join();
                 })
                 .name("quote")
                 .maxJobsActive(10)
@@ -110,7 +111,8 @@ public class PayeeQuoteWorkers {
                             producerTemplate.send("direct:send-quote-to-switch", exchange);
                         }
                         client.newCompleteCommand(job.getKey())
-                                .send();
+                                .send()
+                                .join();
                     })
                     .name("payee-quote-response-" + dfspId)
                     .maxJobsActive(10)

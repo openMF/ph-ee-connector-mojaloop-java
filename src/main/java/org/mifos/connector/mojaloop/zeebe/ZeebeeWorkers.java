@@ -30,19 +30,22 @@ public class ZeebeeWorkers {
                 .jobType("payer-request-confirm")
                 .handler((client, job) -> {
                     logger.info("Job '{}' started from process '{}' with key {}", job.getType(), job.getBpmnProcessId(), job.getKey());
-                    client.newCompleteCommand(job.getKey()).send();
-
-                    // TODO sum local and payee quote and send to customer
-
                     Map<String, Object> variables = new HashMap<>();
                     variables.put(PAYER_CONFIRMED, true);
+
+                    // TODO sum local and payee quote and send to customer
 
                     zeebeClient.newPublishMessageCommand()
                             .messageName(ACCEPT_QUOTE)
                             .correlationKey((String) job.getVariablesAsMap().get(TRANSACTION_ID))
                             .timeToLive(Duration.ofMillis(30000))
+                            .send()
+                            .join();
+
+                    client.newCompleteCommand(job.getKey())
                             .variables(variables)
-                            .send();
+                            .send()
+                            .join();
                 })
                 .name("payer-request-confirm")
                 .maxJobsActive(10)
