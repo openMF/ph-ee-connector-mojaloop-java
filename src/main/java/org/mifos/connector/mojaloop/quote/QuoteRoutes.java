@@ -181,7 +181,6 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                             null,
                             null,
                             null);
-                    exchange.setProperty(PAYER_FSP_ID, payerFspId);
 
                     PartyIdInfo requestPayeePartyIdInfo = channelRequest.getPayee().getPartyIdInfo();
                     Party payee = new Party(
@@ -202,8 +201,8 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                             channelRequest.getAmount(),
                             transactionType));
 
-                    exchange.setProperty(FSPIOP_SOURCE.headerName(), exchangeProperty(PAYER_FSP_ID));
-                    exchange.setProperty(FSPIOP_DESTINATION.headerName(), exchangeProperty(PAYEE_FSP_ID));
+                    exchange.setProperty(FSPIOP_SOURCE.headerName(), payerFspId);
+                    exchange.setProperty(FSPIOP_DESTINATION.headerName(), exchange.getProperty(PAYEE_FSP_ID));
                     mojaloopUtil.setQuoteHeadersRequest(exchange);
                 })
                 .process(pojoToString)
