@@ -1,4 +1,4 @@
-package org.mifos.connector.mojaloop.payee;
+package org.mifos.connector.mojaloop.util;
 
 import com.ilp.conditions.models.pdp.Transaction;
 import org.apache.camel.Exchange;
@@ -32,17 +32,27 @@ public class MojaloopUtil {
     @Value("${switch.transfer-service}")
     private String transferService;
 
-    public void setPartyHeaders(Exchange exchange) {
+    public void setPartyHeadersResponse(Exchange exchange) {
         Map<String, Object> headers = new HashMap<>();
         headers.put(FSPIOP_SOURCE.headerName(), exchange.getIn().getHeader(FSPIOP_SOURCE.headerName()));
         headers.put(FSPIOP_DESTINATION.headerName(), exchange.getIn().getHeader(FSPIOP_SOURCE.headerName()));
         headers.put("Content-Type", PARTIES_CONTENT_TYPE.headerValue());
         headers.put("Accept", PARTIES_ACCEPT_TYPE.headerValue());
         headers.put("Host", accountLookupService);
-        setCommonHeaders(exchange, headers);
+        setResponseTraceHeaders(exchange, headers);
+        finalizeHeaders(exchange, headers);
     }
 
-    public void setQuoteHeaders(Exchange e, QuoteSwitchRequestDTO request) {
+    public void setPartyHeadersRequest(Exchange exchange) {
+        Map<String, Object> headers = new HashMap<>();
+        headers.put(FSPIOP_SOURCE.headerName(), exchange.getIn().getHeader(FSPIOP_SOURCE.headerName()));
+        headers.put("Content-Type", PARTIES_CONTENT_TYPE.headerValue());
+        headers.put("Accept", PARTIES_ACCEPT_TYPE.headerValue());
+        headers.put("Host", accountLookupService);
+        finalizeHeaders(exchange, headers);
+    }
+
+    public void setQuoteHeadersResponse(Exchange e, QuoteSwitchRequestDTO request) {
         Map<String, Object> headers = new HashMap<>();
         headers.put(QUOTE_ID, request.getQuoteId());
         headers.put(FSPIOP_SOURCE.headerName(), request.getPayee().getPartyIdInfo().getFspId());
@@ -50,10 +60,22 @@ public class MojaloopUtil {
         headers.put("Content-Type", QUOTES_CONTENT_TYPE.headerValue());
         headers.put("Accept", QUOTES_ACCEPT_TYPE.headerValue());
         headers.put("Host", switchQuoteService);
-        setCommonHeaders(e, headers);
+        setResponseTraceHeaders(e, headers);
+        finalizeHeaders(e, headers);
     }
 
-    public void setTransferHeaders(Exchange e, Transaction transaction) {
+    public void setQuoteHeadersRequest(Exchange e) {
+        Map<String, Object> headers = new HashMap<>();
+        headers.put(QUOTE_ID, e.getProperty(QUOTE_ID));
+        headers.put(FSPIOP_SOURCE.headerName(), e.getProperty(FSPIOP_SOURCE.headerName()));
+        headers.put(FSPIOP_DESTINATION.headerName(), e.getProperty(FSPIOP_DESTINATION.headerName()));
+        headers.put("Content-Type", QUOTES_CONTENT_TYPE.headerValue());
+        headers.put("Accept", QUOTES_ACCEPT_TYPE.headerValue());
+        headers.put("Host", switchQuoteService);
+        finalizeHeaders(e, headers);
+    }
+
+    public void setTransferHeadersResponse(Exchange e, Transaction transaction) {
         Map<String, Object> headers = new HashMap<>();
         headers.put(TRANSACTION_ID, transaction.getTransactionId());
         headers.put(FSPIOP_SOURCE.headerName(), transaction.getPayee().getPartyIdInfo().getFspId());
@@ -61,17 +83,32 @@ public class MojaloopUtil {
         headers.put("Content-Type", TRANSFERS_CONTENT_TYPE.headerValue());
         headers.put("Accept", TRANSFERS_ACCEPT_TYPE.headerValue());
         headers.put("Host", transferService);
-        setCommonHeaders(e, headers);
+        setResponseTraceHeaders(e, headers);
+        finalizeHeaders(e, headers);
     }
 
-    private void setCommonHeaders(Exchange exchange, Map<String, Object> headers) {
+    public void setTransferHeadersRequest(Exchange e, Transaction transaction) {
+        Map<String, Object> headers = new HashMap<>();
+        headers.put(TRANSACTION_ID, transaction.getTransactionId());
+        headers.put(FSPIOP_SOURCE.headerName(), transaction.getPayer().getPartyIdInfo().getFspId());
+        headers.put(FSPIOP_DESTINATION.headerName(), transaction.getPayee().getPartyIdInfo().getFspId());
+        headers.put("Content-Type", TRANSFERS_CONTENT_TYPE.headerValue());
+        headers.put("Accept", TRANSFERS_ACCEPT_TYPE.headerValue());
+        headers.put("Host", transferService);
+        finalizeHeaders(e, headers);
+    }
+
+    private void finalizeHeaders(Exchange e, Map<String, Object> headers) {
+        e.getIn().removeHeaders("*");
+        e.getIn().setHeaders(headers);
+    }
+
+    private void setResponseTraceHeaders(Exchange exchange, Map<String, Object> headers) {
         headers.put("Date", exchange.getIn().getHeader("Date"));
         headers.put("traceparent", exchange.getIn().getHeader("traceparent"));
         Object tracestate = exchange.getIn().getHeader("tracestate");
         if (tracestate != null) {
             headers.put("tracestate", tracestate);
         }
-        exchange.getIn().removeHeaders("*");
-        exchange.getIn().setHeaders(headers);
     }
 }

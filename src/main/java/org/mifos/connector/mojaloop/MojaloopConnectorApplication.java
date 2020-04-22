@@ -7,21 +7,14 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.apache.camel.Processor;
 import org.mifos.connector.mojaloop.properties.PartyProperties;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 
-import java.util.Map;
-import java.util.stream.Collectors;
-
 @SpringBootApplication
 @EnableConfigurationProperties(PartyProperties.class)
 public class MojaloopConnectorApplication {
-
-    private Logger headerLogger = LoggerFactory.getLogger("headerLogger");
 
     public static void main(String[] args) {
         SpringApplication.run(MojaloopConnectorApplication.class, args);
@@ -41,18 +34,5 @@ public class MojaloopConnectorApplication {
     @Bean
     public Processor pojoToString(ObjectMapper objectMapper) {
         return exchange -> exchange.getIn().setBody(objectMapper.writeValueAsString(exchange.getIn().getBody()));
-    }
-
-    @Bean
-    public Processor headerLogger() {
-        return exchange -> {
-            Map<String, Object> headers = exchange.getIn().getHeaders();
-            String headersAsString = headers.keySet().stream()
-                    .map(key -> key + "=" + headers.get(key))
-                    .collect(Collectors.joining("\n"));
-
-            headerLogger.debug("body: {}", exchange.getIn().getBody());
-            headerLogger.debug("headers: {}", headersAsString);
-        };
     }
 }

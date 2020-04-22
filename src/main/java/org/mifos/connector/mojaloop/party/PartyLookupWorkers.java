@@ -1,4 +1,4 @@
-package org.mifos.connector.mojaloop.payee;
+package org.mifos.connector.mojaloop.party;
 
 import io.zeebe.client.ZeebeClient;
 import org.apache.camel.CamelContext;
@@ -26,7 +26,7 @@ import static org.mifos.connector.mojaloop.zeebe.ZeebeProcessStarter.zeebeVariab
 import static org.mifos.phee.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
 
 @Component
-public class PayeePartyLookupWorkers {
+public class PartyLookupWorkers {
 
     private Logger logger = LoggerFactory.getLogger(this.getClass());
 

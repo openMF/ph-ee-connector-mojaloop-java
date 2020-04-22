@@ -1,9 +1,10 @@
-package org.mifos.connector.mojaloop.payer;
+package org.mifos.connector.mojaloop.party;
 
 import io.zeebe.client.ZeebeClient;
 import org.apache.camel.Exchange;
 import org.apache.camel.Processor;
-import org.mifos.phee.common.mojaloop.dto.TransferSwitchResponseDTO;
+import org.mifos.connector.mojaloop.camel.config.CamelProperties;
+import org.mifos.phee.common.mojaloop.dto.PartySwitchResponseDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -13,13 +14,11 @@ import java.util.Map;
 
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.CACHED_TRANSACTION_ID;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.ERROR_INFORMATION;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeExpressionVariables.TRANSFER_FAILED;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeExpressionVariables.TRANSFER_STATE;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeMessages.TRANSFER_RESPONSE;
-
+import static org.mifos.connector.mojaloop.zeebe.ZeebeExpressionVariables.PARTY_LOOKUP_FAILED;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeMessages.PAYEE_USER_LOOKUP;
 
 @Component
-public class TransferResponseProcessor implements Processor {
+public class PartiesResponseProcessor implements Processor {
 
     @Autowired
     private ZeebeClient zeebeClient;
@@ -27,16 +26,17 @@ public class TransferResponseProcessor implements Processor {
     @Override
     public void process(Exchange exchange) {
         Map<String, Object> variables = new HashMap<>();
-        Object isPayeeTransferFailed = exchange.getProperty(TRANSFER_FAILED);
-        if (isPayeeTransferFailed != null && (boolean)isPayeeTransferFailed) {
+        Object isPayeePartyLookupFailed = exchange.getProperty(PARTY_LOOKUP_FAILED);
+        if(isPayeePartyLookupFailed != null && (boolean)isPayeePartyLookupFailed) {
             variables.put(ERROR_INFORMATION, exchange.getIn().getBody(String.class));
-            variables.put(TRANSFER_FAILED, true);
+            variables.put(PARTY_LOOKUP_FAILED, true);
         } else {
-            variables.put(TRANSFER_STATE, exchange.getIn().getBody(TransferSwitchResponseDTO.class).getTransferState().name());
+            PartySwitchResponseDTO response = exchange.getIn().getBody(PartySwitchResponseDTO.class);
+            variables.put(CamelProperties.PAYEE_FSP_ID, response.getParty().getPartyIdInfo().getFspId());
         }
 
         zeebeClient.newPublishMessageCommand()
-                .messageName(TRANSFER_RESPONSE)
+                .messageName(PAYEE_USER_LOOKUP)
                 .correlationKey(exchange.getProperty(CACHED_TRANSACTION_ID, String.class))
                 .timeToLive(Duration.ofMillis(30000))
                 .variables(variables)

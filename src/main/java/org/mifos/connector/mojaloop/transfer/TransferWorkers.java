@@ -1,4 +1,4 @@
-package org.mifos.connector.mojaloop.payee;
+package org.mifos.connector.mojaloop.transfer;
 
 import io.zeebe.client.ZeebeClient;
 import org.apache.camel.CamelContext;
@@ -32,7 +32,7 @@ import static org.mifos.phee.common.mojaloop.type.MojaloopHeaders.FSPIOP_DESTINA
 import static org.mifos.phee.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
 
 @Component
-public class PayeeTransferWorkers {
+public class TransferWorkers {
 
     private Logger logger = LoggerFactory.getLogger(this.getClass());
 

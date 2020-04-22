@@ -1,11 +1,17 @@
-package org.mifos.connector.mojaloop.payee;
+package org.mifos.connector.mojaloop.transfer;
 
+import com.ilp.conditions.models.pdp.Transaction;
 import io.zeebe.client.ZeebeClient;
 import org.apache.camel.LoggingLevel;
 import org.apache.camel.Processor;
 import org.apache.camel.model.dataformat.JsonLibrary;
+import org.mifos.connector.mojaloop.camel.trace.AddTraceHeaderProcessor;
+import org.mifos.connector.mojaloop.camel.trace.GetCachedTransactionIdProcessor;
 import org.mifos.connector.mojaloop.ilp.IlpBuilder;
+import org.mifos.connector.mojaloop.util.MojaloopUtil;
 import org.mifos.phee.common.camel.ErrorHandlerRouteBuilder;
+import org.mifos.phee.common.mojaloop.dto.MoneyData;
+import org.mifos.phee.common.mojaloop.dto.QuoteSwitchResponseDTO;
 import org.mifos.phee.common.mojaloop.dto.TransferSwitchRequestDTO;
 import org.mifos.phee.common.mojaloop.dto.TransferSwitchResponseDTO;
 import org.mifos.phee.common.mojaloop.ilp.Ilp;
@@ -20,13 +26,13 @@ import java.util.Map;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.ERROR_INFORMATION;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.SWITCH_TRANSFER_REQUEST;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TRANSACTION_ID;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeExpressionVariables.TRANSFER_FAILED;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeMessages.TRANSFER_MESSAGE;
-import static org.mifos.phee.common.mojaloop.type.InteroperabilityType.TRANSFERS_ACCEPT_TYPE;
 import static org.mifos.phee.common.mojaloop.type.MojaloopHeaders.FSPIOP_DESTINATION;
 import static org.mifos.phee.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
 
 @Component
-public class PayeeTransferRoutes extends ErrorHandlerRouteBuilder {
+public class TransferRoutes extends ErrorHandlerRouteBuilder {
 
     @Autowired
     private IlpBuilder ilpBuilder;
@@ -40,7 +46,16 @@ public class PayeeTransferRoutes extends ErrorHandlerRouteBuilder {
     @Autowired
     private MojaloopUtil mojaloopUtil;
 
-    public PayeeTransferRoutes() {
+    @Autowired
+    private AddTraceHeaderProcessor addTraceHeaderProcessor;
+
+    @Autowired
+    private GetCachedTransactionIdProcessor getCachedTransactionIdProcessor;
+
+    @Autowired
+    private TransferResponseProcessor transferResponseProcessor;
+
+    public TransferRoutes() {
         super.configure();
     }
 
@@ -70,12 +85,24 @@ public class PayeeTransferRoutes extends ErrorHandlerRouteBuilder {
                             .join();
                 });
 
+        from("rest:PUT:/switch/transfers/{tid}")
+                .log(LoggingLevel.WARN, "######## SWITCH -> PAYER - response for transfer request - STEP 3")
+                .unmarshal().json(JsonLibrary.Jackson, TransferSwitchResponseDTO.class)
+                .process(getCachedTransactionIdProcessor)
+                .process(transferResponseProcessor);
+
+        from("rest:PUT:/switch/transfers/{tid}/error")
+                .log(LoggingLevel.ERROR, "######## SWITCH -> PAYER - transfer error")
+                .process(getCachedTransactionIdProcessor)
+                .setProperty(TRANSFER_FAILED, constant(true))
+                .process(transferResponseProcessor);
+
         from("direct:send-transfer-error-to-switch")
                 .id("send-transfer-error-to-switch")
                 .unmarshal().json(JsonLibrary.Jackson, TransferSwitchRequestDTO.class)
                 .process(e -> {
                     TransferSwitchRequestDTO request = e.getIn().getBody(TransferSwitchRequestDTO.class);
-                    mojaloopUtil.setTransferHeaders(e, ilpBuilder.parse(request.getIlpPacket(), request.getCondition()).getTransaction());
+                    mojaloopUtil.setTransferHeadersResponse(e, ilpBuilder.parse(request.getIlpPacket(), request.getCondition()).getTransaction());
                     e.getIn().setBody(e.getProperty(ERROR_INFORMATION));
                 })
                 .toD("rest:PUT:/transfers/${header."+TRANSACTION_ID+"}/error?host={{switch.host}}");
@@ -93,9 +120,35 @@ public class PayeeTransferRoutes extends ErrorHandlerRouteBuilder {
                             null);
 
                     exchange.getIn().setBody(response);
-                    mojaloopUtil.setTransferHeaders(exchange, ilp.getTransaction());
+                    mojaloopUtil.setTransferHeadersResponse(exchange, ilp.getTransaction());
                 })
                 .process(pojoToString)
                 .toD("rest:PUT:/transfers/${header."+TRANSACTION_ID+"}?host={{switch.host}}");
+
+        from("direct:send-transfer")
+                .id("send-transfer")
+                .log(LoggingLevel.INFO, "######## PAYER -> SWITCH - transfer request - STEP 1")
+                .unmarshal().json(JsonLibrary.Jackson, QuoteSwitchResponseDTO.class)
+                .process(exchange -> {
+                    QuoteSwitchResponseDTO quoteResponse = exchange.getIn().getBody(QuoteSwitchResponseDTO.class);
+                    Ilp ilp = ilpBuilder.parse(quoteResponse.getIlpPacket(), quoteResponse.getCondition());
+
+                    Transaction transaction = ilp.getTransaction();
+                    TransferSwitchRequestDTO request = new TransferSwitchRequestDTO(
+                            transaction.getTransactionId(),
+                            transaction.getPayer().getPartyIdInfo().getFspId(),
+                            transaction.getPayee().getPartyIdInfo().getFspId(),
+                            new MoneyData(transaction.getAmount().getAmount(), transaction.getAmount().getCurrency()),
+                            ilp.getPacket(),
+                            ilp.getCondition(),
+                            ContextUtil.parseDate(quoteResponse.getExpiration()).plusHours(1),
+                            null);
+
+                    exchange.getIn().setBody(request);
+                    mojaloopUtil.setTransferHeadersRequest(exchange, transaction);
+                })
+                .process(pojoToString)
+                .process(addTraceHeaderProcessor)
+                .toD("rest:POST:/transfers?host={{switch.host}}");
     }
 }

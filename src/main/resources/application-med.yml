@@ -2,6 +2,8 @@ parties:
   - partyIdType: MSISDN
     partyId: 27710305999
     tenantId: tn05
+    fspId: in03tn05
   - partyIdType: MSISDN
     partyId: 27710306999
     tenantId: tn06
+    fspId: in03tn06

@@ -1,18 +1,26 @@
-package org.mifos.connector.mojaloop.payee;
+package org.mifos.connector.mojaloop.quote;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.camel.LoggingLevel;
 import org.apache.camel.Processor;
 import org.apache.camel.model.dataformat.JsonLibrary;
+import org.mifos.connector.mojaloop.camel.trace.AddTraceHeaderProcessor;
 import org.mifos.connector.mojaloop.ilp.IlpBuilder;
+import org.mifos.connector.mojaloop.util.MojaloopUtil;
+import org.mifos.connector.mojaloop.properties.PartyProperties;
 import org.mifos.connector.mojaloop.zeebe.ZeebeProcessStarter;
 import org.mifos.phee.common.ams.dto.QuoteFspResponseDTO;
 import org.mifos.phee.common.camel.ErrorHandlerRouteBuilder;
+import org.mifos.phee.common.channel.dto.TransactionChannelRequestDTO;
 import org.mifos.phee.common.mojaloop.dto.FspMoneyData;
 import org.mifos.phee.common.mojaloop.dto.MoneyData;
+import org.mifos.phee.common.mojaloop.dto.Party;
+import org.mifos.phee.common.mojaloop.dto.PartyIdInfo;
 import org.mifos.phee.common.mojaloop.dto.QuoteSwitchRequestDTO;
 import org.mifos.phee.common.mojaloop.dto.QuoteSwitchResponseDTO;
+import org.mifos.phee.common.mojaloop.dto.TransactionType;
 import org.mifos.phee.common.mojaloop.ilp.Ilp;
+import org.mifos.phee.common.mojaloop.type.AmountType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -23,14 +31,18 @@ import java.time.LocalDateTime;
 import static java.math.BigDecimal.ZERO;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.ERROR_INFORMATION;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.LOCAL_QUOTE_RESPONSE;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PAYEE_FSP_ID;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PAYER_FSP_ID;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.QUOTE_ID;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.QUOTE_SWITCH_REQUEST;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TRANSACTION_ID;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TRANSACTION_REQUEST;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeExpressionVariables.QUOTE_FAILED;
 import static org.mifos.phee.common.mojaloop.type.MojaloopHeaders.FSPIOP_DESTINATION;
 import static org.mifos.phee.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
 
 @Component
-public class PayeeQuoteRoutes extends ErrorHandlerRouteBuilder {
+public class QuoteRoutes extends ErrorHandlerRouteBuilder {
 
     @Value("${bpmn.flows.quote}")
     private String quoteFlow;
@@ -48,9 +60,18 @@ public class PayeeQuoteRoutes extends ErrorHandlerRouteBuilder {
     private ZeebeProcessStarter zeebeProcessStarter;
 
     @Autowired
+    private AddTraceHeaderProcessor addTraceHeaderProcessor;
+
+    @Autowired
+    private PartyProperties partyProperties;
+
+    @Autowired
     private MojaloopUtil mojaloopUtil;
 
-    public PayeeQuoteRoutes() {
+    @Autowired
+    private QuoteResponseProcessor quoteResponseProcessor;
+
+    public QuoteRoutes() {
         super.configure();
     }
 
@@ -78,11 +99,21 @@ public class PayeeQuoteRoutes extends ErrorHandlerRouteBuilder {
                         }
                 );
 
+        from("rest:PUT:/switch/quotes/{"+QUOTE_ID+"}")
+                .log(LoggingLevel.WARN, "######## SWITCH -> PAYER - response for quote request - STEP 3")
+                .unmarshal().json(JsonLibrary.Jackson, QuoteSwitchResponseDTO.class)
+                .process(quoteResponseProcessor);
+
+        from("rest:PUT:/switch/quotes/{"+QUOTE_ID+"}/error")
+                .log(LoggingLevel.ERROR, "######## SWITCH -> PAYER - quote error")
+                .setProperty(QUOTE_FAILED, constant(true))
+                .process(quoteResponseProcessor);
+
         from("direct:send-quote-error-to-switch")
                 .id("send-quote-error-to-switch")
                 .unmarshal().json(JsonLibrary.Jackson, QuoteSwitchRequestDTO.class)
                 .process(e -> {
-                    mojaloopUtil.setQuoteHeaders(e, e.getIn().getBody(QuoteSwitchRequestDTO.class));
+                    mojaloopUtil.setQuoteHeadersResponse(e, e.getIn().getBody(QuoteSwitchRequestDTO.class));
                     e.getIn().setBody(e.getProperty(ERROR_INFORMATION));
                 })
                 .toD("rest:PUT:/quotes/${header."+QUOTE_ID+"}/error?host={{switch.host}}");
@@ -123,10 +154,60 @@ public class PayeeQuoteRoutes extends ErrorHandlerRouteBuilder {
                             null
                     );
 
-                    mojaloopUtil.setQuoteHeaders(exchange, request);
+                    mojaloopUtil.setQuoteHeadersResponse(exchange, request);
                     exchange.getIn().setBody(response);
                 })
                 .process(pojoToString)
                 .toD("rest:PUT:/quotes/${header."+QUOTE_ID+"}?host={{switch.host}}");
+
+        from("direct:send-quote")
+                .id("send-quote")
+                .log(LoggingLevel.INFO, "######## PAYER -> SWITCH - quote request - STEP 1")
+                .process(exchange -> {
+                    TransactionChannelRequestDTO channelRequest = objectMapper.readValue(exchange.getProperty(TRANSACTION_REQUEST, String.class), TransactionChannelRequestDTO.class);
+
+                    TransactionType transactionType = new TransactionType();
+                    transactionType.setInitiator(channelRequest.getTransactionType().getInitiator());
+                    transactionType.setInitiatorType(channelRequest.getTransactionType().getInitiatorType());
+                    transactionType.setScenario(channelRequest.getTransactionType().getScenario());
+
+                    PartyIdInfo payerParty = channelRequest.getPayer().getPartyIdInfo();
+                    String payerFspId = partyProperties.getParty(payerParty.getPartyIdType().name(), payerParty.getPartyIdentifier()).getFspId();
+                    Party payer = new Party(
+                            new PartyIdInfo(payerParty.getPartyIdType(),
+                                    payerParty.getPartyIdentifier(),
+                                    null,
+                                    payerFspId),
+                            null,
+                            null,
+                            null);
+                    exchange.setProperty(PAYER_FSP_ID, payerFspId);
+
+                    PartyIdInfo requestPayeePartyIdInfo = channelRequest.getPayee().getPartyIdInfo();
+                    Party payee = new Party(
+                            new PartyIdInfo(requestPayeePartyIdInfo.getPartyIdType(),
+                                    requestPayeePartyIdInfo.getPartyIdentifier(),
+                                    null,
+                                    exchange.getProperty(PAYEE_FSP_ID, String.class)),
+                            null,
+                            null,
+                            null);
+
+                    exchange.getIn().setBody(new QuoteSwitchRequestDTO(
+                            exchange.getProperty(TRANSACTION_ID, String.class),
+                            exchange.getProperty(QUOTE_ID, String.class),
+                            payee,
+                            payer,
+                            AmountType.RECEIVE,
+                            channelRequest.getAmount(),
+                            transactionType));
+
+                    exchange.setProperty(FSPIOP_SOURCE.headerName(), exchangeProperty(PAYER_FSP_ID));
+                    exchange.setProperty(FSPIOP_DESTINATION.headerName(), exchangeProperty(PAYEE_FSP_ID));
+                    mojaloopUtil.setQuoteHeadersRequest(exchange);
+                })
+                .process(pojoToString)
+                .process(addTraceHeaderProcessor)
+                .toD("rest:POST:/quotes?host={{switch.host}}");
     }
 }
