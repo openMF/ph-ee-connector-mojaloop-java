@@ -40,6 +40,7 @@ public class PartiesResponseProcessor implements Processor {
                 .correlationKey(exchange.getProperty(CACHED_TRANSACTION_ID, String.class))
                 .timeToLive(Duration.ofMillis(30000))
                 .variables(variables)
-                .send();
+                .send()
+                .join();
     }
 }

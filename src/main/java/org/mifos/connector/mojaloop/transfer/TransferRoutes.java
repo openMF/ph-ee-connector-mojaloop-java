@@ -105,7 +105,7 @@ public class TransferRoutes extends ErrorHandlerRouteBuilder {
                     mojaloopUtil.setTransferHeadersResponse(e, ilpBuilder.parse(request.getIlpPacket(), request.getCondition()).getTransaction());
                     e.getIn().setBody(e.getProperty(ERROR_INFORMATION));
                 })
-                .toD("rest:PUT:/transfers/${header."+TRANSACTION_ID+"}/error?host={{switch.host}}");
+                .toD("rest:PUT:/transfers/${exchangeProperty."+TRANSACTION_ID+"}/error?host={{switch.host}}");
 
         from("direct:send-transfer-to-switch")
                 .unmarshal().json(JsonLibrary.Jackson, TransferSwitchRequestDTO.class)
@@ -123,7 +123,7 @@ public class TransferRoutes extends ErrorHandlerRouteBuilder {
                     mojaloopUtil.setTransferHeadersResponse(exchange, ilp.getTransaction());
                 })
                 .process(pojoToString)
-                .toD("rest:PUT:/transfers/${header."+TRANSACTION_ID+"}?host={{switch.host}}");
+                .toD("rest:PUT:/transfers/${exchangeProperty."+TRANSACTION_ID+"}?host={{switch.host}}");
 
         from("direct:send-transfer")
                 .id("send-transfer")

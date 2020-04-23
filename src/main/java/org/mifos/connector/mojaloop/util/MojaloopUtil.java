@@ -9,8 +9,6 @@ import org.springframework.stereotype.Component;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.QUOTE_ID;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TRANSACTION_ID;
 import static org.mifos.phee.common.mojaloop.type.InteroperabilityType.PARTIES_ACCEPT_TYPE;
 import static org.mifos.phee.common.mojaloop.type.InteroperabilityType.PARTIES_CONTENT_TYPE;
 import static org.mifos.phee.common.mojaloop.type.InteroperabilityType.QUOTES_ACCEPT_TYPE;
@@ -54,7 +52,6 @@ public class MojaloopUtil {
 
     public void setQuoteHeadersResponse(Exchange e, QuoteSwitchRequestDTO request) {
         Map<String, Object> headers = new HashMap<>();
-        headers.put(QUOTE_ID, request.getQuoteId());
         headers.put(FSPIOP_SOURCE.headerName(), request.getPayee().getPartyIdInfo().getFspId());
         headers.put(FSPIOP_DESTINATION.headerName(), request.getPayer().getPartyIdInfo().getFspId());
         headers.put("Content-Type", QUOTES_CONTENT_TYPE.headerValue());
@@ -66,7 +63,6 @@ public class MojaloopUtil {
 
     public void setQuoteHeadersRequest(Exchange e) {
         Map<String, Object> headers = new HashMap<>();
-        headers.put(QUOTE_ID, e.getProperty(QUOTE_ID));
         headers.put(FSPIOP_SOURCE.headerName(), e.getProperty(FSPIOP_SOURCE.headerName()));
         headers.put(FSPIOP_DESTINATION.headerName(), e.getProperty(FSPIOP_DESTINATION.headerName()));
         headers.put("Content-Type", QUOTES_CONTENT_TYPE.headerValue());
@@ -77,7 +73,6 @@ public class MojaloopUtil {
 
     public void setTransferHeadersResponse(Exchange e, Transaction transaction) {
         Map<String, Object> headers = new HashMap<>();
-        headers.put(TRANSACTION_ID, transaction.getTransactionId());
         headers.put(FSPIOP_SOURCE.headerName(), transaction.getPayee().getPartyIdInfo().getFspId());
         headers.put(FSPIOP_DESTINATION.headerName(), transaction.getPayer().getPartyIdInfo().getFspId());
         headers.put("Content-Type", TRANSFERS_CONTENT_TYPE.headerValue());
@@ -89,7 +84,6 @@ public class MojaloopUtil {
 
     public void setTransferHeadersRequest(Exchange e, Transaction transaction) {
         Map<String, Object> headers = new HashMap<>();
-        headers.put(TRANSACTION_ID, transaction.getTransactionId());
         headers.put(FSPIOP_SOURCE.headerName(), transaction.getPayer().getPartyIdInfo().getFspId());
         headers.put(FSPIOP_DESTINATION.headerName(), transaction.getPayee().getPartyIdInfo().getFspId());
         headers.put("Content-Type", TRANSFERS_CONTENT_TYPE.headerValue());

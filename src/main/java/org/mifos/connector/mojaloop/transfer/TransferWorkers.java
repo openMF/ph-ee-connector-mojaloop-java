@@ -90,6 +90,7 @@ public class TransferWorkers {
                             );
 
                             exchange.setProperty(ERROR_INFORMATION, errorInformation);
+                            exchange.setProperty(TRANSACTION_ID, existingVariables.get(TRANSACTION_ID));
                             producerTemplate.send("direct:send-transfer-error-to-switch", exchange);
                         } else {
                             zeebeVariablesToCamelHeaders(existingVariables, exchange,
@@ -97,6 +98,7 @@ public class TransferWorkers {
                                     "traceparent"
                             );
 
+                            exchange.setProperty(TRANSACTION_ID, existingVariables.get(TRANSACTION_ID));
                             producerTemplate.send("direct:send-transfer-to-switch", exchange);
                         }
                         client.newCompleteCommand(job.getKey())

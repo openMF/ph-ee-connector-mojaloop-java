@@ -53,6 +53,7 @@ public class QuoteResponseProcessor implements Processor {
                 .correlationKey(exchange.getIn().getHeader(QUOTE_ID, String.class))
                 .timeToLive(Duration.ofMillis(30000))
                 .variables(variables)
-                .send();
+                .send()
+                .join();
     }
 }

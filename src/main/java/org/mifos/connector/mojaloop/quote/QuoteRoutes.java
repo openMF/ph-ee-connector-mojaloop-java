@@ -112,10 +112,12 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                 .id("send-quote-error-to-switch")
                 .unmarshal().json(JsonLibrary.Jackson, QuoteSwitchRequestDTO.class)
                 .process(e -> {
-                    mojaloopUtil.setQuoteHeadersResponse(e, e.getIn().getBody(QuoteSwitchRequestDTO.class));
+                    QuoteSwitchRequestDTO request = e.getIn().getBody(QuoteSwitchRequestDTO.class);
+                    mojaloopUtil.setQuoteHeadersResponse(e, request);
                     e.getIn().setBody(e.getProperty(ERROR_INFORMATION));
+                    e.setProperty(QUOTE_ID, request.getQuoteId());
                 })
-                .toD("rest:PUT:/quotes/${header."+QUOTE_ID+"}/error?host={{switch.host}}");
+                .toD("rest:PUT:/quotes/${exchangeProperty."+QUOTE_ID+"}/error?host={{switch.host}}");
 
         from("direct:send-quote-to-switch")
                 .id("send-quote-to-switch")
@@ -152,12 +154,13 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                             ilp.getCondition(),
                             null
                     );
+                    exchange.getIn().setBody(response);
+                    exchange.setProperty(QUOTE_ID, request.getQuoteId());
 
                     mojaloopUtil.setQuoteHeadersResponse(exchange, request);
-                    exchange.getIn().setBody(response);
                 })
                 .process(pojoToString)
-                .toD("rest:PUT:/quotes/${header."+QUOTE_ID+"}?host={{switch.host}}");
+                .toD("rest:PUT:/quotes/${exchangeProperty."+QUOTE_ID+"}?host={{switch.host}}");
 
         from("direct:send-quote")
                 .id("send-quote")

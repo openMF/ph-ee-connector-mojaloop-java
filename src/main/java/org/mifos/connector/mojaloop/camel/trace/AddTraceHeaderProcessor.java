@@ -4,8 +4,10 @@ package org.mifos.connector.mojaloop.camel.trace;
 import org.apache.camel.Exchange;
 import org.apache.camel.Processor;
 import org.mifos.phee.common.util.ContextUtil;
-import org.mifos.connector.mojaloop.camel.config.CamelProperties;
 import org.springframework.stereotype.Component;
+
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.ORIGIN_DATE;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TRANSACTION_ID;
 
 @Component
 public class AddTraceHeaderProcessor implements Processor {
@@ -20,7 +22,7 @@ public class AddTraceHeaderProcessor implements Processor {
      */
     @Override
     public void process(Exchange exchange) {
-        String transactionId = exchange.getProperty(CamelProperties.TRANSACTION_ID, String.class);
+        String transactionId = exchange.getProperty(TRANSACTION_ID, String.class);
         String transactionIdTrimed = transactionId.replace("-", "");
         String transactionIdKey = transactionIdTrimed.substring(0, 16);
         String traceParent = String.join("-", "00", transactionIdTrimed, transactionIdKey, "01");
@@ -28,6 +30,6 @@ public class AddTraceHeaderProcessor implements Processor {
         exchange.getIn().setHeader("traceparent", traceParent);
         exchange.getIn().setHeader("tracestate", "ph=" + transactionIdKey);
         exchange.getIn().setHeader("Date",
-                ContextUtil.formatToDateHeader(exchange.getProperty(CamelProperties.ORIGIN_DATE, Long.class)));
+                ContextUtil.formatToDateHeader(exchange.getProperty(ORIGIN_DATE, Long.class)));
     }
 }

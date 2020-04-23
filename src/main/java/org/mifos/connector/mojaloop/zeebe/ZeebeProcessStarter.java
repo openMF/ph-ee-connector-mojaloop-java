@@ -34,7 +34,8 @@ public class ZeebeProcessStarter {
                 .bpmnProcessId(workflowId)
                 .latestVersion()
                 .variables(variables)
-                .send();
+                .send()
+                .join();
 
         logger.info("zeebee workflow instance from process {} started", workflowId);
     }
