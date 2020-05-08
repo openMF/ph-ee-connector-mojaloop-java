@@ -3,7 +3,7 @@ package org.mifos.connector.mojaloop.camel.trace;
 
 import org.apache.camel.Exchange;
 import org.apache.camel.Processor;
-import org.mifos.phee.common.util.ContextUtil;
+import org.mifos.connector.common.util.ContextUtil;
 import org.springframework.stereotype.Component;
 
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.ORIGIN_DATE;

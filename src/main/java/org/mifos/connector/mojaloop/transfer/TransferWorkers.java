@@ -5,7 +5,6 @@ import org.apache.camel.CamelContext;
 import org.apache.camel.Exchange;
 import org.apache.camel.ProducerTemplate;
 import org.apache.camel.support.DefaultExchange;
-import org.mifos.connector.mojaloop.zeebe.ZeebeProcessStarter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,19 +16,12 @@ import java.util.List;
 import java.util.Map;
 
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.ERROR_INFORMATION;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.LOCAL_QUOTE_RESPONSE;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.ORIGIN_DATE;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PAYEE_FSP_ID;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PAYEE_QUOTE_RESPONSE;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.QUOTE_SWITCH_REQUEST;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.SWITCH_TRANSFER_REQUEST;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TRANSACTION_ID;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TRANSACTION_REQUEST;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeExpressionVariables.TIMEOUT_QUOTE_RETRY_COUNT;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeExpressionVariables.TIMEOUT_TRANSFER_RETRY_COUNT;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeProcessStarter.zeebeVariablesToCamelHeaders;
-import static org.mifos.phee.common.mojaloop.type.MojaloopHeaders.FSPIOP_DESTINATION;
-import static org.mifos.phee.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
 
 @Component
 public class TransferWorkers {

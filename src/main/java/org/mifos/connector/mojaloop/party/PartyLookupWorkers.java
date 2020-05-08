@@ -7,7 +7,7 @@ import org.apache.camel.Exchange;
 import org.apache.camel.ProducerTemplate;
 import org.apache.camel.support.DefaultExchange;
 import org.mifos.connector.mojaloop.properties.PartyProperties;
-import org.mifos.phee.common.channel.dto.TransactionChannelRequestDTO;
+import org.mifos.connector.common.channel.dto.TransactionChannelRequestDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,7 +27,7 @@ import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TRANSACT
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TRANSACTION_REQUEST;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeExpressionVariables.TIMEOUT_PARTY_LOOKUP_COUNT;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeProcessStarter.zeebeVariablesToCamelHeaders;
-import static org.mifos.phee.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
+import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
 
 @Component
 public class PartyLookupWorkers {

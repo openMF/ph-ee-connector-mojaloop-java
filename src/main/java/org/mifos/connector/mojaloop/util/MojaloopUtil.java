@@ -2,21 +2,21 @@ package org.mifos.connector.mojaloop.util;
 
 import com.ilp.conditions.models.pdp.Transaction;
 import org.apache.camel.Exchange;
-import org.mifos.phee.common.mojaloop.dto.QuoteSwitchRequestDTO;
+import org.mifos.connector.common.mojaloop.dto.QuoteSwitchRequestDTO;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.mifos.phee.common.mojaloop.type.InteroperabilityType.PARTIES_ACCEPT_TYPE;
-import static org.mifos.phee.common.mojaloop.type.InteroperabilityType.PARTIES_CONTENT_TYPE;
-import static org.mifos.phee.common.mojaloop.type.InteroperabilityType.QUOTES_ACCEPT_TYPE;
-import static org.mifos.phee.common.mojaloop.type.InteroperabilityType.QUOTES_CONTENT_TYPE;
-import static org.mifos.phee.common.mojaloop.type.InteroperabilityType.TRANSFERS_ACCEPT_TYPE;
-import static org.mifos.phee.common.mojaloop.type.InteroperabilityType.TRANSFERS_CONTENT_TYPE;
-import static org.mifos.phee.common.mojaloop.type.MojaloopHeaders.FSPIOP_DESTINATION;
-import static org.mifos.phee.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
+import static org.mifos.connector.common.mojaloop.type.InteroperabilityType.PARTIES_ACCEPT_TYPE;
+import static org.mifos.connector.common.mojaloop.type.InteroperabilityType.PARTIES_CONTENT_TYPE;
+import static org.mifos.connector.common.mojaloop.type.InteroperabilityType.QUOTES_ACCEPT_TYPE;
+import static org.mifos.connector.common.mojaloop.type.InteroperabilityType.QUOTES_CONTENT_TYPE;
+import static org.mifos.connector.common.mojaloop.type.InteroperabilityType.TRANSFERS_ACCEPT_TYPE;
+import static org.mifos.connector.common.mojaloop.type.InteroperabilityType.TRANSFERS_CONTENT_TYPE;
+import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_DESTINATION;
+import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
 
 @Component
 public class MojaloopUtil {

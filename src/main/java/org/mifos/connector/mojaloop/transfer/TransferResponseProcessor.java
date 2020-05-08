@@ -3,7 +3,7 @@ package org.mifos.connector.mojaloop.transfer;
 import io.zeebe.client.ZeebeClient;
 import org.apache.camel.Exchange;
 import org.apache.camel.Processor;
-import org.mifos.phee.common.mojaloop.dto.TransferSwitchResponseDTO;
+import org.mifos.connector.common.mojaloop.dto.TransferSwitchResponseDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

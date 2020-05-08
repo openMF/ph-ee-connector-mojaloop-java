@@ -10,11 +10,11 @@ import org.mifos.connector.mojaloop.camel.trace.GetCachedTransactionIdProcessor;
 import org.mifos.connector.mojaloop.util.MojaloopUtil;
 import org.mifos.connector.mojaloop.properties.PartyProperties;
 import org.mifos.connector.mojaloop.zeebe.ZeebeProcessStarter;
-import org.mifos.phee.common.camel.ErrorHandlerRouteBuilder;
-import org.mifos.phee.common.channel.dto.TransactionChannelRequestDTO;
-import org.mifos.phee.common.mojaloop.dto.Party;
-import org.mifos.phee.common.mojaloop.dto.PartyIdInfo;
-import org.mifos.phee.common.mojaloop.dto.PartySwitchResponseDTO;
+import org.mifos.connector.common.camel.ErrorHandlerRouteBuilder;
+import org.mifos.connector.common.channel.dto.TransactionChannelRequestDTO;
+import org.mifos.connector.common.mojaloop.dto.Party;
+import org.mifos.connector.common.mojaloop.dto.PartyIdInfo;
+import org.mifos.connector.common.mojaloop.dto.PartySwitchResponseDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -27,8 +27,8 @@ import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TENANT_I
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TRANSACTION_REQUEST;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeExpressionVariables.PARTY_LOOKUP_FAILED;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeProcessStarter.camelHeadersToZeebeVariables;
-import static org.mifos.phee.common.ams.dto.InteropIdentifierType.MSISDN;
-import static org.mifos.phee.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
+import static org.mifos.connector.common.ams.dto.InteropIdentifierType.MSISDN;
+import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
 
 @Component
 public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {

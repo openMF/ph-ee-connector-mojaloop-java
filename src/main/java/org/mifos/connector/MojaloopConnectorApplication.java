@@ -1,4 +1,4 @@
-package org.mifos.connector.mojaloop;
+package org.mifos.connector;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;

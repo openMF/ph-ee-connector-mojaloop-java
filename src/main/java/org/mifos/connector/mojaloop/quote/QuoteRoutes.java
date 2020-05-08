@@ -9,18 +9,18 @@ import org.mifos.connector.mojaloop.ilp.IlpBuilder;
 import org.mifos.connector.mojaloop.properties.PartyProperties;
 import org.mifos.connector.mojaloop.util.MojaloopUtil;
 import org.mifos.connector.mojaloop.zeebe.ZeebeProcessStarter;
-import org.mifos.phee.common.ams.dto.QuoteFspResponseDTO;
-import org.mifos.phee.common.camel.ErrorHandlerRouteBuilder;
-import org.mifos.phee.common.channel.dto.TransactionChannelRequestDTO;
-import org.mifos.phee.common.mojaloop.dto.FspMoneyData;
-import org.mifos.phee.common.mojaloop.dto.MoneyData;
-import org.mifos.phee.common.mojaloop.dto.Party;
-import org.mifos.phee.common.mojaloop.dto.PartyIdInfo;
-import org.mifos.phee.common.mojaloop.dto.QuoteSwitchRequestDTO;
-import org.mifos.phee.common.mojaloop.dto.QuoteSwitchResponseDTO;
-import org.mifos.phee.common.mojaloop.dto.TransactionType;
-import org.mifos.phee.common.mojaloop.ilp.Ilp;
-import org.mifos.phee.common.mojaloop.type.AmountType;
+import org.mifos.connector.common.ams.dto.QuoteFspResponseDTO;
+import org.mifos.connector.common.camel.ErrorHandlerRouteBuilder;
+import org.mifos.connector.common.channel.dto.TransactionChannelRequestDTO;
+import org.mifos.connector.common.mojaloop.dto.FspMoneyData;
+import org.mifos.connector.common.mojaloop.dto.MoneyData;
+import org.mifos.connector.common.mojaloop.dto.Party;
+import org.mifos.connector.common.mojaloop.dto.PartyIdInfo;
+import org.mifos.connector.common.mojaloop.dto.QuoteSwitchRequestDTO;
+import org.mifos.connector.common.mojaloop.dto.QuoteSwitchResponseDTO;
+import org.mifos.connector.common.mojaloop.dto.TransactionType;
+import org.mifos.connector.common.mojaloop.ilp.Ilp;
+import org.mifos.connector.common.mojaloop.type.AmountType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -37,8 +37,8 @@ import static org.mifos.connector.mojaloop.camel.config.CamelProperties.QUOTE_SW
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TRANSACTION_ID;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TRANSACTION_REQUEST;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeExpressionVariables.QUOTE_FAILED;
-import static org.mifos.phee.common.mojaloop.type.MojaloopHeaders.FSPIOP_DESTINATION;
-import static org.mifos.phee.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
+import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_DESTINATION;
+import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
 
 @Component
 public class QuoteRoutes extends ErrorHandlerRouteBuilder {
