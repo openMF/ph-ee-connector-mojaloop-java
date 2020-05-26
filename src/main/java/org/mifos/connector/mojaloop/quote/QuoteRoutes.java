@@ -31,11 +31,11 @@ import java.time.LocalDateTime;
 import static java.math.BigDecimal.ZERO;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.ERROR_INFORMATION;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.LOCAL_QUOTE_RESPONSE;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PAYEE_FSP_ID;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PARTY_LOOKUP_FSP_ID;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.QUOTE_ID;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.QUOTE_SWITCH_REQUEST;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TRANSACTION_ID;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TRANSACTION_REQUEST;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.CHANNEL_REQUEST;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeExpressionVariables.QUOTE_FAILED;
 import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_DESTINATION;
 import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
@@ -83,7 +83,7 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                 .process(exchange -> {
                             QuoteSwitchRequestDTO request = exchange.getIn().getBody(QuoteSwitchRequestDTO.class);
 
-                            zeebeProcessStarter.startZeebeWorkflow(quoteFlow, null, variables -> {
+                            zeebeProcessStarter.startZeebeWorkflow(quoteFlow, variables -> {
                                 variables.put(QUOTE_ID, request.getQuoteId());
                                 variables.put(FSPIOP_SOURCE.headerName(), request.getPayee().getPartyIdInfo().getFspId());
                                 variables.put(FSPIOP_DESTINATION.headerName(), request.getPayer().getPartyIdInfo().getFspId());
@@ -166,7 +166,7 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                 .id("send-quote")
                 .log(LoggingLevel.INFO, "######## PAYER -> SWITCH - quote request - STEP 1")
                 .process(exchange -> {
-                    TransactionChannelRequestDTO channelRequest = objectMapper.readValue(exchange.getProperty(TRANSACTION_REQUEST, String.class), TransactionChannelRequestDTO.class);
+                    TransactionChannelRequestDTO channelRequest = objectMapper.readValue(exchange.getProperty(CHANNEL_REQUEST, String.class), TransactionChannelRequestDTO.class);
 
                     TransactionType transactionType = new TransactionType();
                     transactionType.setInitiator(channelRequest.getTransactionType().getInitiator());
@@ -189,7 +189,7 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                             new PartyIdInfo(requestPayeePartyIdInfo.getPartyIdType(),
                                     requestPayeePartyIdInfo.getPartyIdentifier(),
                                     null,
-                                    exchange.getProperty(PAYEE_FSP_ID, String.class)),
+                                    exchange.getProperty(PARTY_LOOKUP_FSP_ID, String.class)),
                             null,
                             null,
                             null);
@@ -204,7 +204,7 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                             transactionType));
 
                     exchange.setProperty(FSPIOP_SOURCE.headerName(), payerFspId);
-                    exchange.setProperty(FSPIOP_DESTINATION.headerName(), exchange.getProperty(PAYEE_FSP_ID));
+                    exchange.setProperty(FSPIOP_DESTINATION.headerName(), exchange.getProperty(PARTY_LOOKUP_FSP_ID));
                     mojaloopUtil.setQuoteHeadersRequest(exchange);
                 })
                 .process(pojoToString)

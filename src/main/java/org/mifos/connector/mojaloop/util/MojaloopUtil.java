@@ -13,6 +13,8 @@ import static org.mifos.connector.common.mojaloop.type.InteroperabilityType.PART
 import static org.mifos.connector.common.mojaloop.type.InteroperabilityType.PARTIES_CONTENT_TYPE;
 import static org.mifos.connector.common.mojaloop.type.InteroperabilityType.QUOTES_ACCEPT_TYPE;
 import static org.mifos.connector.common.mojaloop.type.InteroperabilityType.QUOTES_CONTENT_TYPE;
+import static org.mifos.connector.common.mojaloop.type.InteroperabilityType.TRANSACTIONS_ACCEPT_TYPE;
+import static org.mifos.connector.common.mojaloop.type.InteroperabilityType.TRANSACTIONS_CONTENT_TYPE;
 import static org.mifos.connector.common.mojaloop.type.InteroperabilityType.TRANSFERS_ACCEPT_TYPE;
 import static org.mifos.connector.common.mojaloop.type.InteroperabilityType.TRANSFERS_CONTENT_TYPE;
 import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_DESTINATION;
@@ -29,6 +31,9 @@ public class MojaloopUtil {
 
     @Value("${switch.transfer-service}")
     private String transferService;
+
+    @Value("${switch.transaction-request-service}")
+    private String transactionRequestService;
 
     public void setPartyHeadersResponse(Exchange exchange) {
         Map<String, Object> headers = new HashMap<>();
@@ -89,6 +94,27 @@ public class MojaloopUtil {
         headers.put("Content-Type", TRANSFERS_CONTENT_TYPE.headerValue());
         headers.put("Accept", TRANSFERS_ACCEPT_TYPE.headerValue());
         headers.put("Host", transferService);
+        finalizeHeaders(e, headers);
+    }
+
+    public void setTransactionRequestHeadersResponse(Exchange e) {
+        Map<String, Object> headers = new HashMap<>();
+        headers.put(FSPIOP_SOURCE.headerName(), e.getProperty(FSPIOP_SOURCE.headerName()));
+        headers.put(FSPIOP_DESTINATION.headerName(), e.getProperty(FSPIOP_DESTINATION.headerName()));
+        headers.put("Content-Type", TRANSFERS_CONTENT_TYPE.headerValue());
+        headers.put("Accept", TRANSFERS_ACCEPT_TYPE.headerValue());
+        headers.put("Host", transactionRequestService);
+        setResponseTraceHeaders(e, headers);
+        finalizeHeaders(e, headers);
+    }
+
+    public void setTransactionRequestHeadersRequest(Exchange e) {
+        Map<String, Object> headers = new HashMap<>();
+        headers.put(FSPIOP_SOURCE.headerName(), e.getProperty(FSPIOP_SOURCE.headerName()));
+        headers.put(FSPIOP_DESTINATION.headerName(), e.getProperty(FSPIOP_DESTINATION.headerName()));
+        headers.put("Content-Type", TRANSACTIONS_CONTENT_TYPE.headerValue());
+        headers.put("Accept", TRANSACTIONS_ACCEPT_TYPE.headerValue());
+        headers.put("Host", transactionRequestService);
         finalizeHeaders(e, headers);
     }
 

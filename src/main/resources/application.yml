@@ -10,8 +10,13 @@ bpmn:
   flows:
     party-lookup: "PayeePartyLookup-DFSPID"
     quote: "PayeeQuoteTransfer-DFSPID"
+    transaction-request: "PayerTransactionRequest-DFSPID"
 
 zeebe:
+  client:
+    max-execution-threads: 100
+    number-of-workers: 14
+    evenly-allocated-max-jobs: "#{${zeebe.client.max-execution-threads} / ${zeebe.client.number-of-workers}}"
   broker:
     contactpoint: "ph-ee-zeebe:26500"
 
@@ -23,5 +28,6 @@ switch:
   quote-service: quoting-service.local
   account-lookup-service: account-lookup-service.local
   transfer-service: ml-api-adapter.local
+  transaction-request-service: transaction-request-service.local
 
 dfspids: "DFSPID"

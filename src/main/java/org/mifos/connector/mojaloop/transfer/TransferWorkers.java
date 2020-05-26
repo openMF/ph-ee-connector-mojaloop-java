@@ -22,6 +22,8 @@ import static org.mifos.connector.mojaloop.camel.config.CamelProperties.SWITCH_T
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TRANSACTION_ID;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeExpressionVariables.TIMEOUT_TRANSFER_RETRY_COUNT;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeProcessStarter.zeebeVariablesToCamelHeaders;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeeWorkers.WORKER_PAYEE_TRANSFER_RESPONSE;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeeWorkers.WORKER_SEND_TRANSFER_REQUEST;
 
 @Component
 public class TransferWorkers {
@@ -40,34 +42,15 @@ public class TransferWorkers {
     @Value("#{'${dfspids}'.split(',')}")
     private List<String> dfspids;
 
+    @Value("${zeebe.client.evenly-allocated-max-jobs}")
+    private int workerMaxJobs;
+
     @PostConstruct
     public void setupWorkers() {
-        zeebeClient.newWorker()
-                .jobType("send-transfer-request")
-                .handler((client, job) -> {
-                    logger.info("Job '{}' started from process '{}' with key {}", job.getType(), job.getBpmnProcessId(), job.getKey());
-                    Map<String, Object> variables = job.getVariablesAsMap();
-                    variables.put(TIMEOUT_TRANSFER_RETRY_COUNT, 1 + (Integer) variables.getOrDefault(TIMEOUT_TRANSFER_RETRY_COUNT, -1));
-
-                    Exchange exchange = new DefaultExchange(camelContext);
-                    exchange.setProperty(TRANSACTION_ID, variables.get(TRANSACTION_ID));
-                    exchange.setProperty(ORIGIN_DATE, variables.get(ORIGIN_DATE));
-                    exchange.getIn().setBody(variables.get(PAYEE_QUOTE_RESPONSE));
-
-                    producerTemplate.send("direct:send-transfer", exchange);
-                    client.newCompleteCommand(job.getKey())
-                            .variables(variables)
-                            .send()
-                            .join();
-                })
-                .name("send-transfer-request")
-                .maxJobsActive(10)
-                .open();
-
-        for(String dfspid : dfspids) {
-            logger.info("## generating payee-transfer-response-{} zeebe worker", dfspid);
+        for (String dfspid : dfspids) {
+            logger.info("## generating " + WORKER_PAYEE_TRANSFER_RESPONSE + "{} zeebe worker", dfspid);
             zeebeClient.newWorker()
-                    .jobType("payee-transfer-response-" + dfspid)
+                    .jobType(WORKER_PAYEE_TRANSFER_RESPONSE + dfspid)
                     .handler((client, job) -> {
                         logger.info("Job '{}' started from process '{}' with key {}", job.getType(), job.getBpmnProcessId(), job.getKey());
                         Map<String, Object> existingVariables = job.getVariablesAsMap();
@@ -75,7 +58,7 @@ public class TransferWorkers {
                         Exchange exchange = new DefaultExchange(camelContext);
                         exchange.getIn().setBody(existingVariables.get(SWITCH_TRANSFER_REQUEST));
                         Object errorInformation = existingVariables.get(ERROR_INFORMATION);
-                        if(errorInformation != null) {
+                        if (errorInformation != null) {
                             zeebeVariablesToCamelHeaders(existingVariables, exchange,
                                     "Date",
                                     "traceparent"
@@ -97,8 +80,31 @@ public class TransferWorkers {
                                 .send()
                                 .join();
                     })
-                    .name("payee-transfer-response-" + dfspid)
-                    .maxJobsActive(10)
+                    .name(WORKER_PAYEE_TRANSFER_RESPONSE + dfspid)
+                    .maxJobsActive(workerMaxJobs)
+                    .open();
+
+            logger.info("## generating " + WORKER_SEND_TRANSFER_REQUEST + "{} zeebe worker", dfspid);
+            zeebeClient.newWorker()
+                    .jobType(WORKER_SEND_TRANSFER_REQUEST + dfspid)
+                    .handler((client, job) -> {
+                        logger.info("Job '{}' started from process '{}' with key {}", job.getType(), job.getBpmnProcessId(), job.getKey());
+                        Map<String, Object> variables = job.getVariablesAsMap();
+                        variables.put(TIMEOUT_TRANSFER_RETRY_COUNT, 1 + (Integer) variables.getOrDefault(TIMEOUT_TRANSFER_RETRY_COUNT, -1));
+
+                        Exchange exchange = new DefaultExchange(camelContext);
+                        exchange.setProperty(TRANSACTION_ID, variables.get(TRANSACTION_ID));
+                        exchange.setProperty(ORIGIN_DATE, variables.get(ORIGIN_DATE));
+                        exchange.getIn().setBody(variables.get(PAYEE_QUOTE_RESPONSE));
+
+                        producerTemplate.send("direct:send-transfer", exchange);
+                        client.newCompleteCommand(job.getKey())
+                                .variables(variables)
+                                .send()
+                                .join();
+                    })
+                    .name(WORKER_SEND_TRANSFER_REQUEST + dfspid)
+                    .maxJobsActive(workerMaxJobs)
                     .open();
         }
     }

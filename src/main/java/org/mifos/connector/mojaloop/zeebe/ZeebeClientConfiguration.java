@@ -11,12 +11,15 @@ public class ZeebeClientConfiguration {
     @Value("${zeebe.broker.contactpoint}")
     private String zeebeBrokerContactpoint;
 
+    @Value("${zeebe.client.max-execution-threads}")
+    private int zeebeClientMaxThreads;
+
     @Bean
     public ZeebeClient setup() {
         return ZeebeClient.newClientBuilder()
                 .brokerContactPoint(zeebeBrokerContactpoint)
                 .usePlaintext()
-                .numJobWorkerExecutionThreads(100)
+                .numJobWorkerExecutionThreads(zeebeClientMaxThreads)
                 .build();
     }
 }

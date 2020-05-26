@@ -20,11 +20,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.ERROR_INFORMATION;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.IS_RTP_REQUEST;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PARTY_ID;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PARTY_ID_TYPE;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PAYEE_PARTY_RESPONSE;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TENANT_ID;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TRANSACTION_REQUEST;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.CHANNEL_REQUEST;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeExpressionVariables.PARTY_LOOKUP_FAILED;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeProcessStarter.camelHeadersToZeebeVariables;
 import static org.mifos.connector.common.ams.dto.InteropIdentifierType.MSISDN;
@@ -69,7 +70,7 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
         from("rest:GET:/switch/parties/{"+PARTY_ID_TYPE+"}/{"+PARTY_ID+"}")
                 .log(LoggingLevel.WARN, "## SWITCH -> PAYEE inbound GET parties - STEP 2")
                 .process(e ->
-                        zeebeProcessStarter.startZeebeWorkflow(partyLookupFlow, null, variables -> {
+                        zeebeProcessStarter.startZeebeWorkflow(partyLookupFlow, variables -> {
                                 camelHeadersToZeebeVariables(e, variables,
                                         PARTY_ID_TYPE,
                                         PARTY_ID,
@@ -121,14 +122,15 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                 .id("send-party-lookup")
                 .log(LoggingLevel.INFO, "######## PAYER -> SWITCH - party lookup request - STEP 1")
                 .process(e -> {
-                    TransactionChannelRequestDTO channelRequest = objectMapper.readValue(e.getProperty(TRANSACTION_REQUEST, String.class), TransactionChannelRequestDTO.class);
-                    PartyIdInfo payeePartyIdInfo = channelRequest.getPayee().getPartyIdInfo();
-                    e.setProperty(PARTY_ID_TYPE, payeePartyIdInfo.getPartyIdType());
-                    e.setProperty(PARTY_ID, payeePartyIdInfo.getPartyIdentifier());
+                    TransactionChannelRequestDTO channelRequest = objectMapper.readValue(e.getProperty(CHANNEL_REQUEST, String.class), TransactionChannelRequestDTO.class);
+                    PartyIdInfo requestedParty = e.getProperty(IS_RTP_REQUEST, Boolean.class) ? channelRequest.getPayer().getPartyIdInfo() : channelRequest.getPayee().getPartyIdInfo();
+                    PartyIdInfo requestingParty = e.getProperty(IS_RTP_REQUEST, Boolean.class) ? channelRequest.getPayee().getPartyIdInfo() : channelRequest.getPayer().getPartyIdInfo();
 
-                    PartyIdInfo payerParty = channelRequest.getPayer().getPartyIdInfo();
-                    String payerFspId = partyProperties.getParty(payerParty.getPartyIdType().name(), payerParty.getPartyIdentifier()).getFspId();
-                    e.getIn().setHeader(FSPIOP_SOURCE.headerName(), payerFspId);
+                    e.setProperty(PARTY_ID_TYPE, requestedParty.getPartyIdType());
+                    e.setProperty(PARTY_ID, requestedParty.getPartyIdentifier());
+
+                    String requestingFspId = partyProperties.getParty(requestingParty.getPartyIdType().name(), requestingParty.getPartyIdentifier()).getFspId();
+                    e.getIn().setHeader(FSPIOP_SOURCE.headerName(), requestingFspId);
 
                     mojaloopUtil.setPartyHeadersRequest(e);
                 })

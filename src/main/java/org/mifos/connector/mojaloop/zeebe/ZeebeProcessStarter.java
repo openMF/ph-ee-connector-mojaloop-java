@@ -22,11 +22,8 @@ public class ZeebeProcessStarter {
     @Autowired
     private ZeebeClient zeebeClient;
 
-    public void startZeebeWorkflow(String workflowId, String request, Consumer<Map<String, Object>> variablesLambda) {
+    public void startZeebeWorkflow(String workflowId, Consumer<Map<String, Object>> variablesLambda) {
         Map<String, Object> variables = new HashMap<>();
-        if(request != null) {
-            variables.put(CamelProperties.TRANSACTION_REQUEST, request);
-        }
         variables.put(CamelProperties.ORIGIN_DATE, Instant.now().toEpochMilli());
         variablesLambda.accept(variables);
 

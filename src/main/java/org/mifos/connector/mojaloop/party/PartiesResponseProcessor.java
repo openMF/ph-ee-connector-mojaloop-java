@@ -13,9 +13,9 @@ import java.util.Map;
 
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.CACHED_TRANSACTION_ID;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.ERROR_INFORMATION;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PAYEE_FSP_ID;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PARTY_LOOKUP_FSP_ID;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeExpressionVariables.PARTY_LOOKUP_FAILED;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeMessages.PAYEE_USER_LOOKUP;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeMessages.PARTY_LOOKUP;
 
 @Component
 public class PartiesResponseProcessor implements Processor {
@@ -32,11 +32,11 @@ public class PartiesResponseProcessor implements Processor {
             variables.put(PARTY_LOOKUP_FAILED, true);
         } else {
             PartySwitchResponseDTO response = exchange.getIn().getBody(PartySwitchResponseDTO.class);
-            variables.put(PAYEE_FSP_ID, response.getParty().getPartyIdInfo().getFspId());
+            variables.put(PARTY_LOOKUP_FSP_ID, response.getParty().getPartyIdInfo().getFspId());
         }
 
         zeebeClient.newPublishMessageCommand()
-                .messageName(PAYEE_USER_LOOKUP)
+                .messageName(PARTY_LOOKUP)
                 .correlationKey(exchange.getProperty(CACHED_TRANSACTION_ID, String.class))
                 .timeToLive(Duration.ofMillis(30000))
                 .variables(variables)
