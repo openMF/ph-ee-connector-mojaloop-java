@@ -7,6 +7,8 @@ import org.apache.camel.Exchange;
 import org.apache.camel.Processor;
 import org.mifos.connector.mojaloop.ilp.IlpBuilder;
 import org.mifos.connector.common.mojaloop.dto.QuoteSwitchResponseDTO;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -22,6 +24,8 @@ import static org.mifos.connector.mojaloop.zeebe.ZeebeMessages.QUOTE;
 
 @Component
 public class QuoteResponseProcessor implements Processor {
+
+    private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
     private ZeebeClient zeebeClient;
@@ -43,9 +47,11 @@ public class QuoteResponseProcessor implements Processor {
         } else {
             QuoteSwitchResponseDTO response = exchange.getIn().getBody(QuoteSwitchResponseDTO.class);
             if (!ilpBuilder.isValidPacketAgainstCondition(response.getIlpPacket(), response.getCondition())) {
-                throw new RuntimeException("Invalid ILP packet!");
+                logger.error("Invalid ILP packet for quote: {}", exchange.getIn().getHeader(QUOTE_ID));
+                variables.put(QUOTE_FAILED, true);
             }
             variables.put(PAYEE_QUOTE_RESPONSE, objectMapper.writeValueAsString(response));
+            variables.put(QUOTE_FAILED, false);
         }
 
         zeebeClient.newPublishMessageCommand()

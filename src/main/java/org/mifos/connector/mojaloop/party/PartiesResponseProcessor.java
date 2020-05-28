@@ -33,6 +33,7 @@ public class PartiesResponseProcessor implements Processor {
         } else {
             PartySwitchResponseDTO response = exchange.getIn().getBody(PartySwitchResponseDTO.class);
             variables.put(PARTY_LOOKUP_FSP_ID, response.getParty().getPartyIdInfo().getFspId());
+            variables.put(PARTY_LOOKUP_FAILED, false);
         }
 
         zeebeClient.newPublishMessageCommand()

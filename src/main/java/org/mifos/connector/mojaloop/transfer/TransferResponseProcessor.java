@@ -33,6 +33,7 @@ public class TransferResponseProcessor implements Processor {
             variables.put(TRANSFER_FAILED, true);
         } else {
             variables.put(TRANSFER_STATE, exchange.getIn().getBody(TransferSwitchResponseDTO.class).getTransferState().name());
+            variables.put(TRANSFER_FAILED, false);
         }
 
         zeebeClient.newPublishMessageCommand()
