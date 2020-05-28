@@ -6,6 +6,8 @@ import org.apache.camel.Processor;
 import org.mifos.connector.common.util.ContextUtil;
 import org.springframework.stereotype.Component;
 
+import java.util.Base64;
+
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.ORIGIN_DATE;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TRANSACTION_ID;
 
@@ -28,7 +30,7 @@ public class AddTraceHeaderProcessor implements Processor {
         String traceParent = String.join("-", "00", transactionIdTrimed, transactionIdKey, "01");
 
         exchange.getIn().setHeader("traceparent", traceParent);
-        exchange.getIn().setHeader("tracestate", "ph=" + transactionIdKey);
+        exchange.getIn().setHeader("tracestate", "ph=" + Base64.getEncoder().encodeToString(transactionIdKey.getBytes()));
         exchange.getIn().setHeader("Date",
                 ContextUtil.formatToDateHeader(exchange.getProperty(ORIGIN_DATE, Long.class)));
     }
