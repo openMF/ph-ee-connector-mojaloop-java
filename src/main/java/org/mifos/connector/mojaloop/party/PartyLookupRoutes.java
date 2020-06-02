@@ -106,7 +106,7 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                     mojaloopUtil.setPartyHeadersResponse(exchange);
                 })
                 .process(pojoToString)
-                .toD("rest:PUT:/parties/${exchangeProperty."+PARTY_ID_TYPE+"}/${exchangeProperty."+PARTY_ID+"}?host={{switch.host}}");
+                .toD("rest:PUT:/parties/${exchangeProperty."+PARTY_ID_TYPE+"}/${exchangeProperty."+PARTY_ID+"}?host={{switch.als-host}}");
 
         from("direct:send-parties-error-response")
                 .id("send-parties-error-response")
@@ -116,7 +116,7 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                     exchange.getIn().setBody(exchange.getProperty(ERROR_INFORMATION));
                     mojaloopUtil.setPartyHeadersResponse(exchange);
                 })
-                .toD("rest:PUT:/parties/${exchangeProperty."+PARTY_ID_TYPE+"}/${exchangeProperty."+PARTY_ID+"}/error?host={{switch.host}}");
+                .toD("rest:PUT:/parties/${exchangeProperty."+PARTY_ID_TYPE+"}/${exchangeProperty."+PARTY_ID+"}/error?host={{switch.als-host}}");
 
         from("direct:send-party-lookup")
                 .id("send-party-lookup")
@@ -135,6 +135,6 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                     mojaloopUtil.setPartyHeadersRequest(e);
                 })
                 .process(addTraceHeaderProcessor)
-                .toD("rest:GET:/parties/${exchangeProperty." + PARTY_ID_TYPE + "}/${exchangeProperty." + PARTY_ID + "}?host={{switch.host}}");
+                .toD("rest:GET:/parties/${exchangeProperty." + PARTY_ID_TYPE + "}/${exchangeProperty." + PARTY_ID + "}?host={{switch.als-host}}");
     }
 }

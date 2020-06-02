@@ -14,7 +14,7 @@ public class CamelProperties {
     public static final String PARTY_LOOKUP_FSP_ID = "partyLookupFspId";
     public static final String PAYEE_PARTY_RESPONSE = "payeePartyResponse";
     public static final String PAYEE_QUOTE_RESPONSE = "payeeQuoteResponse";
-    public static final String PAYER_FSP_ID = "payerFspId";
+    public static final String INITIATOR_FSP_ID = "initiatorFspId";
     public static final String SWITCH_TRANSFER_REQUEST = "switchTransferRequest";
     public static final String TENANT_ID = "tenantId";
     public static final String TRANSACTION_ID = "transactionId";

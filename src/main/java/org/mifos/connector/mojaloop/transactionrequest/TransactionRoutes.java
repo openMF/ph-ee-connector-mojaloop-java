@@ -104,7 +104,7 @@ public class TransactionRoutes extends ErrorHandlerRouteBuilder {
                 })
                 .process(pojoToString)
                 .process(addTraceHeaderProcessor)
-                .toD("rest:POST:/transactionRequests?host={{switch.host}}");
+                .toD("rest:POST:/transactionRequests?host={{switch.transactions-host}}");
 
         from("rest:POST:/switch/transactionRequests")
                 .log(LoggingLevel.INFO, "######## SWITCH -> PAYER - incoming transactionRequest - STEP 2")
@@ -152,7 +152,7 @@ public class TransactionRoutes extends ErrorHandlerRouteBuilder {
                     mojaloopUtil.setTransactionRequestHeadersResponse(e);
                 })
                 .process(pojoToString)
-                .toD("rest:PUT:/transactionRequests/${exchangeProperty." + TRANSACTION_ID + "}?host={{switch.host}}");
+                .toD("rest:PUT:/transactionRequests/${exchangeProperty." + TRANSACTION_ID + "}?host={{switch.transactions-host}}");
 
         from("rest:PUT:/switch/transactionRequests/{" + TRANSACTION_ID + "}")
                 .log(LoggingLevel.INFO, "######## SWITCH -> PAYEE - response for transactionRequest - STEP 4")
@@ -169,7 +169,7 @@ public class TransactionRoutes extends ErrorHandlerRouteBuilder {
                 .log(LoggingLevel.INFO, "######## PAYER -> SWITCH - authorizations request - STEP 1")
                 .process(e -> {
                 })
-                .toD("rest:GET:/authorizations/${exchangeProperty." + TRANSACTION_ID + "}?host={{switch.host}}");
+                .toD("rest:GET:/authorizations/${exchangeProperty." + TRANSACTION_ID + "}?host={{switch.transactions-host}}");
 
         from("rest:GET:/switch/authorizations/{" + TRANSACTION_ID + "}")
                 .log(LoggingLevel.INFO, "######## SWITCH -> PAYEE - authorizations request - STEP 2")
@@ -180,7 +180,7 @@ public class TransactionRoutes extends ErrorHandlerRouteBuilder {
                 .log(LoggingLevel.INFO, "######## PAYEE -> SWITCH - authorizations request - STEP 3")
                 .process(e -> {
                 })
-                .toD("rest:PUT:/authorizations/${exchangeProperty." + TRANSACTION_ID + "}?host={{switch.host}}");
+                .toD("rest:PUT:/authorizations/${exchangeProperty." + TRANSACTION_ID + "}?host={{switch.transactions-host}}");
 
         from("rest:PUT:/switch/authorizations/{" + TRANSACTION_ID + "}")
                 .log(LoggingLevel.INFO, "######## SWITCH -> PAYER - response for authorizations - STEP 4")

@@ -117,7 +117,7 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                     e.getIn().setBody(e.getProperty(ERROR_INFORMATION));
                     e.setProperty(QUOTE_ID, request.getQuoteId());
                 })
-                .toD("rest:PUT:/quotes/${exchangeProperty."+QUOTE_ID+"}/error?host={{switch.host}}");
+                .toD("rest:PUT:/quotes/${exchangeProperty."+QUOTE_ID+"}/error?host={{switch.quotes-host}}");
 
         from("direct:send-quote-to-switch")
                 .id("send-quote-to-switch")
@@ -160,7 +160,7 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                     mojaloopUtil.setQuoteHeadersResponse(exchange, request);
                 })
                 .process(pojoToString)
-                .toD("rest:PUT:/quotes/${exchangeProperty."+QUOTE_ID+"}?host={{switch.host}}");
+                .toD("rest:PUT:/quotes/${exchangeProperty."+QUOTE_ID+"}?host={{switch.quotes-host}}");
 
         from("direct:send-quote")
                 .id("send-quote")
@@ -209,6 +209,6 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                 })
                 .process(pojoToString)
                 .process(addTraceHeaderProcessor)
-                .toD("rest:POST:/quotes?host={{switch.host}}");
+                .toD("rest:POST:/quotes?host={{switch.quotes-host}}");
     }
 }

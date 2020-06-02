@@ -7,6 +7,8 @@ import org.apache.camel.Exchange;
 import org.apache.camel.ProducerTemplate;
 import org.apache.camel.support.DefaultExchange;
 import org.mifos.connector.common.channel.dto.TransactionChannelRequestDTO;
+import org.mifos.connector.common.mojaloop.dto.Party;
+import org.mifos.connector.common.mojaloop.dto.PartyIdInfo;
 import org.mifos.connector.mojaloop.properties.PartyProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +25,7 @@ import static org.mifos.connector.mojaloop.camel.config.CamelProperties.ERROR_IN
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.IS_RTP_REQUEST;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.ORIGIN_DATE;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PAYEE_PARTY_RESPONSE;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PAYER_FSP_ID;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.INITIATOR_FSP_ID;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.QUOTE_SWITCH_REQUEST;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TRANSACTION_ID;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.CHANNEL_REQUEST;
@@ -74,16 +76,16 @@ public class PartyLookupWorkers {
                         Object channelRequest = variables.get(CHANNEL_REQUEST);
                         exchange.setProperty(CHANNEL_REQUEST, channelRequest);
                         exchange.setProperty(ORIGIN_DATE, variables.get(ORIGIN_DATE));
-                        exchange.setProperty(IS_RTP_REQUEST, variables.get(IS_RTP_REQUEST));
+                        boolean isTransactionRequest = (boolean) variables.get(IS_RTP_REQUEST);
+                        exchange.setProperty(IS_RTP_REQUEST, isTransactionRequest);
                         producerTemplate.send("direct:send-party-lookup", exchange);
 
                         // only saved for operations to identify workflow
-                        if (variables.get(PAYER_FSP_ID) == null) {
+                        if (variables.get(INITIATOR_FSP_ID) == null) {
                             TransactionChannelRequestDTO channelRequestObject = objectMapper.readValue((String) channelRequest, TransactionChannelRequestDTO.class);
-                            String payerFspId = partyProperties.getParty(channelRequestObject.getPayer().getPartyIdInfo().getPartyIdType().name(),
-                                    channelRequestObject.getPayer().getPartyIdInfo().getPartyIdentifier())
-                                    .getFspId();
-                            variables.put(PAYER_FSP_ID, payerFspId);
+                            PartyIdInfo initiatorParty = isTransactionRequest ? channelRequestObject.getPayee().getPartyIdInfo() : channelRequestObject.getPayer().getPartyIdInfo();
+                            String initiatorFspId = partyProperties.getParty(initiatorParty.getPartyIdType().name(), initiatorParty.getPartyIdentifier()).getFspId();
+                            variables.put(INITIATOR_FSP_ID, initiatorFspId);
                         }
 
                         client.newCompleteCommand(job.getKey())

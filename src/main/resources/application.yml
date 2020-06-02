@@ -24,10 +24,13 @@ connector:
   ilp-secret: h4on38bsDjKiat2783gnklgafikmeuu5123kpobb7jm99
 
 switch:
-  host: http://40.114.81.46
+  quotes-host: http://40.114.81.46
   quote-service: quoting-service.local
+  als-host: http://40.114.81.46
   account-lookup-service: account-lookup-service.local
+  transfers-host: http://40.114.81.46
   transfer-service: ml-api-adapter.local
+  transactions-host: http://40.114.81.46
   transaction-request-service: transaction-request-service.local
 
 dfspids: "DFSPID"
