@@ -12,11 +12,11 @@
         </encoder>
     </appender>
 
-<!--    <logger name="org" level="INFO"/>-->
-<!--    <logger name="io" level="DEBUG"/>-->
+    <logger name="org" level="INFO"/>
+    <logger name="io" level="INFO"/>
 <!--    <logger name="io.zeebe.client.job.poller" level="TRACE"/>-->
 <!--    <logger name="hu.dpc" level="TRACE"/>-->
-<!--    <logger name="org.apache.camel.component.undertow" level="TRACE"/>-->
+<!--    <logger name="org.eclipse" level="TRACE"/>-->
 
     <root level="DEBUG">
         <appender-ref ref="CONSOLE"/>
