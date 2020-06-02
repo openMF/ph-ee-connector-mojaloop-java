@@ -7,6 +7,7 @@ import org.apache.camel.Exchange;
 import org.apache.camel.ProducerTemplate;
 import org.apache.camel.support.DefaultExchange;
 import org.mifos.connector.common.channel.dto.TransactionChannelRequestDTO;
+import org.mifos.connector.mojaloop.zeebe.ZeebeProcessStarter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -137,6 +138,12 @@ public class TransactionWorkers {
                         exchange.setProperty(TRANSACTION_STATE, existingVariables.get(TRANSACTION_STATE));
                         exchange.setProperty(FSPIOP_SOURCE.headerName(), channelRequest.getPayer().getPartyIdInfo().getFspId());
                         exchange.setProperty(FSPIOP_DESTINATION.headerName(), channelRequest.getPayee().getPartyIdInfo().getFspId());
+
+                        ZeebeProcessStarter.zeebeVariablesToCamelHeaders(existingVariables, exchange,
+                                "Date",
+                                "traceparent"
+                        );
+
                         producerTemplate.send("direct:send-transaction-state", exchange);
 
                         client.newCompleteCommand(job.getKey())
