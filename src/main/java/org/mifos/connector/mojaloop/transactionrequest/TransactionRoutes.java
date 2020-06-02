@@ -8,7 +8,6 @@ import org.mifos.connector.common.camel.ErrorHandlerRouteBuilder;
 import org.mifos.connector.common.channel.dto.TransactionChannelRequestDTO;
 import org.mifos.connector.common.mojaloop.dto.Party;
 import org.mifos.connector.common.mojaloop.dto.PartyIdInfo;
-import org.mifos.connector.common.mojaloop.dto.PartySwitchResponseDTO;
 import org.mifos.connector.common.mojaloop.dto.TransactionRequestSwitchRequestDTO;
 import org.mifos.connector.common.mojaloop.dto.TransactionRequestSwitchResponseDTO;
 import org.mifos.connector.common.mojaloop.dto.TransactionType;
@@ -156,7 +155,7 @@ public class TransactionRoutes extends ErrorHandlerRouteBuilder {
 
         from("rest:PUT:/switch/transactionRequests/{" + TRANSACTION_ID + "}")
                 .log(LoggingLevel.INFO, "######## SWITCH -> PAYEE - response for transactionRequest - STEP 4")
-                .unmarshal().json(JsonLibrary.Jackson, PartySwitchResponseDTO.class)
+                .unmarshal().json(JsonLibrary.Jackson, TransactionRequestSwitchResponseDTO.class)
                 .process(transactionResponseProcessor);
 
         from("rest:PUT:/switch/transactionRequests/{" + TRANSACTION_ID + "}/error")
