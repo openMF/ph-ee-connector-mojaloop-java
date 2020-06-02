@@ -68,6 +68,7 @@ public class TransactionWorkers {
                         Exchange exchange = new DefaultExchange(camelContext);
                         exchange.setProperty(TRANSACTION_ID, existingVariables.get(TRANSACTION_ID));
                         exchange.setProperty(PARTY_LOOKUP_FSP_ID, existingVariables.get(PARTY_LOOKUP_FSP_ID));
+                        exchange.setProperty(CHANNEL_REQUEST, existingVariables.get(CHANNEL_REQUEST));
                         producerTemplate.send("direct:send-transaction-request", exchange);
 
                         client.newCompleteCommand(job.getKey())
