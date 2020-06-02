@@ -77,7 +77,7 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
     @Override
     public void configure() {
         from("rest:POST:/switch/quotes")
-                .log(LoggingLevel.WARN, "######## SWITCH -> PAYEE - forward quote request - STEP 2")
+                .log(LoggingLevel.INFO, "######## SWITCH -> PAYEE - forward quote request - STEP 2")
                 .setProperty(QUOTE_SWITCH_REQUEST, bodyAs(String.class))
                 .unmarshal().json(JsonLibrary.Jackson, QuoteSwitchRequestDTO.class)
                 .process(exchange -> {
@@ -99,7 +99,7 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                 );
 
         from("rest:PUT:/switch/quotes/{"+QUOTE_ID+"}")
-                .log(LoggingLevel.WARN, "######## SWITCH -> PAYER - response for quote request - STEP 3")
+                .log(LoggingLevel.INFO, "######## SWITCH -> PAYER - response for quote request - STEP 4")
                 .unmarshal().json(JsonLibrary.Jackson, QuoteSwitchResponseDTO.class)
                 .process(quoteResponseProcessor);
 
@@ -121,6 +121,7 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
 
         from("direct:send-quote-to-switch")
                 .id("send-quote-to-switch")
+                .log(LoggingLevel.INFO, "######## PAYEE -> SWITCH - response for quote request - STEP 3")
                 .unmarshal().json(JsonLibrary.Jackson, QuoteSwitchRequestDTO.class)
                 .process(exchange -> {
                     QuoteSwitchRequestDTO request = exchange.getIn().getBody(QuoteSwitchRequestDTO.class);

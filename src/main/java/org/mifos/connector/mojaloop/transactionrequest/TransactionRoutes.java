@@ -115,6 +115,7 @@ public class TransactionRoutes extends ErrorHandlerRouteBuilder {
                                     TransactionRequestSwitchRequestDTO transactionRequest = exchange.getIn().getBody(TransactionRequestSwitchRequestDTO.class);
                                     variables.put(TRANSACTION_ID, transactionRequest.getTransactionRequestId());
                                     variables.put(TRANSACTION_REQUEST, exchange.getProperty(TRANSACTION_REQUEST));
+                                    variables.put(PARTY_LOOKUP_FSP_ID, transactionRequest.getPayee().getPartyIdInfo().getFspId());
                                     variables.put(IS_AUTHORISATION_REQUIRED, false);
 
                                     TransactionChannelRequestDTO channelRequest = new TransactionChannelRequestDTO();
