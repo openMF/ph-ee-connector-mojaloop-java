@@ -101,8 +101,8 @@ public class MojaloopUtil {
         Map<String, Object> headers = new HashMap<>();
         headers.put(FSPIOP_SOURCE.headerName(), e.getProperty(FSPIOP_SOURCE.headerName()));
         headers.put(FSPIOP_DESTINATION.headerName(), e.getProperty(FSPIOP_DESTINATION.headerName()));
-        headers.put("Content-Type", TRANSFERS_CONTENT_TYPE.headerValue());
-        headers.put("Accept", TRANSFERS_ACCEPT_TYPE.headerValue());
+        headers.put("Content-Type", TRANSACTIONS_CONTENT_TYPE.headerValue());
+        headers.put("Accept", TRANSACTIONS_ACCEPT_TYPE.headerValue());
         headers.put("Host", transactionRequestService);
         setResponseTraceHeaders(e, headers);
         finalizeHeaders(e, headers);
