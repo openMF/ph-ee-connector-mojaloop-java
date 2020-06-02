@@ -1,6 +1,7 @@
 package org.mifos.connector.mojaloop.zeebe;
 
 import io.zeebe.client.ZeebeClient;
+import org.mifos.connector.common.mojaloop.type.TransactionRequestState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +15,9 @@ import java.util.List;
 import java.util.Map;
 
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TRANSACTION_ID;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeExpressionVariables.AUTH_VALIDATION_SUCCESS;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeExpressionVariables.PAYER_CONFIRMED;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeExpressionVariables.TRANSACTION_STATE;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeMessages.ACCEPT_QUOTE;
 
 
@@ -58,6 +61,9 @@ public class ZeebeeWorkers {
                         logger.info("Job '{}' started from process '{}' with key {}", job.getType(), job.getBpmnProcessId(), job.getKey());
                         Map<String, Object> variables = new HashMap<>();
                         variables.put(PAYER_CONFIRMED, true);
+                        // TODO these should be somewhere else
+                        variables.put(AUTH_VALIDATION_SUCCESS, true);
+                        variables.put(TRANSACTION_STATE, TransactionRequestState.ACCEPTED.name());
 
                         // TODO sum local and payee quote and send to customer
 
