@@ -76,7 +76,7 @@ public class TransactionRoutes extends ErrorHandlerRouteBuilder {
     public void configure() {
         from("direct:send-transaction-request")
                 .id("send-transaction-request")
-                .log(LoggingLevel.INFO, "######## PAYEE -> SWITCH - transactionRequest request - STEP 1")
+                .log(LoggingLevel.INFO, "######## PAYEE -> SWITCH - transactionRequest request ${exchangeProperty."+TRANSACTION_ID+"} - STEP 1")
                 .process(e -> {
                     TransactionChannelRequestDTO channelRequest = objectMapper.readValue(e.getProperty(CHANNEL_REQUEST, String.class), TransactionChannelRequestDTO.class);
                     PartyIdInfo payeeParty = channelRequest.getPayee().getPartyIdInfo();
@@ -106,9 +106,9 @@ public class TransactionRoutes extends ErrorHandlerRouteBuilder {
                 .toD("rest:POST:/transactionRequests?host={{switch.transactions-host}}");
 
         from("rest:POST:/switch/transactionRequests")
-                .log(LoggingLevel.INFO, "######## SWITCH -> PAYER - incoming transactionRequest - STEP 2")
                 .setProperty(TRANSACTION_REQUEST, bodyAs(String.class))
                 .unmarshal().json(JsonLibrary.Jackson, TransactionRequestSwitchRequestDTO.class)
+                .log(LoggingLevel.INFO, "######## SWITCH -> PAYER - incoming transactionRequest ${body.transactionRequestId} - STEP 2")
                 .process(exchange -> {
                             zeebeProcessStarter.startZeebeWorkflow(transactionRequestFlow, variables -> {
                                 try {
@@ -142,7 +142,7 @@ public class TransactionRoutes extends ErrorHandlerRouteBuilder {
                 );
 
         from("direct:send-transaction-state")
-                .log(LoggingLevel.INFO, "######## PAYER -> SWITCH - transactionState response - STEP 3")
+                .log(LoggingLevel.INFO, "######## PAYER -> SWITCH - transactionState response ${exchangeProperty."+TRANSACTION_ID+"} - STEP 3")
                 .process(e -> {
                     TransactionRequestSwitchResponseDTO response = new TransactionRequestSwitchResponseDTO();
                     response.setTransactionId(e.getProperty(TRANSACTION_ID, String.class));
@@ -155,12 +155,12 @@ public class TransactionRoutes extends ErrorHandlerRouteBuilder {
                 .toD("rest:PUT:/transactionRequests/${exchangeProperty." + TRANSACTION_ID + "}?host={{switch.transactions-host}}");
 
         from("rest:PUT:/switch/transactionRequests/{" + TRANSACTION_ID + "}")
-                .log(LoggingLevel.INFO, "######## SWITCH -> PAYEE - response for transactionRequest - STEP 4")
+                .log(LoggingLevel.INFO, "######## SWITCH -> PAYEE - response for transactionRequest ${header."+TRANSACTION_ID+"} - STEP 4")
                 .unmarshal().json(JsonLibrary.Jackson, TransactionRequestSwitchResponseDTO.class)
                 .process(transactionResponseProcessor);
 
         from("rest:PUT:/switch/transactionRequests/{" + TRANSACTION_ID + "}/error")
-                .log(LoggingLevel.INFO, "######## SWITCH error with transactionRequest")
+                .log(LoggingLevel.INFO, "######## SWITCH error with transactionRequest ${header."+TRANSACTION_ID+"}")
                 .setProperty(TRANSACTION_REQUEST_FAILED, constant(true))
                 .process(transactionResponseProcessor);
 
