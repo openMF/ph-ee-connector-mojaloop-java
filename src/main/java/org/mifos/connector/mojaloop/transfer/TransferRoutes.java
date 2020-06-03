@@ -62,7 +62,6 @@ public class TransferRoutes extends ErrorHandlerRouteBuilder {
     @Override
     public void configure() {
         from("rest:POST:/switch/transfers")
-                .log(LoggingLevel.WARN, "######## SWITCH -> PAYEE - forward transfer request - STEP 2")
                 .setProperty(SWITCH_TRANSFER_REQUEST, bodyAs(String.class))
                 .unmarshal().json(JsonLibrary.Jackson, TransferSwitchRequestDTO.class)
                 .process(exchange -> {
@@ -71,7 +70,9 @@ public class TransferRoutes extends ErrorHandlerRouteBuilder {
 
                     Map<String, Object> variables = new HashMap<>();
                     variables.put(SWITCH_TRANSFER_REQUEST, exchange.getProperty(SWITCH_TRANSFER_REQUEST));
-                    variables.put(TRANSACTION_ID, ilp.getTransaction().getTransactionId());
+                    String transactionId = ilp.getTransaction().getTransactionId();
+                    exchange.setProperty(TRANSACTION_ID, transactionId);
+                    variables.put(TRANSACTION_ID, transactionId);
                     variables.put(FSPIOP_SOURCE.headerName(), request.getPayeeFsp());
                     variables.put(FSPIOP_DESTINATION.headerName(), request.getPayerFsp());
                     variables.put("Date", exchange.getIn().getHeader("Date"));
@@ -79,20 +80,21 @@ public class TransferRoutes extends ErrorHandlerRouteBuilder {
 
                     zeebeClient.newPublishMessageCommand()
                             .messageName(TRANSFER_MESSAGE)
-                            .correlationKey(ilp.getTransaction().getTransactionId())
+                            .correlationKey(transactionId)
                             .variables(variables)
                             .send()
                             .join();
-                });
+                })
+                .log(LoggingLevel.INFO, "######## SWITCH -> PAYEE - forward transfer request ${exchangeProperty."+TRANSACTION_ID+"} - STEP 2");
 
-        from("rest:PUT:/switch/transfers/{tid}")
-                .log(LoggingLevel.WARN, "######## SWITCH -> PAYER - response for transfer request - STEP 3")
+        from("rest:PUT:/switch/transfers/{"+TRANSACTION_ID+"}")
+                .log(LoggingLevel.INFO, "######## SWITCH -> PAYER - response for transfer request ${header."+TRANSACTION_ID+"} - STEP 4")
                 .unmarshal().json(JsonLibrary.Jackson, TransferSwitchResponseDTO.class)
                 .process(getCachedTransactionIdProcessor)
                 .process(transferResponseProcessor);
 
-        from("rest:PUT:/switch/transfers/{tid}/error")
-                .log(LoggingLevel.ERROR, "######## SWITCH -> PAYER - transfer error")
+        from("rest:PUT:/switch/transfers/{"+TRANSACTION_ID+"}/error")
+                .log(LoggingLevel.ERROR, "######## SWITCH -> PAYER - transfer error ${header."+TRANSACTION_ID+"}")
                 .process(getCachedTransactionIdProcessor)
                 .setProperty(TRANSFER_FAILED, constant(true))
                 .process(transferResponseProcessor);
@@ -108,6 +110,7 @@ public class TransferRoutes extends ErrorHandlerRouteBuilder {
                 .toD("rest:PUT:/transfers/${exchangeProperty."+TRANSACTION_ID+"}/error?host={{switch.transfers-host}}");
 
         from("direct:send-transfer-to-switch")
+                .log(LoggingLevel.INFO, "######## PAYEE -> SWITCH - transfer response ${exchangeProperty."+TRANSACTION_ID+"} - STEP 3")
                 .unmarshal().json(JsonLibrary.Jackson, TransferSwitchRequestDTO.class)
                 .process(exchange -> {
                     TransferSwitchRequestDTO request = exchange.getIn().getBody(TransferSwitchRequestDTO.class);
@@ -127,7 +130,7 @@ public class TransferRoutes extends ErrorHandlerRouteBuilder {
 
         from("direct:send-transfer")
                 .id("send-transfer")
-                .log(LoggingLevel.INFO, "######## PAYER -> SWITCH - transfer request - STEP 1")
+                .log(LoggingLevel.INFO, "######## PAYER -> SWITCH - transfer request ${exchangeProperty."+TRANSACTION_ID+"} - STEP 1")
                 .unmarshal().json(JsonLibrary.Jackson, QuoteSwitchResponseDTO.class)
                 .process(exchange -> {
                     QuoteSwitchResponseDTO quoteResponse = exchange.getIn().getBody(QuoteSwitchResponseDTO.class);
