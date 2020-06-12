@@ -11,6 +11,7 @@ import org.mifos.connector.common.mojaloop.dto.PartyIdInfo;
 import org.mifos.connector.common.mojaloop.dto.TransactionRequestSwitchRequestDTO;
 import org.mifos.connector.common.mojaloop.dto.TransactionRequestSwitchResponseDTO;
 import org.mifos.connector.common.mojaloop.dto.TransactionType;
+import org.mifos.connector.common.mojaloop.type.AuthenticationType;
 import org.mifos.connector.common.mojaloop.type.InitiatorType;
 import org.mifos.connector.common.mojaloop.type.Scenario;
 import org.mifos.connector.common.mojaloop.type.TransactionRequestState;
@@ -28,7 +29,10 @@ import org.springframework.stereotype.Component;
 
 import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_DESTINATION;
 import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.AUTH_TYPE;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.CHANNEL_REQUEST;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PARTY_ID;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PARTY_ID_TYPE;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PARTY_LOOKUP_FSP_ID;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TRANSACTION_ID;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TRANSACTION_REQUEST;
@@ -76,7 +80,7 @@ public class TransactionRoutes extends ErrorHandlerRouteBuilder {
     public void configure() {
         from("direct:send-transaction-request")
                 .id("send-transaction-request")
-                .log(LoggingLevel.INFO, "######## PAYEE -> SWITCH - transactionRequest request ${exchangeProperty."+TRANSACTION_ID+"} - STEP 1")
+                .log(LoggingLevel.INFO, "######## PAYEE -> SWITCH - transactionRequest request ${exchangeProperty." + TRANSACTION_ID + "} - STEP 1")
                 .process(e -> {
                     TransactionChannelRequestDTO channelRequest = objectMapper.readValue(e.getProperty(CHANNEL_REQUEST, String.class), TransactionChannelRequestDTO.class);
                     PartyIdInfo payeeParty = channelRequest.getPayee().getPartyIdInfo();
@@ -95,7 +99,11 @@ public class TransactionRoutes extends ErrorHandlerRouteBuilder {
                     tr.setPayer(payerParty);
                     tr.setAmount(channelRequest.getAmount());
                     tr.setTransactionType(channelRequest.getTransactionType());
-                    //tr.setAuthenticationType(AuthenticationType.OTP); // TODO if auth enabled, not implemented under Mojaloop v8.8
+                    tr.setExtensionList(channelRequest.getExtensionList());
+                    String authType = e.getProperty(AUTH_TYPE, String.class);
+                    if (!"NONE".equals(authType)) {
+                        tr.setAuthenticationType(AuthenticationType.valueOf(authType));
+                    }
 
                     e.getIn().setBody(tr);
 
@@ -110,39 +118,43 @@ public class TransactionRoutes extends ErrorHandlerRouteBuilder {
                 .unmarshal().json(JsonLibrary.Jackson, TransactionRequestSwitchRequestDTO.class)
                 .log(LoggingLevel.INFO, "######## SWITCH -> PAYER - incoming transactionRequest ${body.transactionRequestId} - STEP 2")
                 .process(exchange -> {
-                            zeebeProcessStarter.startZeebeWorkflow(transactionRequestFlow, variables -> {
-                                try {
-                                    TransactionRequestSwitchRequestDTO transactionRequest = exchange.getIn().getBody(TransactionRequestSwitchRequestDTO.class);
-                                    variables.put(TRANSACTION_ID, transactionRequest.getTransactionRequestId());
-                                    variables.put(TRANSACTION_REQUEST, exchange.getProperty(TRANSACTION_REQUEST));
-                                    variables.put(PARTY_LOOKUP_FSP_ID, transactionRequest.getPayee().getPartyIdInfo().getFspId());
-                                    variables.put(IS_AUTHORISATION_REQUIRED, false);
+                            TransactionRequestSwitchRequestDTO transactionRequest = exchange.getIn().getBody(TransactionRequestSwitchRequestDTO.class);
+                            PartyIdInfo payer = transactionRequest.getPayer();
+                            String tenantId = partyProperties.getParty(payer.getPartyIdType().name(),
+                                    payer.getPartyIdentifier()).getTenantId();
+                            zeebeProcessStarter.startZeebeWorkflow(transactionRequestFlow.replace("{tenant}", tenantId),
+                                    variables -> {
+                                        try {
+                                            variables.put(TRANSACTION_ID, transactionRequest.getTransactionRequestId());
+                                            variables.put(TRANSACTION_REQUEST, exchange.getProperty(TRANSACTION_REQUEST));
+                                            variables.put(PARTY_LOOKUP_FSP_ID, transactionRequest.getPayee().getPartyIdInfo().getFspId());
+                                            variables.put(IS_AUTHORISATION_REQUIRED, transactionRequest.getAuthenticationType() != null);
 
-                                    TransactionChannelRequestDTO channelRequest = new TransactionChannelRequestDTO();
-                                    channelRequest.setPayer(new Party(transactionRequest.getPayer()));
-                                    channelRequest.setPayee(transactionRequest.getPayee());
-                                    TransactionType transactionType = new TransactionType();
-                                    transactionType.setInitiator(TransactionRole.PAYER);
-                                    transactionType.setScenario(Scenario.PAYMENT);
-                                    transactionType.setInitiatorType(InitiatorType.CONSUMER);
-                                    channelRequest.setTransactionType(transactionType);
-                                    channelRequest.setAmount(transactionRequest.getAmount());
-                                    variables.put(CHANNEL_REQUEST, objectMapper.writeValueAsString(channelRequest));
-                                    variables.put(TRANSACTION_STATE, TransactionRequestState.RECEIVED.name());
+                                            TransactionChannelRequestDTO channelRequest = new TransactionChannelRequestDTO();
+                                            channelRequest.setPayer(new Party(payer));
+                                            channelRequest.setPayee(transactionRequest.getPayee());
+                                            TransactionType transactionType = new TransactionType();
+                                            transactionType.setInitiator(TransactionRole.PAYER);
+                                            transactionType.setScenario(Scenario.PAYMENT);
+                                            transactionType.setInitiatorType(InitiatorType.CONSUMER);
+                                            channelRequest.setTransactionType(transactionType);
+                                            channelRequest.setAmount(transactionRequest.getAmount());
+                                            variables.put(CHANNEL_REQUEST, objectMapper.writeValueAsString(channelRequest));
+                                            variables.put(TRANSACTION_STATE, TransactionRequestState.RECEIVED.name());
 
-                                    ZeebeProcessStarter.camelHeadersToZeebeVariables(exchange, variables,
-                                            "Date",
-                                            "traceparent"
-                                    );
-                                } catch (Exception e) {
-                                    logger.error("Error when creating channelRequest for payer local quote!", e);
-                                }
-                            });
+                                            ZeebeProcessStarter.camelHeadersToZeebeVariables(exchange, variables,
+                                                    "Date",
+                                                    "traceparent"
+                                            );
+                                        } catch (Exception e) {
+                                            logger.error("Error when creating channelRequest for payer local quote!", e);
+                                        }
+                                    });
                         }
                 );
 
         from("direct:send-transaction-state")
-                .log(LoggingLevel.INFO, "######## PAYER -> SWITCH - transactionState response ${exchangeProperty."+TRANSACTION_ID+"} - STEP 3")
+                .log(LoggingLevel.INFO, "######## PAYER -> SWITCH - transactionState response ${exchangeProperty." + TRANSACTION_ID + "} - STEP 3")
                 .process(e -> {
                     TransactionRequestSwitchResponseDTO response = new TransactionRequestSwitchResponseDTO();
                     response.setTransactionId(e.getProperty(TRANSACTION_ID, String.class));
@@ -155,12 +167,12 @@ public class TransactionRoutes extends ErrorHandlerRouteBuilder {
                 .toD("rest:PUT:/transactionRequests/${exchangeProperty." + TRANSACTION_ID + "}?host={{switch.transactions-host}}");
 
         from("rest:PUT:/switch/transactionRequests/{" + TRANSACTION_ID + "}")
-                .log(LoggingLevel.INFO, "######## SWITCH -> PAYEE - response for transactionRequest ${header."+TRANSACTION_ID+"} - STEP 4")
+                .log(LoggingLevel.INFO, "######## SWITCH -> PAYEE - response for transactionRequest ${header." + TRANSACTION_ID + "} - STEP 4")
                 .unmarshal().json(JsonLibrary.Jackson, TransactionRequestSwitchResponseDTO.class)
                 .process(transactionResponseProcessor);
 
         from("rest:PUT:/switch/transactionRequests/{" + TRANSACTION_ID + "}/error")
-                .log(LoggingLevel.INFO, "######## SWITCH error with transactionRequest ${header."+TRANSACTION_ID+"}")
+                .log(LoggingLevel.INFO, "######## SWITCH error with transactionRequest ${header." + TRANSACTION_ID + "}")
                 .setProperty(TRANSACTION_REQUEST_FAILED, constant(true))
                 .process(transactionResponseProcessor);
 

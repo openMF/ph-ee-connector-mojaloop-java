@@ -5,31 +5,31 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.camel.LoggingLevel;
 import org.apache.camel.Processor;
 import org.apache.camel.model.dataformat.JsonLibrary;
-import org.mifos.connector.mojaloop.camel.trace.AddTraceHeaderProcessor;
-import org.mifos.connector.mojaloop.camel.trace.GetCachedTransactionIdProcessor;
-import org.mifos.connector.mojaloop.util.MojaloopUtil;
-import org.mifos.connector.mojaloop.properties.PartyProperties;
-import org.mifos.connector.mojaloop.zeebe.ZeebeProcessStarter;
 import org.mifos.connector.common.camel.ErrorHandlerRouteBuilder;
 import org.mifos.connector.common.channel.dto.TransactionChannelRequestDTO;
 import org.mifos.connector.common.mojaloop.dto.Party;
 import org.mifos.connector.common.mojaloop.dto.PartyIdInfo;
 import org.mifos.connector.common.mojaloop.dto.PartySwitchResponseDTO;
+import org.mifos.connector.mojaloop.camel.trace.AddTraceHeaderProcessor;
+import org.mifos.connector.mojaloop.camel.trace.GetCachedTransactionIdProcessor;
+import org.mifos.connector.mojaloop.properties.PartyProperties;
+import org.mifos.connector.mojaloop.util.MojaloopUtil;
+import org.mifos.connector.mojaloop.zeebe.ZeebeProcessStarter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import static org.mifos.connector.common.ams.dto.InteropIdentifierType.MSISDN;
+import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.CHANNEL_REQUEST;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.ERROR_INFORMATION;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.IS_RTP_REQUEST;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PARTY_ID;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PARTY_ID_TYPE;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PAYEE_PARTY_RESPONSE;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TENANT_ID;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.CHANNEL_REQUEST;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeExpressionVariables.PARTY_LOOKUP_FAILED;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeProcessStarter.camelHeadersToZeebeVariables;
-import static org.mifos.connector.common.ams.dto.InteropIdentifierType.MSISDN;
-import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
 
 @Component
 public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
@@ -67,20 +67,22 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
 
     @Override
     public void configure() {
-        from("rest:GET:/switch/parties/{"+PARTY_ID_TYPE+"}/{"+PARTY_ID+"}")
+        from("rest:GET:/switch/parties/{" + PARTY_ID_TYPE + "}/{" + PARTY_ID + "}")
                 .log(LoggingLevel.WARN, "## SWITCH -> PAYEE inbound GET parties - STEP 2")
-                .process(e ->
-                        zeebeProcessStarter.startZeebeWorkflow(partyLookupFlow, variables -> {
-                                camelHeadersToZeebeVariables(e, variables,
-                                        PARTY_ID_TYPE,
-                                        PARTY_ID,
-                                        FSPIOP_SOURCE.headerName(),
-                                        "traceparent",
-                                        "Date");
-                                variables.put(TENANT_ID, partyProperties.getParty(e.getIn().getHeader(PARTY_ID_TYPE, String.class),
-                                        e.getIn().getHeader(PARTY_ID, String.class)).getTenantId());
-                            }
-                        )
+                .process(e -> {
+                            String tenantId = partyProperties.getParty(e.getIn().getHeader(PARTY_ID_TYPE, String.class),
+                                    e.getIn().getHeader(PARTY_ID, String.class)).getTenantId();
+                            zeebeProcessStarter.startZeebeWorkflow(partyLookupFlow.replace("{tenant}", tenantId),
+                                    variables -> {
+                                        camelHeadersToZeebeVariables(e, variables,
+                                                PARTY_ID_TYPE,
+                                                PARTY_ID,
+                                                FSPIOP_SOURCE.headerName(),
+                                                "traceparent",
+                                                "Date");
+                                        variables.put(TENANT_ID, tenantId);
+                                    });
+                        }
                 );
 
         from("rest:PUT:/switch/parties/" + MSISDN + "/{partyId}")
@@ -106,7 +108,7 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                     mojaloopUtil.setPartyHeadersResponse(exchange);
                 })
                 .process(pojoToString)
-                .toD("rest:PUT:/parties/${exchangeProperty."+PARTY_ID_TYPE+"}/${exchangeProperty."+PARTY_ID+"}?host={{switch.als-host}}");
+                .toD("rest:PUT:/parties/${exchangeProperty." + PARTY_ID_TYPE + "}/${exchangeProperty." + PARTY_ID + "}?host={{switch.als-host}}");
 
         from("direct:send-parties-error-response")
                 .id("send-parties-error-response")
@@ -116,7 +118,7 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                     exchange.getIn().setBody(exchange.getProperty(ERROR_INFORMATION));
                     mojaloopUtil.setPartyHeadersResponse(exchange);
                 })
-                .toD("rest:PUT:/parties/${exchangeProperty."+PARTY_ID_TYPE+"}/${exchangeProperty."+PARTY_ID+"}/error?host={{switch.als-host}}");
+                .toD("rest:PUT:/parties/${exchangeProperty." + PARTY_ID_TYPE + "}/${exchangeProperty." + PARTY_ID + "}/error?host={{switch.als-host}}");
 
         from("direct:send-party-lookup")
                 .id("send-party-lookup")

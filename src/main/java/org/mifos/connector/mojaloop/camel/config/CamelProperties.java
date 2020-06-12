@@ -4,6 +4,7 @@ public class CamelProperties {
 
     private CamelProperties() {}
 
+    public static final String AUTH_TYPE = "authType";
     public static final String CACHED_TRANSACTION_ID = "cachedTransactionId";
     public static final String ERROR_INFORMATION = "errorInformation";
     public static final String IS_RTP_REQUEST = "isRtpRequest";

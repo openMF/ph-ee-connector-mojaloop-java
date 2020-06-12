@@ -4,11 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.camel.LoggingLevel;
 import org.apache.camel.Processor;
 import org.apache.camel.model.dataformat.JsonLibrary;
-import org.mifos.connector.mojaloop.camel.trace.AddTraceHeaderProcessor;
-import org.mifos.connector.mojaloop.ilp.IlpBuilder;
-import org.mifos.connector.mojaloop.properties.PartyProperties;
-import org.mifos.connector.mojaloop.util.MojaloopUtil;
-import org.mifos.connector.mojaloop.zeebe.ZeebeProcessStarter;
 import org.mifos.connector.common.ams.dto.QuoteFspResponseDTO;
 import org.mifos.connector.common.camel.ErrorHandlerRouteBuilder;
 import org.mifos.connector.common.channel.dto.TransactionChannelRequestDTO;
@@ -21,6 +16,11 @@ import org.mifos.connector.common.mojaloop.dto.QuoteSwitchResponseDTO;
 import org.mifos.connector.common.mojaloop.dto.TransactionType;
 import org.mifos.connector.common.mojaloop.ilp.Ilp;
 import org.mifos.connector.common.mojaloop.type.AmountType;
+import org.mifos.connector.mojaloop.camel.trace.AddTraceHeaderProcessor;
+import org.mifos.connector.mojaloop.ilp.IlpBuilder;
+import org.mifos.connector.mojaloop.properties.PartyProperties;
+import org.mifos.connector.mojaloop.util.MojaloopUtil;
+import org.mifos.connector.mojaloop.zeebe.ZeebeProcessStarter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -29,16 +29,16 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import static java.math.BigDecimal.ZERO;
+import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_DESTINATION;
+import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.CHANNEL_REQUEST;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.ERROR_INFORMATION;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.LOCAL_QUOTE_RESPONSE;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PARTY_LOOKUP_FSP_ID;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.QUOTE_ID;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.QUOTE_SWITCH_REQUEST;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TRANSACTION_ID;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.CHANNEL_REQUEST;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeExpressionVariables.QUOTE_FAILED;
-import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_DESTINATION;
-import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
 
 @Component
 public class QuoteRoutes extends ErrorHandlerRouteBuilder {
@@ -82,28 +82,32 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                 .unmarshal().json(JsonLibrary.Jackson, QuoteSwitchRequestDTO.class)
                 .process(exchange -> {
                             QuoteSwitchRequestDTO request = exchange.getIn().getBody(QuoteSwitchRequestDTO.class);
+                            PartyIdInfo payee = request.getPayee().getPartyIdInfo();
+                            String tenantId = partyProperties.getParty(payee.getPartyIdType().name(),
+                                    payee.getPartyIdentifier()).getTenantId();
 
-                            zeebeProcessStarter.startZeebeWorkflow(quoteFlow, variables -> {
-                                variables.put(QUOTE_ID, request.getQuoteId());
-                                variables.put(FSPIOP_SOURCE.headerName(), request.getPayee().getPartyIdInfo().getFspId());
-                                variables.put(FSPIOP_DESTINATION.headerName(), request.getPayer().getPartyIdInfo().getFspId());
-                                variables.put(TRANSACTION_ID, request.getTransactionId());
-                                variables.put(QUOTE_SWITCH_REQUEST, exchange.getProperty(QUOTE_SWITCH_REQUEST));
+                            zeebeProcessStarter.startZeebeWorkflow(quoteFlow.replace("{tenant}", tenantId),
+                                    variables -> {
+                                        variables.put(QUOTE_ID, request.getQuoteId());
+                                        variables.put(FSPIOP_SOURCE.headerName(), payee.getFspId());
+                                        variables.put(FSPIOP_DESTINATION.headerName(), request.getPayer().getPartyIdInfo().getFspId());
+                                        variables.put(TRANSACTION_ID, request.getTransactionId());
+                                        variables.put(QUOTE_SWITCH_REQUEST, exchange.getProperty(QUOTE_SWITCH_REQUEST));
 
-                                ZeebeProcessStarter.camelHeadersToZeebeVariables(exchange, variables,
-                                        "Date",
-                                        "traceparent"
-                                );
-                            });
+                                        ZeebeProcessStarter.camelHeadersToZeebeVariables(exchange, variables,
+                                                "Date",
+                                                "traceparent"
+                                        );
+                                    });
                         }
                 );
 
-        from("rest:PUT:/switch/quotes/{"+QUOTE_ID+"}")
+        from("rest:PUT:/switch/quotes/{" + QUOTE_ID + "}")
                 .log(LoggingLevel.INFO, "######## SWITCH -> PAYER - response for quote request - STEP 4")
                 .unmarshal().json(JsonLibrary.Jackson, QuoteSwitchResponseDTO.class)
                 .process(quoteResponseProcessor);
 
-        from("rest:PUT:/switch/quotes/{"+QUOTE_ID+"}/error")
+        from("rest:PUT:/switch/quotes/{" + QUOTE_ID + "}/error")
                 .log(LoggingLevel.ERROR, "######## SWITCH -> PAYER - quote error")
                 .setProperty(QUOTE_FAILED, constant(true))
                 .process(quoteResponseProcessor);
@@ -117,7 +121,7 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                     e.getIn().setBody(e.getProperty(ERROR_INFORMATION));
                     e.setProperty(QUOTE_ID, request.getQuoteId());
                 })
-                .toD("rest:PUT:/quotes/${exchangeProperty."+QUOTE_ID+"}/error?host={{switch.quotes-host}}");
+                .toD("rest:PUT:/quotes/${exchangeProperty." + QUOTE_ID + "}/error?host={{switch.quotes-host}}");
 
         from("direct:send-quote-to-switch")
                 .id("send-quote-to-switch")
@@ -161,7 +165,7 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                     mojaloopUtil.setQuoteHeadersResponse(exchange, request);
                 })
                 .process(pojoToString)
-                .toD("rest:PUT:/quotes/${exchangeProperty."+QUOTE_ID+"}?host={{switch.quotes-host}}");
+                .toD("rest:PUT:/quotes/${exchangeProperty." + QUOTE_ID + "}?host={{switch.quotes-host}}");
 
         from("direct:send-quote")
                 .id("send-quote")

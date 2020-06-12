@@ -8,9 +8,9 @@ camel:
 
 bpmn:
   flows:
-    party-lookup: "PayeePartyLookup-DFSPID"
-    quote: "PayeeQuoteTransfer-DFSPID"
-    transaction-request: "PayerTransactionRequest-DFSPID"
+    party-lookup: "PayeePartyLookup-{tenant}"
+    quote: "PayeeQuoteTransfer-{tenant}"
+    transaction-request: "PayerTransactionRequest-{tenant}"
 
 zeebe:
   client:

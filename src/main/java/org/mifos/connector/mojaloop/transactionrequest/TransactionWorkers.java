@@ -20,6 +20,7 @@ import java.util.Map;
 
 import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_DESTINATION;
 import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.AUTH_TYPE;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.CHANNEL_REQUEST;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.ORIGIN_DATE;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PARTY_LOOKUP_FSP_ID;
@@ -72,6 +73,7 @@ public class TransactionWorkers {
                         exchange.setProperty(PARTY_LOOKUP_FSP_ID, existingVariables.get(PARTY_LOOKUP_FSP_ID));
                         exchange.setProperty(CHANNEL_REQUEST, existingVariables.get(CHANNEL_REQUEST));
                         exchange.setProperty(ORIGIN_DATE, existingVariables.get(ORIGIN_DATE));
+                        exchange.setProperty(AUTH_TYPE, existingVariables.get(AUTH_TYPE));
                         producerTemplate.send("direct:send-transaction-request", exchange);
 
                         client.newCompleteCommand(job.getKey())
