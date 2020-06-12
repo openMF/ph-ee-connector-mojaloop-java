@@ -11,7 +11,7 @@ public class ZeebeMessages {
     public static final String PAYER_AUTH_RESPONSE = "payer-auth-response";
     public static final String PAYER_CONFIRMATION = "payer-confirmation";
     public static final String QUOTE = "quote";
-    public static final String TRANSFER_MESSAGE = "TransferMessage-DFSPID";
+    public static final String TRANSFER_MESSAGE = "transfer-message";
     public static final String TRANSFER_RESPONSE = "transfer-response";
     public static final String TRANSACTION_REQUEST = "transaction-request";
 
