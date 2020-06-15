@@ -17,7 +17,7 @@ public class ZeebeExpressionVariables {
     public static final String TIMEOUT_TRANSFER_RETRY_COUNT = "transferRetryCount";
     public static final String TRANSACTION_REQUEST_FAILED = "transactionRequestFailed";
     public static final String TRANSACTION_REQUEST_RETRY_COUNT = "transactionRequestRetryCount";
-    public static final String TRANSACTION_STATE = "transActionState";
+    public static final String TRANSACTION_STATE = "transactionState";
     public static final String TRANSFER_FAILED = "transferFailed";
     public static final String TRANSFER_STATE = "transferState";
 
