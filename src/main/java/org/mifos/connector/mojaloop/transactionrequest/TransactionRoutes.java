@@ -31,8 +31,7 @@ import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_DE
 import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.AUTH_TYPE;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.CHANNEL_REQUEST;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PARTY_ID;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PARTY_ID_TYPE;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.INITIATOR_FSP_ID;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PARTY_LOOKUP_FSP_ID;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TRANSACTION_ID;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TRANSACTION_REQUEST;
@@ -129,6 +128,7 @@ public class TransactionRoutes extends ErrorHandlerRouteBuilder {
                                             variables.put(TRANSACTION_REQUEST, exchange.getProperty(TRANSACTION_REQUEST));
                                             variables.put(PARTY_LOOKUP_FSP_ID, transactionRequest.getPayee().getPartyIdInfo().getFspId());
                                             variables.put(IS_AUTHORISATION_REQUIRED, transactionRequest.getAuthenticationType() != null);
+                                            variables.put(INITIATOR_FSP_ID, tenantId);
 
                                             TransactionChannelRequestDTO channelRequest = new TransactionChannelRequestDTO();
                                             channelRequest.setPayer(new Party(payer));
