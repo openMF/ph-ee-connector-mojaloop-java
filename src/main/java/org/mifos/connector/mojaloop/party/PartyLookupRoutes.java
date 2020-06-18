@@ -92,6 +92,7 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                                     variables -> {
                                         variables.put("Date", originalHeaders.get("Date"));
                                         variables.put("traceparent", originalHeaders.get("traceparent"));
+                                        variables.put(FSPIOP_SOURCE.headerName(), originalHeaders.get(FSPIOP_SOURCE.headerName()));
                                         variables.put(PARTY_ID_TYPE, originalHeaders.get(PARTY_ID_TYPE));
                                         variables.put(PARTY_ID, originalHeaders.get(PARTY_ID));
                                         variables.put(TENANT_ID, tenantId);
