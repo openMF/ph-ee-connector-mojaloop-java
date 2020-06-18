@@ -90,6 +90,8 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
 
                             zeebeProcessStarter.startZeebeWorkflow(partyLookupFlow.replace("{tenant}", tenantId),
                                     variables -> {
+                                        variables.put("Date", originalHeaders.get("Date"));
+                                        variables.put("traceparent", originalHeaders.get("traceparent"));
                                         variables.put(PARTY_ID_TYPE, originalHeaders.get(PARTY_ID_TYPE));
                                         variables.put(PARTY_ID, originalHeaders.get(PARTY_ID));
                                         variables.put(TENANT_ID, tenantId);
