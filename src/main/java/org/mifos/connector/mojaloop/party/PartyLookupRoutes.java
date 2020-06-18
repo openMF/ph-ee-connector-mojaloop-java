@@ -33,10 +33,11 @@ import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PARTY_ID
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PAYEE_PARTY_RESPONSE;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TENANT_ID;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeExpressionVariables.PARTY_LOOKUP_FAILED;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeProcessStarter.camelHeadersToZeebeVariables;
 
 @Component
 public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
+
+    private static final String ORIGINAL_HEADERS_PROPERTY = "originalHeaders";
 
     @Value("${bpmn.flows.party-lookup}")
     private String partyLookupFlow;
@@ -73,6 +74,9 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
     public void configure() {
         from("rest:GET:/switch/parties/{" + PARTY_ID_TYPE + "}/{" + PARTY_ID + "}")
                 .log(LoggingLevel.DEBUG, "## SWITCH -> PAYER/PAYEE inbound GET parties - STEP 2")
+                .process(e -> {
+                    e.setProperty(ORIGINAL_HEADERS_PROPERTY, e.getIn().getHeaders());
+                })
                 .to("direct:get-dfsp-from-oracle")
                 .process(e -> {
                             JSONObject oracleResponse = new JSONObject(e.getIn().getBody(String.class));
@@ -82,14 +86,12 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                                         + e.getIn().getHeader(PARTY_ID, String.class) + ", response contains " + partyList.length() + " elements!");
                             }
                             String tenantId = partyProperties.getParty(partyList.getJSONObject(0).getString("fspId")).getTenantId();
+                            Map<String, Object> originalHeaders = (Map<String, Object>) e.getProperty(ORIGINAL_HEADERS_PROPERTY);
+
                             zeebeProcessStarter.startZeebeWorkflow(partyLookupFlow.replace("{tenant}", tenantId),
                                     variables -> {
-                                        camelHeadersToZeebeVariables(e, variables,
-                                                PARTY_ID_TYPE,
-                                                PARTY_ID,
-                                                FSPIOP_SOURCE.headerName(),
-                                                "traceparent",
-                                                "Date");
+                                        variables.put(PARTY_ID_TYPE, originalHeaders.get(PARTY_ID_TYPE));
+                                        variables.put(PARTY_ID, originalHeaders.get(PARTY_ID));
                                         variables.put(TENANT_ID, tenantId);
                                     });
                         }
