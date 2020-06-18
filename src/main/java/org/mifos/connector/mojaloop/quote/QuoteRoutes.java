@@ -180,7 +180,7 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                     transactionType.setScenario(channelRequest.getTransactionType().getScenario());
 
                     PartyIdInfo payerParty = channelRequest.getPayer().getPartyIdInfo();
-                    String payerFspId = partyProperties.getParty(exchange.getProperty(TENANT_ID, String.class)).getFspId();
+                    String payerFspId = partyProperties.getPartyByTenant(exchange.getProperty(TENANT_ID, String.class)).getFspId();
                     Party payer = new Party(
                             new PartyIdInfo(payerParty.getPartyIdType(),
                                     payerParty.getPartyIdentifier(),

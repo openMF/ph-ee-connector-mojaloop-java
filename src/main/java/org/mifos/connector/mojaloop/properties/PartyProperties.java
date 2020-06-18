@@ -24,13 +24,16 @@ public class PartyProperties {
     }
 
     public Party getParty(String dfspId) {
-        if (dfspId == null) {
-            throw new RuntimeException("Party with dfspid: " + dfspId + ", not configured!");
-        }
-
         return getParties().stream()
                 .filter(t -> t.getFspId().equals(dfspId))
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("Party with dfspId: " + dfspId + ", not configured!"));
+    }
+
+    public Party getPartyByTenant(String tenantId) {
+        return getParties().stream()
+                .filter(t -> t.getTenantId().equals(tenantId))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Party with tenant: " + tenantId + ", not configured!"));
     }
 }

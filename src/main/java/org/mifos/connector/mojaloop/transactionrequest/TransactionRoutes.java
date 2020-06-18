@@ -84,7 +84,7 @@ public class TransactionRoutes extends ErrorHandlerRouteBuilder {
                 .process(e -> {
                     TransactionChannelRequestDTO channelRequest = objectMapper.readValue(e.getProperty(CHANNEL_REQUEST, String.class), TransactionChannelRequestDTO.class);
                     PartyIdInfo payeeParty = channelRequest.getPayee().getPartyIdInfo();
-                    String payeeFspId = partyProperties.getParty(e.getProperty(TENANT_ID, String.class)).getFspId();
+                    String payeeFspId = partyProperties.getPartyByTenant(e.getProperty(TENANT_ID, String.class)).getFspId();
                     payeeParty.setFspId(payeeFspId);
                     e.setProperty(FSPIOP_SOURCE.headerName(), payeeFspId);
 

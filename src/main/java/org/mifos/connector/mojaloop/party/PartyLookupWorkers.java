@@ -86,7 +86,7 @@ public class PartyLookupWorkers {
                         if (existingVariables.get(INITIATOR_FSP_ID) == null) {
                             TransactionChannelRequestDTO channelRequestObject = objectMapper.readValue((String) channelRequest, TransactionChannelRequestDTO.class);
                             PartyIdInfo initiatorParty = isTransactionRequest ? channelRequestObject.getPayee().getPartyIdInfo() : channelRequestObject.getPayer().getPartyIdInfo();
-                            String initiatorFspId = partyProperties.getParty(tenantId).getFspId();
+                            String initiatorFspId = partyProperties.getPartyByTenant(tenantId).getFspId();
                             existingVariables.put(INITIATOR_FSP_ID, initiatorFspId);
                         }
 
