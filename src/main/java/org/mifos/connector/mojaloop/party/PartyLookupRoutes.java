@@ -21,6 +21,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.util.Map;
+
 import static org.mifos.connector.common.ams.dto.InteropIdentifierType.MSISDN;
 import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.CHANNEL_REQUEST;
@@ -95,6 +97,10 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
 
         from("direct:get-dfsp-from-oracle")
                 .id("get-dfsp-from-oracle")
+                .process(e -> {
+                    e.getIn().getHeaders().remove("CamelHttpPath");
+                    e.getIn().getHeaders().remove("CamelHttpUri");
+                })
                 .toD("rest:GET:/oracle/participants/${header." + PARTY_ID_TYPE + "}/${header." + PARTY_ID + "}?host={{switch.oracle-host}}");
 
         from("rest:PUT:/switch/parties/" + MSISDN + "/{partyId}")
