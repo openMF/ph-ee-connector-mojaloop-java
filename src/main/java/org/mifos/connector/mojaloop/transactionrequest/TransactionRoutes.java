@@ -33,6 +33,7 @@ import static org.mifos.connector.mojaloop.camel.config.CamelProperties.AUTH_TYP
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.CHANNEL_REQUEST;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.INITIATOR_FSP_ID;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PARTY_LOOKUP_FSP_ID;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TENANT_ID;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TRANSACTION_ID;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TRANSACTION_REQUEST;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeExpressionVariables.IS_AUTHORISATION_REQUIRED;
@@ -83,7 +84,7 @@ public class TransactionRoutes extends ErrorHandlerRouteBuilder {
                 .process(e -> {
                     TransactionChannelRequestDTO channelRequest = objectMapper.readValue(e.getProperty(CHANNEL_REQUEST, String.class), TransactionChannelRequestDTO.class);
                     PartyIdInfo payeeParty = channelRequest.getPayee().getPartyIdInfo();
-                    String payeeFspId = partyProperties.getParty(payeeParty.getPartyIdType().name(), payeeParty.getPartyIdentifier()).getFspId();
+                    String payeeFspId = partyProperties.getParty(e.getProperty(TENANT_ID, String.class)).getFspId();
                     payeeParty.setFspId(payeeFspId);
                     e.setProperty(FSPIOP_SOURCE.headerName(), payeeFspId);
 
@@ -119,8 +120,7 @@ public class TransactionRoutes extends ErrorHandlerRouteBuilder {
                 .process(exchange -> {
                             TransactionRequestSwitchRequestDTO transactionRequest = exchange.getIn().getBody(TransactionRequestSwitchRequestDTO.class);
                             PartyIdInfo payer = transactionRequest.getPayer();
-                            org.mifos.connector.mojaloop.properties.Party payerParty = partyProperties.getParty(payer.getPartyIdType().name(),
-                                    payer.getPartyIdentifier());
+                            org.mifos.connector.mojaloop.properties.Party payerParty = partyProperties.getParty(payer.getFspId());
                             zeebeProcessStarter.startZeebeWorkflow(transactionRequestFlow.replace("{tenant}", payerParty.getTenantId()),
                                     variables -> {
                                         try {
@@ -129,6 +129,7 @@ public class TransactionRoutes extends ErrorHandlerRouteBuilder {
                                             variables.put(PARTY_LOOKUP_FSP_ID, transactionRequest.getPayee().getPartyIdInfo().getFspId());
                                             variables.put(IS_AUTHORISATION_REQUIRED, transactionRequest.getAuthenticationType() != null);
                                             variables.put(INITIATOR_FSP_ID, payerParty.getFspId());
+                                            variables.put(TENANT_ID, payerParty.getTenantId());
 
                                             TransactionChannelRequestDTO channelRequest = new TransactionChannelRequestDTO();
                                             channelRequest.setPayer(new Party(payer));

@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.camel.LoggingLevel;
 import org.apache.camel.Processor;
 import org.apache.camel.model.dataformat.JsonLibrary;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.mifos.connector.common.camel.ErrorHandlerRouteBuilder;
 import org.mifos.connector.common.channel.dto.TransactionChannelRequestDTO;
 import org.mifos.connector.common.mojaloop.dto.Party;
@@ -68,10 +70,16 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
     @Override
     public void configure() {
         from("rest:GET:/switch/parties/{" + PARTY_ID_TYPE + "}/{" + PARTY_ID + "}")
-                .log(LoggingLevel.WARN, "## SWITCH -> PAYEE inbound GET parties - STEP 2")
+                .log(LoggingLevel.DEBUG, "## SWITCH -> PAYER/PAYEE inbound GET parties - STEP 2")
+                .to("direct:get-dfsp-from-oracle")
                 .process(e -> {
-                            String tenantId = partyProperties.getParty(e.getIn().getHeader(PARTY_ID_TYPE, String.class),
-                                    e.getIn().getHeader(PARTY_ID, String.class)).getTenantId();
+                            JSONObject oracleResponse = new JSONObject(e.getIn().getBody(String.class));
+                            JSONArray partyList = oracleResponse.getJSONArray("partyList");
+                            if (partyList.length() != 1) {
+                                throw new RuntimeException("Can not identify dfsp from oracle with type: " + e.getIn().getHeader(PARTY_ID_TYPE, String.class) + " and value: "
+                                        + e.getIn().getHeader(PARTY_ID, String.class) + ", response contains " + partyList.length() + " elements!");
+                            }
+                            String tenantId = partyProperties.getParty(partyList.getJSONObject(0).getString("fspId")).getTenantId();
                             zeebeProcessStarter.startZeebeWorkflow(partyLookupFlow.replace("{tenant}", tenantId),
                                     variables -> {
                                         camelHeadersToZeebeVariables(e, variables,
@@ -85,8 +93,12 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                         }
                 );
 
+        from("direct:get-dfsp-from-oracle")
+                .id("get-dfsp-from-oracle")
+                .toD("rest:GET:/oracle/participants/${header." + PARTY_ID_TYPE + "}/${header." + PARTY_ID + "}?host={{switch.oracle-host}}");
+
         from("rest:PUT:/switch/parties/" + MSISDN + "/{partyId}")
-                .log(LoggingLevel.WARN, "######## SWITCH -> PAYER - response for parties request  - STEP 3")
+                .log(LoggingLevel.DEBUG, "######## SWITCH -> PAYER - response for parties request  - STEP 3")
                 .unmarshal().json(JsonLibrary.Jackson, PartySwitchResponseDTO.class)
                 .process(getCachedTransactionIdProcessor)
                 .process(partiesResponseProcessor);
@@ -122,17 +134,13 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
 
         from("direct:send-party-lookup")
                 .id("send-party-lookup")
-                .log(LoggingLevel.INFO, "######## PAYER -> SWITCH - party lookup request - STEP 1")
+                .log(LoggingLevel.DEBUG, "######## PAYER -> SWITCH - party lookup request - STEP 1")
                 .process(e -> {
                     TransactionChannelRequestDTO channelRequest = objectMapper.readValue(e.getProperty(CHANNEL_REQUEST, String.class), TransactionChannelRequestDTO.class);
                     PartyIdInfo requestedParty = e.getProperty(IS_RTP_REQUEST, Boolean.class) ? channelRequest.getPayer().getPartyIdInfo() : channelRequest.getPayee().getPartyIdInfo();
-                    PartyIdInfo requestingParty = e.getProperty(IS_RTP_REQUEST, Boolean.class) ? channelRequest.getPayee().getPartyIdInfo() : channelRequest.getPayer().getPartyIdInfo();
-
                     e.setProperty(PARTY_ID_TYPE, requestedParty.getPartyIdType());
                     e.setProperty(PARTY_ID, requestedParty.getPartyIdentifier());
-
-                    String requestingFspId = partyProperties.getParty(requestingParty.getPartyIdType().name(), requestingParty.getPartyIdentifier()).getFspId();
-                    e.getIn().setHeader(FSPIOP_SOURCE.headerName(), requestingFspId);
+                    e.getIn().setHeader(FSPIOP_SOURCE.headerName(), partyProperties.getParty(e.getProperty(TENANT_ID, String.class)).getFspId());
 
                     mojaloopUtil.setPartyHeadersRequest(e);
                 })

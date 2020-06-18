@@ -32,5 +32,6 @@ switch:
   transfer-service: ml-api-adapter.local
   transactions-host: http://40.114.81.46
   transaction-request-service: transaction-request-service.local
+  oracle-host: http://account-oracle.mifos.io:4100
 
 dfspids: "DFSPID"

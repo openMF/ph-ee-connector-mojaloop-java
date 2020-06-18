@@ -37,6 +37,7 @@ import static org.mifos.connector.mojaloop.camel.config.CamelProperties.LOCAL_QU
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PARTY_LOOKUP_FSP_ID;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.QUOTE_ID;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.QUOTE_SWITCH_REQUEST;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TENANT_ID;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TRANSACTION_ID;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeExpressionVariables.QUOTE_FAILED;
 
@@ -83,8 +84,7 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                 .process(exchange -> {
                             QuoteSwitchRequestDTO request = exchange.getIn().getBody(QuoteSwitchRequestDTO.class);
                             PartyIdInfo payee = request.getPayee().getPartyIdInfo();
-                            String tenantId = partyProperties.getParty(payee.getPartyIdType().name(),
-                                    payee.getPartyIdentifier()).getTenantId();
+                            String tenantId = partyProperties.getParty(payee.getFspId()).getTenantId();
 
                             zeebeProcessStarter.startZeebeWorkflow(quoteFlow.replace("{tenant}", tenantId),
                                     variables -> {
@@ -93,6 +93,7 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                                         variables.put(FSPIOP_DESTINATION.headerName(), request.getPayer().getPartyIdInfo().getFspId());
                                         variables.put(TRANSACTION_ID, request.getTransactionId());
                                         variables.put(QUOTE_SWITCH_REQUEST, exchange.getProperty(QUOTE_SWITCH_REQUEST));
+                                        variables.put(TENANT_ID, tenantId);
 
                                         ZeebeProcessStarter.camelHeadersToZeebeVariables(exchange, variables,
                                                 "Date",
@@ -179,7 +180,7 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                     transactionType.setScenario(channelRequest.getTransactionType().getScenario());
 
                     PartyIdInfo payerParty = channelRequest.getPayer().getPartyIdInfo();
-                    String payerFspId = partyProperties.getParty(payerParty.getPartyIdType().name(), payerParty.getPartyIdentifier()).getFspId();
+                    String payerFspId = partyProperties.getParty(exchange.getProperty(TENANT_ID, String.class)).getFspId();
                     Party payer = new Party(
                             new PartyIdInfo(payerParty.getPartyIdType(),
                                     payerParty.getPartyIdentifier(),

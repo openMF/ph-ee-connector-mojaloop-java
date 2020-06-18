@@ -24,6 +24,7 @@ import static org.mifos.connector.mojaloop.camel.config.CamelProperties.AUTH_TYP
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.CHANNEL_REQUEST;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.ORIGIN_DATE;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PARTY_LOOKUP_FSP_ID;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TENANT_ID;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TRANSACTION_ID;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeExpressionVariables.AUTH_RETRIES_LEFT_COUNT;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeExpressionVariables.PAYER_CONFIRMATION_RETRY_COUNT;
@@ -74,6 +75,7 @@ public class TransactionWorkers {
                         exchange.setProperty(CHANNEL_REQUEST, existingVariables.get(CHANNEL_REQUEST));
                         exchange.setProperty(ORIGIN_DATE, existingVariables.get(ORIGIN_DATE));
                         exchange.setProperty(AUTH_TYPE, existingVariables.get(AUTH_TYPE));
+                        exchange.setProperty(TENANT_ID, existingVariables.get(TENANT_ID));
                         producerTemplate.send("direct:send-transaction-request", exchange);
 
                         client.newCompleteCommand(job.getKey())

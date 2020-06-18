@@ -25,6 +25,7 @@ import static org.mifos.connector.mojaloop.camel.config.CamelProperties.ORIGIN_D
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PARTY_LOOKUP_FSP_ID;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.QUOTE_ID;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.QUOTE_SWITCH_REQUEST;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TENANT_ID;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TRANSACTION_ID;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.CHANNEL_REQUEST;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeExpressionVariables.TIMEOUT_QUOTE_RETRY_COUNT;
@@ -60,24 +61,25 @@ public class QuoteWorkers {
                     .handler((client, job) -> {
                         logger.info("Job '{}' started from process '{}' with key {}", job.getType(), job.getBpmnProcessId(), job.getKey());
                         Exchange exchange = new DefaultExchange(camelContext);
-                        Map<String, Object> variables = job.getVariablesAsMap();
-                        variables.put(TIMEOUT_QUOTE_RETRY_COUNT, 1 + (Integer) variables.getOrDefault(TIMEOUT_QUOTE_RETRY_COUNT, -1));
+                        Map<String, Object> existingVariables = job.getVariablesAsMap();
+                        existingVariables.put(TIMEOUT_QUOTE_RETRY_COUNT, 1 + (Integer) existingVariables.getOrDefault(TIMEOUT_QUOTE_RETRY_COUNT, -1));
 
-                        exchange.setProperty(TRANSACTION_ID, variables.get(TRANSACTION_ID));
-                        exchange.setProperty(CHANNEL_REQUEST, variables.get(CHANNEL_REQUEST));
-                        exchange.setProperty(ORIGIN_DATE, variables.get(ORIGIN_DATE));
-                        exchange.setProperty(PARTY_LOOKUP_FSP_ID, variables.get(PARTY_LOOKUP_FSP_ID));
-                        Object quoteId = variables.get(QUOTE_ID);
+                        exchange.setProperty(TRANSACTION_ID, existingVariables.get(TRANSACTION_ID));
+                        exchange.setProperty(CHANNEL_REQUEST, existingVariables.get(CHANNEL_REQUEST));
+                        exchange.setProperty(ORIGIN_DATE, existingVariables.get(ORIGIN_DATE));
+                        exchange.setProperty(PARTY_LOOKUP_FSP_ID, existingVariables.get(PARTY_LOOKUP_FSP_ID));
+                        exchange.setProperty(TENANT_ID, existingVariables.get(TENANT_ID));
+                        Object quoteId = existingVariables.get(QUOTE_ID);
                         if (quoteId == null) {
                             quoteId = UUID.randomUUID().toString();
-                            variables.put(QUOTE_ID, quoteId);
+                            existingVariables.put(QUOTE_ID, quoteId);
                         }
                         exchange.setProperty(QUOTE_ID, quoteId);
 
                         producerTemplate.send("direct:send-quote", exchange);
 
                         client.newCompleteCommand(job.getKey())
-                                .variables(variables)
+                                .variables(existingVariables)
                                 .send()
                                 .join();
                     })

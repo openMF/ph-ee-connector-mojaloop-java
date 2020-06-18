@@ -1,9 +1,5 @@
 parties:
-  - partyIdType: MSISDN
-    partyId: 27710203999
-    tenantId: tn03
+  - tenantId: tn03
     fspId: in02tn03
-  - partyIdType: MSISDN
-    partyId: 27710204999
-    tenantId: tn04
+  - tenantId: tn04
     fspId: in02tn04

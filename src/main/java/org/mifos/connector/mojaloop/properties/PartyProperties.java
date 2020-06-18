@@ -23,14 +23,14 @@ public class PartyProperties {
         this.parties = parties;
     }
 
-    public Party getParty(String partyIdType, String partyId) {
-        if (partyIdType == null || partyId == null) {
-            throw new RuntimeException("Party with type: " + partyIdType + ", id: " + partyId + ", not configured!");
+    public Party getParty(String dfspId) {
+        if (dfspId == null) {
+            throw new RuntimeException("Party with dfspid: " + dfspId + ", not configured!");
         }
 
         return getParties().stream()
-                .filter(t -> t.getPartyIdType().equals(partyIdType) && t.getPartyId().equals(partyId))
+                .filter(t -> t.getFspId().equals(dfspId))
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("Party with type: " + partyIdType + ", id: " + partyId + ", not configured!"));
+                .orElseThrow(() -> new RuntimeException("Party with dfspId: " + dfspId + ", not configured!"));
     }
 }
