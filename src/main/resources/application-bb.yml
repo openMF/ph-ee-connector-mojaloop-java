@@ -1,5 +1,7 @@
 parties:
   - tenantId: tn03
     fspId: in02tn03
+    domain: in02tn03.mifos.io
   - tenantId: tn04
     fspId: in02tn04
+    domain: in02tn04.mifos.io

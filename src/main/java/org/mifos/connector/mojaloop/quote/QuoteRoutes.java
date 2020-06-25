@@ -84,7 +84,7 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                 .process(exchange -> {
                             QuoteSwitchRequestDTO request = exchange.getIn().getBody(QuoteSwitchRequestDTO.class);
                             PartyIdInfo payee = request.getPayee().getPartyIdInfo();
-                            String tenantId = partyProperties.getParty(payee.getFspId()).getTenantId();
+                            String tenantId = partyProperties.getPartyByDfsp(payee.getFspId()).getTenantId();
 
                             zeebeProcessStarter.startZeebeWorkflow(quoteFlow.replace("{tenant}", tenantId),
                                     variables -> {

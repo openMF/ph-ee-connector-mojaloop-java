@@ -21,8 +21,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.util.Map;
-
 import static org.mifos.connector.common.ams.dto.InteropIdentifierType.MSISDN;
 import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.CHANNEL_REQUEST;
@@ -75,38 +73,41 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
         from("rest:GET:/switch/parties/{" + PARTY_ID_TYPE + "}/{" + PARTY_ID + "}")
                 .log(LoggingLevel.DEBUG, "## SWITCH -> PAYER/PAYEE inbound GET parties - STEP 2")
                 .process(e -> {
-                    e.setProperty(ORIGINAL_HEADERS_PROPERTY, e.getIn().getHeaders());
-                })
-                .to("direct:get-dfsp-from-oracle")
-                .process(e -> {
-                            JSONObject oracleResponse = new JSONObject(e.getIn().getBody(String.class));
-                            JSONArray partyList = oracleResponse.getJSONArray("partyList");
-                            if (partyList.length() != 1) {
-                                throw new RuntimeException("Can not identify dfsp from oracle with type: " + e.getIn().getHeader(PARTY_ID_TYPE, String.class) + " and value: "
-                                        + e.getIn().getHeader(PARTY_ID, String.class) + ", response contains " + partyList.length() + " elements!");
-                            }
-                            String tenantId = partyProperties.getParty(partyList.getJSONObject(0).getString("fspId")).getTenantId();
-                            Map<String, Object> originalHeaders = (Map<String, Object>) e.getProperty(ORIGINAL_HEADERS_PROPERTY);
-
+                    String host = e.getIn().getHeader("Host", String.class).split(":")[0];
+                    String tenantId = partyProperties.getPartyByDomain(host).getTenantId();
                             zeebeProcessStarter.startZeebeWorkflow(partyLookupFlow.replace("{tenant}", tenantId),
                                     variables -> {
-                                        variables.put("Date", originalHeaders.get("Date"));
-                                        variables.put("traceparent", originalHeaders.get("traceparent"));
-                                        variables.put(FSPIOP_SOURCE.headerName(), originalHeaders.get(FSPIOP_SOURCE.headerName()));
-                                        variables.put(PARTY_ID_TYPE, originalHeaders.get(PARTY_ID_TYPE));
-                                        variables.put(PARTY_ID, originalHeaders.get(PARTY_ID));
+                                        variables.put("Date", e.getIn().getHeader("Date"));
+                                        variables.put("traceparent", e.getIn().getHeader("traceparent"));
+                                        variables.put(FSPIOP_SOURCE.headerName(), e.getIn().getHeader(FSPIOP_SOURCE.headerName()));
+                                        variables.put(PARTY_ID_TYPE, e.getIn().getHeader(PARTY_ID_TYPE));
+                                        variables.put(PARTY_ID, e.getIn().getHeader(PARTY_ID));
                                         variables.put(TENANT_ID, tenantId);
                                     });
                         }
                 );
 
+        /*
+         * Optional functionality to get the dfspid from the oracle with party identifier
+         */
         from("direct:get-dfsp-from-oracle")
                 .id("get-dfsp-from-oracle")
                 .process(e -> {
+                    e.setProperty(ORIGINAL_HEADERS_PROPERTY, e.getIn().getHeaders());
                     e.getIn().getHeaders().remove("CamelHttpPath");
                     e.getIn().getHeaders().remove("CamelHttpUri");
                 })
-                .toD("rest:GET:/oracle/participants/${header." + PARTY_ID_TYPE + "}/${header." + PARTY_ID + "}?host={{switch.oracle-host}}");
+                .toD("rest:GET:/oracle/participants/${header." + PARTY_ID_TYPE + "}/${header." + PARTY_ID + "}?host={{switch.oracle-host}}")
+                .process(e -> {
+                    JSONObject oracleResponse = new JSONObject(e.getIn().getBody(String.class));
+                    JSONArray partyList = oracleResponse.getJSONArray("partyList");
+                    if (partyList.length() != 1) {
+                        throw new RuntimeException("Can not identify dfsp from oracle with type: " + e.getIn().getHeader(PARTY_ID_TYPE, String.class) + " and value: "
+                                + e.getIn().getHeader(PARTY_ID, String.class) + ", response contains " + partyList.length() + " elements!");
+                    }
+                    String tenantId = partyProperties.getPartyByDfsp(partyList.getJSONObject(0).getString("fspId")).getTenantId();
+                    e.setProperty(TENANT_ID, tenantId);
+                });
 
         from("rest:PUT:/switch/parties/" + MSISDN + "/{partyId}")
                 .log(LoggingLevel.DEBUG, "######## SWITCH -> PAYER - response for parties request  - STEP 3")

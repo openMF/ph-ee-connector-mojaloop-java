@@ -23,17 +23,24 @@ public class PartyProperties {
         this.parties = parties;
     }
 
-    public Party getParty(String dfspId) {
+    public Party getPartyByDfsp(String dfsp) {
         return getParties().stream()
-                .filter(t -> t.getFspId().equals(dfspId))
+                .filter(t -> t.getFspId().equals(dfsp))
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("Party with dfspId: " + dfspId + ", not configured!"));
+                .orElseThrow(() -> new RuntimeException("Party with dfspId: " + dfsp + ", not configured!"));
     }
 
-    public Party getPartyByTenant(String tenantId) {
+    public Party getPartyByTenant(String tenant) {
         return getParties().stream()
-                .filter(t -> t.getTenantId().equals(tenantId))
+                .filter(t -> t.getTenantId().equals(tenant))
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("Party with tenant: " + tenantId + ", not configured!"));
+                .orElseThrow(() -> new RuntimeException("Party with tenant: " + tenant + ", not configured!"));
+    }
+
+    public Party getPartyByDomain(String domain) {
+        return getParties().stream()
+                .filter(t -> t.getDomain().equals(domain))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Party with domain: " + domain + ", not configured!"));
     }
 }

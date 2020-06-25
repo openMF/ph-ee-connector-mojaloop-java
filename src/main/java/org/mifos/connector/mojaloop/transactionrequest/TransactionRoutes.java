@@ -120,7 +120,7 @@ public class TransactionRoutes extends ErrorHandlerRouteBuilder {
                 .process(exchange -> {
                             TransactionRequestSwitchRequestDTO transactionRequest = exchange.getIn().getBody(TransactionRequestSwitchRequestDTO.class);
                             PartyIdInfo payer = transactionRequest.getPayer();
-                            org.mifos.connector.mojaloop.properties.Party payerParty = partyProperties.getParty(payer.getFspId());
+                            org.mifos.connector.mojaloop.properties.Party payerParty = partyProperties.getPartyByDfsp(payer.getFspId());
                             zeebeProcessStarter.startZeebeWorkflow(transactionRequestFlow.replace("{tenant}", payerParty.getTenantId()),
                                     variables -> {
                                         try {
