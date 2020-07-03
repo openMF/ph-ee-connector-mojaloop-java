@@ -130,15 +130,16 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                 .unmarshal().json(JsonLibrary.Jackson, QuoteSwitchRequestDTO.class)
                 .process(exchange -> {
                     QuoteSwitchRequestDTO request = exchange.getIn().getBody(QuoteSwitchRequestDTO.class);
-                    request.getAmount().setAmount(request.getAmount().getAmountDecimal().stripTrailingZeros().toPlainString());
+                    MoneyData requestAmount = request.getAmount();
+                    stripAmount(requestAmount);
 
                     Ilp ilp = ilpBuilder.build(request.getTransactionId(),
                             request.getQuoteId(),
-                            request.getAmount().getAmountDecimal(),
-                            request.getAmount().getCurrency(),
+                            requestAmount.getAmountDecimal(),
+                            requestAmount.getCurrency(),
                             request.getPayer(),
                             request.getPayee(),
-                            request.getAmount().getAmountDecimal());
+                            requestAmount.getAmountDecimal());
 
                     QuoteFspResponseDTO localQuoteResponse = objectMapper.readValue(exchange.getIn().getHeader(LOCAL_QUOTE_RESPONSE, String.class), QuoteFspResponseDTO.class);
                     FspMoneyData fspFee = localQuoteResponse.getFspFee();
@@ -146,14 +147,14 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
 
                     // amount format: ^([0]|([1-9][0-9]{0,17}))([.][0-9]{0,3}[1-9])?$
                     BigDecimal fspFeeAmount = (fspFee != null ? fspFee.getAmount() : ZERO).stripTrailingZeros();
-                    String fspFeeCurrency = fspFee != null ? fspFee.getCurrency() : request.getAmount().getCurrency();
+                    String fspFeeCurrency = fspFee != null ? fspFee.getCurrency() : requestAmount.getCurrency();
                     BigDecimal fspCommissionAmount = (fspCommission != null ? fspCommission.getAmount() : ZERO).stripTrailingZeros();
-                    String fspCommissionCurrency = fspCommission != null ? fspCommission.getCurrency() : request.getAmount().getCurrency();
+                    String fspCommissionCurrency = fspCommission != null ? fspCommission.getCurrency() : requestAmount.getCurrency();
 
                     QuoteSwitchResponseDTO response = new QuoteSwitchResponseDTO(
-                            request.getAmount(),
-                            new MoneyData(request.getAmount().getAmountDecimal().subtract(fspFeeAmount).subtract(fspCommissionAmount).stripTrailingZeros().toPlainString(),
-                                    request.getAmount().getCurrency()),
+                            requestAmount,
+                            new MoneyData(requestAmount.getAmountDecimal().subtract(fspFeeAmount).subtract(fspCommissionAmount).stripTrailingZeros().toPlainString(),
+                                    requestAmount.getCurrency()),
                             new MoneyData(fspFeeAmount.compareTo(ZERO) == 0 ? "0" : fspFeeAmount.toPlainString(), fspFeeCurrency),
                             new MoneyData(fspCommissionAmount.compareTo(ZERO) == 0 ? "0" : fspCommissionAmount.toPlainString(), fspCommissionCurrency),
                             LocalDateTime.now().plusHours(1),
@@ -202,13 +203,15 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                             null,
                             null);
 
+                    MoneyData requestAmount = channelRequest.getAmount();
+                    stripAmount(requestAmount);
                     exchange.getIn().setBody(new QuoteSwitchRequestDTO(
                             exchange.getProperty(TRANSACTION_ID, String.class),
                             exchange.getProperty(QUOTE_ID, String.class),
                             payee,
                             payer,
                             AmountType.RECEIVE,
-                            channelRequest.getAmount(),
+                            requestAmount,
                             transactionType));
 
                     exchange.setProperty(FSPIOP_SOURCE.headerName(), payerFspId);
@@ -218,5 +221,9 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                 .process(pojoToString)
                 .process(addTraceHeaderProcessor)
                 .toD("rest:POST:/quotes?host={{switch.quotes-host}}");
+    }
+
+    private void stripAmount(MoneyData requestAmount) {
+        requestAmount.setAmount(requestAmount.getAmountDecimal().stripTrailingZeros().toPlainString());
     }
 }
