@@ -130,6 +130,8 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                 .unmarshal().json(JsonLibrary.Jackson, QuoteSwitchRequestDTO.class)
                 .process(exchange -> {
                     QuoteSwitchRequestDTO request = exchange.getIn().getBody(QuoteSwitchRequestDTO.class);
+                    request.getAmount().setAmount(request.getAmount().getAmountDecimal().stripTrailingZeros().toPlainString());
+
                     Ilp ilp = ilpBuilder.build(request.getTransactionId(),
                             request.getQuoteId(),
                             request.getAmount().getAmountDecimal(),

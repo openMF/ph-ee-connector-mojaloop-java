@@ -33,6 +33,7 @@ import static org.mifos.connector.mojaloop.zeebe.ZeebeExpressionVariables.PARTY_
 import static org.mifos.connector.mojaloop.zeebe.ZeebeProcessStarter.zeebeVariablesToCamelHeaders;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeeWorkers.WORKER_PARTY_LOOKUP_LOCAL_RESPONSE;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeeWorkers.WORKER_PARTY_LOOKUP_REQUEST;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeeWorkers.WORKER_PARTY_REGISTRATION_ORACLE;
 
 @Component
 public class PartyLookupWorkers {
@@ -134,6 +135,24 @@ public class PartyLookupWorkers {
                                 .join();
                     })
                     .name(WORKER_PARTY_LOOKUP_LOCAL_RESPONSE + dfspId)
+                    .maxJobsActive(workerMaxJobs)
+                    .open();
+
+            logger.info("## generating " + WORKER_PARTY_REGISTRATION_ORACLE + "{} zeebe worker", dfspId);
+            zeebeClient.newWorker()
+                    .jobType(WORKER_PARTY_REGISTRATION_ORACLE + dfspId)
+                    .handler((client, job) -> {
+                        logger.info("Job '{}' started from process '{}' with key {}", job.getType(), job.getBpmnProcessId(), job.getKey());
+                        Map<String, Object> existingVariables = job.getVariablesAsMap();
+
+                        Exchange exchange = new DefaultExchange(camelContext);
+
+
+                        client.newCompleteCommand(job.getKey())
+                                .send()
+                                .join();
+                    })
+                    .name(WORKER_PARTY_REGISTRATION_ORACLE + dfspId)
                     .maxJobsActive(workerMaxJobs)
                     .open();
         }

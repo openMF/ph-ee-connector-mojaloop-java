@@ -38,6 +38,7 @@ public class ZeebeeWorkers {
     public static final String WORKER_TRANSACTION_REQUEST = "transaction-request-";
     public static final String WORKER_VALIDATE_OTP_AUTH_REPONSE = "validate-otp-auth-reponse-";
     public static final String WORKER_SEND_PAYER_AUTHORISATION = "send-payer-authorisation-";
+    public static final String WORKER_PARTY_REGISTRATION_ORACLE = "party-registration-oracle-";
 
     private Logger logger = LoggerFactory.getLogger(this.getClass());
 
