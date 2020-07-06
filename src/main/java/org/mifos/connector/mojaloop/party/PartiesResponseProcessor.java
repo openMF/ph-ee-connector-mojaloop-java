@@ -12,9 +12,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.CACHED_TRANSACTION_ID;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.ERROR_INFORMATION;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PARTY_LOOKUP_FSP_ID;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeExpressionVariables.PARTY_LOOKUP_FAILED;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.ERROR_INFORMATION;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.PARTY_LOOKUP_FSP_ID;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.PARTY_LOOKUP_FAILED;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeMessages.PARTY_LOOKUP;
 
 @Component

@@ -2,7 +2,6 @@ package org.mifos.connector.mojaloop.zeebe;
 
 import io.zeebe.client.ZeebeClient;
 import org.apache.camel.Exchange;
-import org.mifos.connector.mojaloop.camel.config.CamelProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +23,7 @@ public class ZeebeProcessStarter {
 
     public void startZeebeWorkflow(String workflowId, Consumer<Map<String, Object>> variablesLambda) {
         Map<String, Object> variables = new HashMap<>();
-        variables.put(CamelProperties.ORIGIN_DATE, Instant.now().toEpochMilli());
+        variables.put(ZeebeVariables.ORIGIN_DATE, Instant.now().toEpochMilli());
         variablesLambda.accept(variables);
 
         zeebeClient.newCreateInstanceCommand()

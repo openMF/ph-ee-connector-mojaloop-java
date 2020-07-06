@@ -5,8 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.camel.LoggingLevel;
 import org.apache.camel.Processor;
 import org.apache.camel.model.dataformat.JsonLibrary;
-import org.json.JSONArray;
-import org.json.JSONObject;
 import org.mifos.connector.common.camel.ErrorHandlerRouteBuilder;
 import org.mifos.connector.common.channel.dto.TransactionChannelRequestDTO;
 import org.mifos.connector.common.mojaloop.dto.Party;
@@ -23,14 +21,14 @@ import org.springframework.stereotype.Component;
 
 import static org.mifos.connector.common.ams.dto.InteropIdentifierType.MSISDN;
 import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.CHANNEL_REQUEST;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.ERROR_INFORMATION;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.IS_RTP_REQUEST;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PARTY_ID;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PARTY_ID_TYPE;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PAYEE_PARTY_RESPONSE;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TENANT_ID;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeExpressionVariables.PARTY_LOOKUP_FAILED;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.CHANNEL_REQUEST;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.ERROR_INFORMATION;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.IS_RTP_REQUEST;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.PARTY_ID;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.PARTY_ID_TYPE;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.PARTY_LOOKUP_FAILED;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.PAYEE_PARTY_RESPONSE;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.TENANT_ID;
 
 @Component
 public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {

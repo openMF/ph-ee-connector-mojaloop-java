@@ -20,17 +20,20 @@ import java.util.List;
 import java.util.Map;
 
 import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.CHANNEL_REQUEST;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.ERROR_INFORMATION;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.INITIATOR_FSP_ID;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.IS_RTP_REQUEST;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.ORIGIN_DATE;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PAYEE_PARTY_RESPONSE;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.QUOTE_SWITCH_REQUEST;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TENANT_ID;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TRANSACTION_ID;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeExpressionVariables.PARTY_LOOKUP_RETRY_COUNT;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeProcessStarter.zeebeVariablesToCamelHeaders;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.ACCOUNT_CURRENCY;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.CHANNEL_REQUEST;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.ERROR_INFORMATION;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.INITIATOR_FSP_ID;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.IS_RTP_REQUEST;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.ORIGIN_DATE;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.PARTY_ID;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.PARTY_ID_TYPE;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.PARTY_LOOKUP_RETRY_COUNT;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.PAYEE_PARTY_RESPONSE;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.QUOTE_SWITCH_REQUEST;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.TENANT_ID;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.TRANSACTION_ID;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeeWorkers.WORKER_PARTY_LOOKUP_LOCAL_RESPONSE;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeeWorkers.WORKER_PARTY_LOOKUP_REQUEST;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeeWorkers.WORKER_PARTY_REGISTRATION_ORACLE;
@@ -146,7 +149,11 @@ public class PartyLookupWorkers {
                         Map<String, Object> existingVariables = job.getVariablesAsMap();
 
                         Exchange exchange = new DefaultExchange(camelContext);
-
+                        exchange.setProperty(PARTY_ID_TYPE, existingVariables.get(PARTY_ID_TYPE));
+                        exchange.setProperty(PARTY_ID, existingVariables.get(PARTY_ID));
+                        exchange.setProperty(TENANT_ID, existingVariables.get(TENANT_ID));
+                        exchange.setProperty(ACCOUNT_CURRENCY, existingVariables.get(ACCOUNT_CURRENCY));
+                        producerTemplate.send("direct:register-party-identifier-in-oracle", exchange);
 
                         client.newCompleteCommand(job.getKey())
                                 .send()

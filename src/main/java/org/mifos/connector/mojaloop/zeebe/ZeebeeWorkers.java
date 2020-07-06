@@ -14,10 +14,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TRANSACTION_ID;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeExpressionVariables.AUTH_VALIDATION_SUCCESS;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeExpressionVariables.PAYER_CONFIRMED;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeExpressionVariables.TRANSACTION_STATE;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.TRANSACTION_ID;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.AUTH_VALIDATION_SUCCESS;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.PAYER_CONFIRMED;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.TRANSACTION_STATE;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeMessages.ACCEPT_QUOTE;
 
 

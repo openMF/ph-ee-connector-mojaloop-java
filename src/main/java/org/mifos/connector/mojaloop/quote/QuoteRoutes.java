@@ -31,15 +31,15 @@ import java.time.LocalDateTime;
 import static java.math.BigDecimal.ZERO;
 import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_DESTINATION;
 import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.CHANNEL_REQUEST;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.ERROR_INFORMATION;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.LOCAL_QUOTE_RESPONSE;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PARTY_LOOKUP_FSP_ID;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.QUOTE_ID;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.QUOTE_SWITCH_REQUEST;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TENANT_ID;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TRANSACTION_ID;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeExpressionVariables.QUOTE_FAILED;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.CHANNEL_REQUEST;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.ERROR_INFORMATION;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.LOCAL_QUOTE_RESPONSE;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.PARTY_LOOKUP_FSP_ID;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.QUOTE_ID;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.QUOTE_SWITCH_REQUEST;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.TENANT_ID;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.TRANSACTION_ID;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.QUOTE_FAILED;
 
 @Component
 public class QuoteRoutes extends ErrorHandlerRouteBuilder {

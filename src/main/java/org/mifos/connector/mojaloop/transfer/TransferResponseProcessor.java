@@ -12,9 +12,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.CACHED_TRANSACTION_ID;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.ERROR_INFORMATION;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeExpressionVariables.TRANSFER_FAILED;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeExpressionVariables.TRANSFER_STATE;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.ERROR_INFORMATION;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.TRANSFER_FAILED;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.TRANSFER_STATE;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeMessages.TRANSFER_RESPONSE;
 
 

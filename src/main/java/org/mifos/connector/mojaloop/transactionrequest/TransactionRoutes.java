@@ -30,15 +30,15 @@ import org.springframework.stereotype.Component;
 import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_DESTINATION;
 import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.AUTH_TYPE;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.CHANNEL_REQUEST;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.INITIATOR_FSP_ID;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PARTY_LOOKUP_FSP_ID;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TENANT_ID;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TRANSACTION_ID;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TRANSACTION_REQUEST;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeExpressionVariables.IS_AUTHORISATION_REQUIRED;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeExpressionVariables.TRANSACTION_REQUEST_FAILED;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeExpressionVariables.TRANSACTION_STATE;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.CHANNEL_REQUEST;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.INITIATOR_FSP_ID;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.PARTY_LOOKUP_FSP_ID;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.TENANT_ID;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.TRANSACTION_ID;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.TRANSACTION_REQUEST;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.IS_AUTHORISATION_REQUIRED;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.TRANSACTION_REQUEST_FAILED;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.TRANSACTION_STATE;
 
 @Component
 public class TransactionRoutes extends ErrorHandlerRouteBuilder {

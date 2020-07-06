@@ -8,8 +8,8 @@ import org.springframework.stereotype.Component;
 
 import java.util.Base64;
 
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.ORIGIN_DATE;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TRANSACTION_ID;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.ORIGIN_DATE;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.TRANSACTION_ID;
 
 @Component
 public class AddTraceHeaderProcessor implements Processor {

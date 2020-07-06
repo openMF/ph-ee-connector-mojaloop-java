@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.HashMap;
+import java.util.Map;
 
 @Configuration
 public class CamelContextConfig {
@@ -20,20 +21,15 @@ public class CamelContextConfig {
         return new CamelContextConfiguration() {
             @Override
             public void beforeApplicationStart(CamelContext camelContext) {
-                camelContext.setTracing(false);
-                camelContext.setMessageHistory(false);
-                camelContext.setStreamCaching(true);
                 camelContext.disableJMX();
 
                 RestConfiguration rest = new RestConfiguration();
-                camelContext.setRestConfiguration(rest);
-                rest.setComponent("jetty");
+                rest.setComponent("undertow");
                 rest.setProducerComponent("undertow");
                 rest.setPort(serverPort);
                 rest.setBindingMode(RestConfiguration.RestBindingMode.json);
-                rest.setDataFormatProperties(new HashMap<>());
-                rest.getDataFormatProperties().put("prettyPrint", "true");
                 rest.setScheme("http");
+                camelContext.setRestConfiguration(rest);
             }
 
             @Override

@@ -12,11 +12,11 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.ERROR_INFORMATION;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TRANSACTION_ID;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.TRANSACTION_REQUEST_RESPONSE;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeExpressionVariables.TRANSACTION_REQUEST_FAILED;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeExpressionVariables.TRANSACTION_STATE;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.ERROR_INFORMATION;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.TRANSACTION_ID;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.TRANSACTION_REQUEST_RESPONSE;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.TRANSACTION_REQUEST_FAILED;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.TRANSACTION_STATE;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeMessages.TRANSACTION_REQUEST;
 
 @Component

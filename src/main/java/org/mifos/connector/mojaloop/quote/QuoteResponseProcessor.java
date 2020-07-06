@@ -16,10 +16,10 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.ERROR_INFORMATION;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PAYEE_QUOTE_RESPONSE;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.QUOTE_ID;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeExpressionVariables.QUOTE_FAILED;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.ERROR_INFORMATION;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.PAYEE_QUOTE_RESPONSE;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.QUOTE_ID;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.QUOTE_FAILED;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeMessages.QUOTE;
 
 @Component
