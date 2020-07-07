@@ -49,7 +49,7 @@ public class OracleRoutes extends ErrorHandlerRouteBuilder {
                 .toD("rest:GET:/oracle/participants/${exchangeProperty." + PARTY_ID_TYPE + "}/${exchangeProperty." + PARTY_ID + "}?host={{switch.oracle-host}}")
                 .process(e -> {
                     try {
-                        e.setProperty(PARTY_EXISTS, new JSONArray(e.getIn().getBody(String.class)).isEmpty());
+                        e.setProperty(PARTY_EXISTS, !new JSONArray(e.getIn().getBody(String.class)).isEmpty());
                     } catch (JSONException ex) { // non exist and existing response format are different from oracle
                         e.setProperty(PARTY_EXISTS, true);
                     }
@@ -62,7 +62,7 @@ public class OracleRoutes extends ErrorHandlerRouteBuilder {
                     String fspId = partyProperties.getPartyByTenant(e.getProperty(TENANT_ID, String.class)).getFspId();
                     JSONObject request = new JSONObject();
                     request.put("fspId", fspId);
-                    request.put("currency", e.getProperty(ACCOUNT_CURRENCY));
+                    request.put("currency", e.getProperty(ACCOUNT_CURRENCY, String.class));
                     e.getIn().setBody(request.toString());
                     e.getIn().setHeader("Content-Type", "application/json");
                     e.getIn().setHeader("Accept", "application/json");
