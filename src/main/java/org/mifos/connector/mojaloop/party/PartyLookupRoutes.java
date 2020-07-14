@@ -82,7 +82,9 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                                         variables.put(TENANT_ID, tenantId);
                                     });
                         }
-                );
+                )
+                .setBody(constant(null))
+                .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(202));
 
         from("rest:PUT:/switch/parties/" + MSISDN + "/{partyId}")
                 .log(LoggingLevel.DEBUG, "######## SWITCH -> PAYER - response for parties request  - STEP 3")
