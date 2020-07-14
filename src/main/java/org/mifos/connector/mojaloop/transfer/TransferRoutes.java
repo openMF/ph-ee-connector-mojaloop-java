@@ -1,11 +1,14 @@
 package org.mifos.connector.mojaloop.transfer;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ilp.conditions.models.pdp.Transaction;
 import io.zeebe.client.ZeebeClient;
 import org.apache.camel.Exchange;
 import org.apache.camel.LoggingLevel;
 import org.apache.camel.Processor;
 import org.apache.camel.model.dataformat.JsonLibrary;
+import org.json.JSONObject;
+import org.mifos.connector.common.channel.dto.TransactionChannelRequestDTO;
 import org.mifos.connector.mojaloop.camel.trace.AddTraceHeaderProcessor;
 import org.mifos.connector.mojaloop.camel.trace.GetCachedTransactionIdProcessor;
 import org.mifos.connector.mojaloop.ilp.IlpBuilder;
@@ -24,6 +27,7 @@ import org.springframework.stereotype.Component;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.CHANNEL_REQUEST;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.ERROR_INFORMATION;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.SWITCH_TRANSFER_REQUEST;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.TRANSACTION_ID;
@@ -46,6 +50,9 @@ public class TransferRoutes extends ErrorHandlerRouteBuilder {
 
     @Autowired
     private MojaloopUtil mojaloopUtil;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Autowired
     private AddTraceHeaderProcessor addTraceHeaderProcessor;
@@ -152,7 +159,7 @@ public class TransferRoutes extends ErrorHandlerRouteBuilder {
                             ilp.getPacket(),
                             ilp.getCondition(),
                             ContextUtil.parseDate(quoteResponse.getExpiration()).plusHours(1),
-                            null);
+                            objectMapper.readValue(exchange.getProperty(CHANNEL_REQUEST, String.class), TransactionChannelRequestDTO.class).getExtensionList());
 
                     exchange.getIn().setBody(request);
                     mojaloopUtil.setTransferHeadersRequest(exchange, transaction);

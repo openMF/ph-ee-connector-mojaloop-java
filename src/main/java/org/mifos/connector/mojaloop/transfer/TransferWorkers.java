@@ -15,6 +15,7 @@ import javax.annotation.PostConstruct;
 import java.util.List;
 import java.util.Map;
 
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.CHANNEL_REQUEST;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.ERROR_INFORMATION;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.ORIGIN_DATE;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.PAYEE_QUOTE_RESPONSE;
@@ -95,6 +96,7 @@ public class TransferWorkers {
                         Exchange exchange = new DefaultExchange(camelContext);
                         exchange.setProperty(TRANSACTION_ID, variables.get(TRANSACTION_ID));
                         exchange.setProperty(ORIGIN_DATE, variables.get(ORIGIN_DATE));
+                        exchange.setProperty(CHANNEL_REQUEST, variables.get(CHANNEL_REQUEST));
                         exchange.getIn().setBody(variables.get(PAYEE_QUOTE_RESPONSE));
 
                         producerTemplate.send("direct:send-transfer", exchange);
