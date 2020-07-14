@@ -168,8 +168,8 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                             null,
                             ilp.getPacket(),
                             ilp.getCondition(),
-                            null
-                    );
+                            request.getExtensionList());
+
                     exchange.getIn().setBody(response);
                     exchange.setProperty(QUOTE_ID, request.getQuoteId());
 
@@ -212,14 +212,16 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
 
                     MoneyData requestAmount = channelRequest.getAmount();
                     stripAmount(requestAmount);
-                    exchange.getIn().setBody(new QuoteSwitchRequestDTO(
+                    QuoteSwitchRequestDTO quoteRequest = new QuoteSwitchRequestDTO(
                             exchange.getProperty(TRANSACTION_ID, String.class),
                             exchange.getProperty(QUOTE_ID, String.class),
                             payee,
                             payer,
                             AmountType.RECEIVE,
                             requestAmount,
-                            transactionType));
+                            transactionType);
+                    quoteRequest.setExtensionList(channelRequest.getExtensionList());
+                    exchange.getIn().setBody(quoteRequest);
 
                     exchange.setProperty(FSPIOP_SOURCE.headerName(), payerFspId);
                     exchange.setProperty(FSPIOP_DESTINATION.headerName(), exchange.getProperty(PARTY_LOOKUP_FSP_ID));
