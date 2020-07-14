@@ -1,6 +1,7 @@
 package org.mifos.connector.mojaloop.quote;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.camel.Exchange;
 import org.apache.camel.LoggingLevel;
 import org.apache.camel.Processor;
 import org.apache.camel.model.dataformat.JsonLibrary;
@@ -101,17 +102,23 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                                         );
                                     });
                         }
-                );
+                )
+                .setBody(constant(null))
+                .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(202));
 
         from("rest:PUT:/switch/quotes/{" + QUOTE_ID + "}")
                 .log(LoggingLevel.INFO, "######## SWITCH -> PAYER - response for quote request - STEP 4")
                 .unmarshal().json(JsonLibrary.Jackson, QuoteSwitchResponseDTO.class)
-                .process(quoteResponseProcessor);
+                .process(quoteResponseProcessor)
+                .setBody(constant(null))
+                .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(200));
 
         from("rest:PUT:/switch/quotes/{" + QUOTE_ID + "}/error")
                 .log(LoggingLevel.ERROR, "######## SWITCH -> PAYER - quote error")
                 .setProperty(QUOTE_FAILED, constant(true))
-                .process(quoteResponseProcessor);
+                .process(quoteResponseProcessor)
+                .setBody(constant(null))
+                .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(200));
 
         from("direct:send-quote-error-to-switch")
                 .id("send-quote-error-to-switch")

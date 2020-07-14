@@ -2,6 +2,7 @@ package org.mifos.connector.mojaloop.party;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.camel.Exchange;
 import org.apache.camel.LoggingLevel;
 import org.apache.camel.Processor;
 import org.apache.camel.model.dataformat.JsonLibrary;
@@ -87,13 +88,17 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                 .log(LoggingLevel.DEBUG, "######## SWITCH -> PAYER - response for parties request  - STEP 3")
                 .unmarshal().json(JsonLibrary.Jackson, PartySwitchResponseDTO.class)
                 .process(getCachedTransactionIdProcessor)
-                .process(partiesResponseProcessor);
+                .process(partiesResponseProcessor)
+                .setBody(constant(null))
+                .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(200));
 
         from("rest:PUT:/switch/parties/" + MSISDN + "/{partyId}/error")
                 .log(LoggingLevel.ERROR, "######## SWITCH -> PAYER - parties error")
                 .process(getCachedTransactionIdProcessor)
                 .setProperty(PARTY_LOOKUP_FAILED, constant(true))
-                .process(partiesResponseProcessor);
+                .process(partiesResponseProcessor)
+                .setBody(constant(null))
+                .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(200));
 
         from("direct:send-parties-response")
                 .id("send-parties-response")

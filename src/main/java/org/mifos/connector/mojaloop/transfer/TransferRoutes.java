@@ -2,6 +2,7 @@ package org.mifos.connector.mojaloop.transfer;
 
 import com.ilp.conditions.models.pdp.Transaction;
 import io.zeebe.client.ZeebeClient;
+import org.apache.camel.Exchange;
 import org.apache.camel.LoggingLevel;
 import org.apache.camel.Processor;
 import org.apache.camel.model.dataformat.JsonLibrary;
@@ -85,19 +86,25 @@ public class TransferRoutes extends ErrorHandlerRouteBuilder {
                             .send()
                             .join();
                 })
-                .log(LoggingLevel.INFO, "######## SWITCH -> PAYEE - forward transfer request ${exchangeProperty."+TRANSACTION_ID+"} - STEP 2");
+                .log(LoggingLevel.INFO, "######## SWITCH -> PAYEE - forward transfer request ${exchangeProperty."+TRANSACTION_ID+"} - STEP 2")
+                .setBody(constant(null))
+                .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(202));
 
         from("rest:PUT:/switch/transfers/{"+TRANSACTION_ID+"}")
                 .log(LoggingLevel.INFO, "######## SWITCH -> PAYER - response for transfer request ${header."+TRANSACTION_ID+"} - STEP 4")
                 .unmarshal().json(JsonLibrary.Jackson, TransferSwitchResponseDTO.class)
                 .process(getCachedTransactionIdProcessor)
-                .process(transferResponseProcessor);
+                .process(transferResponseProcessor)
+                .setBody(constant(null))
+                .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(200));
 
         from("rest:PUT:/switch/transfers/{"+TRANSACTION_ID+"}/error")
                 .log(LoggingLevel.ERROR, "######## SWITCH -> PAYER - transfer error ${header."+TRANSACTION_ID+"}")
                 .process(getCachedTransactionIdProcessor)
                 .setProperty(TRANSFER_FAILED, constant(true))
-                .process(transferResponseProcessor);
+                .process(transferResponseProcessor)
+                .setBody(constant(null))
+                .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(200));
 
         from("direct:send-transfer-error-to-switch")
                 .id("send-transfer-error-to-switch")
