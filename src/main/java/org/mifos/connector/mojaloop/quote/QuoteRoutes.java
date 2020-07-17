@@ -36,11 +36,11 @@ import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.CHANNEL_REQUEST;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.ERROR_INFORMATION;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.LOCAL_QUOTE_RESPONSE;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.PARTY_LOOKUP_FSP_ID;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.QUOTE_FAILED;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.QUOTE_ID;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.QUOTE_SWITCH_REQUEST;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.TENANT_ID;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.TRANSACTION_ID;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.QUOTE_FAILED;
 
 @Component
 public class QuoteRoutes extends ErrorHandlerRouteBuilder {
@@ -214,13 +214,18 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                     stripAmount(requestAmount);
                     QuoteSwitchRequestDTO quoteRequest = new QuoteSwitchRequestDTO(
                             exchange.getProperty(TRANSACTION_ID, String.class),
+                            null, // TODO previously sent transactionRequest, use this?
                             exchange.getProperty(QUOTE_ID, String.class),
                             payee,
                             payer,
                             AmountType.RECEIVE,
                             requestAmount,
-                            transactionType);
-                    quoteRequest.setExtensionList(channelRequest.getExtensionList());
+                            null,
+                            transactionType,
+                            null,
+                            null, // TODO should be used other then extensions for comment?
+                            null,
+                            channelRequest.getExtensionList());
                     exchange.getIn().setBody(quoteRequest);
 
                     exchange.setProperty(FSPIOP_SOURCE.headerName(), payerFspId);

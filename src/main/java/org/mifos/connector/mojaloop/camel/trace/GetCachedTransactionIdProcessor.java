@@ -28,7 +28,7 @@ public class GetCachedTransactionIdProcessor implements Processor {
 
         if (transactionId == null) {
             logger.error("FATAL: failed to resolve transactionIdKey {} in local TransactionCache, stopping route now", transactionIdKey);
-            exchange.setProperty(Exchange.ROUTE_STOP, Boolean.TRUE);
+            exchange.setRouteStop(true);
         }
     }
 
