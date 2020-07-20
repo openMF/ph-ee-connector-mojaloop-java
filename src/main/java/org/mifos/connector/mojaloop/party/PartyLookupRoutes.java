@@ -118,8 +118,6 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
         from("direct:send-parties-error-response")
                 .id("send-parties-error-response")
                 .process(exchange -> {
-                    exchange.setProperty(PARTY_ID, exchange.getIn().getHeader(PARTY_ID));
-                    exchange.setProperty(PARTY_ID_TYPE, exchange.getIn().getHeader(PARTY_ID_TYPE));
                     exchange.getIn().setBody(exchange.getProperty(ERROR_INFORMATION));
                     mojaloopUtil.setPartyHeadersResponse(exchange);
                 })

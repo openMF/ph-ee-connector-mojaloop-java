@@ -31,7 +31,6 @@ import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.PARTY_ID;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.PARTY_ID_TYPE;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.PARTY_LOOKUP_RETRY_COUNT;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.PAYEE_PARTY_RESPONSE;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.QUOTE_SWITCH_REQUEST;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.TENANT_ID;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.TRANSACTION_ID;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeeWorkers.WORKER_PARTY_LOOKUP_LOCAL_RESPONSE;
@@ -118,7 +117,10 @@ public class PartyLookupWorkers {
                                     "traceparent",
                                     "Date"
                             );
+
                             exchange.setProperty(ERROR_INFORMATION, errorInformation);
+                            exchange.setProperty(PARTY_ID_TYPE, existingVariables.get(PARTY_ID_TYPE));
+                            exchange.setProperty(PARTY_ID, existingVariables.get(PARTY_ID));
 
                             producerTemplate.send("direct:send-parties-error-response", exchange);
                         } else {
@@ -127,6 +129,7 @@ public class PartyLookupWorkers {
                                     "traceparent",
                                     "Date"
                             );
+
                             exchange.setProperty(PAYEE_PARTY_RESPONSE, existingVariables.get(PAYEE_PARTY_RESPONSE));
 
                             producerTemplate.send("direct:send-parties-response", exchange);
