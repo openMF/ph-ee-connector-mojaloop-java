@@ -111,7 +111,6 @@ public class PartyLookupWorkers {
                         Map<String, Object> existingVariables = job.getVariablesAsMap();
 
                         Exchange exchange = new DefaultExchange(camelContext);
-                        exchange.getIn().setBody(existingVariables.get(QUOTE_SWITCH_REQUEST));
                         Object errorInformation = existingVariables.get(ERROR_INFORMATION);
                         if (errorInformation != null) {
                             zeebeVariablesToCamelHeaders(existingVariables, exchange,
