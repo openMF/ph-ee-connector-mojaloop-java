@@ -1,10 +1,17 @@
 package org.mifos.connector.mojaloop.quote;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.zeebe.client.ZeebeClient;
 import org.apache.camel.CamelContext;
 import org.apache.camel.Exchange;
 import org.apache.camel.ProducerTemplate;
 import org.apache.camel.support.DefaultExchange;
+import org.mifos.connector.common.channel.dto.TransactionChannelRequestDTO;
+import org.mifos.connector.common.mojaloop.dto.ExtensionList;
+import org.mifos.connector.common.mojaloop.dto.FspMoneyData;
+import org.mifos.connector.common.mojaloop.dto.GeoCode;
+import org.mifos.connector.common.mojaloop.dto.MoneyData;
+import org.mifos.connector.common.mojaloop.dto.QuoteSwitchResponseDTO;
 import org.mifos.connector.mojaloop.zeebe.ZeebeProcessStarter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +20,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -52,6 +60,12 @@ public class QuoteWorkers {
     @Value("${zeebe.client.evenly-allocated-max-jobs}")
     private int workerMaxJobs;
 
+    @Value("${mojaloop.enabled:false}")
+    private boolean isMojaloopEnabled;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
     @PostConstruct
     public void setupWorkers() {
         for (String dfspId : dfspids) {
@@ -60,23 +74,38 @@ public class QuoteWorkers {
                     .jobType(WORKER_QUOTE + dfspId)
                     .handler((client, job) -> {
                         logger.info("Job '{}' started from process '{}' with key {}", job.getType(), job.getBpmnProcessId(), job.getKey());
-                        Exchange exchange = new DefaultExchange(camelContext);
+
                         Map<String, Object> existingVariables = job.getVariablesAsMap();
                         existingVariables.put(TIMEOUT_QUOTE_RETRY_COUNT, 1 + (Integer) existingVariables.getOrDefault(TIMEOUT_QUOTE_RETRY_COUNT, -1));
-
-                        exchange.setProperty(TRANSACTION_ID, existingVariables.get(TRANSACTION_ID));
-                        exchange.setProperty(CHANNEL_REQUEST, existingVariables.get(CHANNEL_REQUEST));
-                        exchange.setProperty(ORIGIN_DATE, existingVariables.get(ORIGIN_DATE));
-                        exchange.setProperty(PARTY_LOOKUP_FSP_ID, existingVariables.get(PARTY_LOOKUP_FSP_ID));
-                        exchange.setProperty(TENANT_ID, existingVariables.get(TENANT_ID));
                         Object quoteId = existingVariables.get(QUOTE_ID);
                         if (quoteId == null) {
                             quoteId = UUID.randomUUID().toString();
                             existingVariables.put(QUOTE_ID, quoteId);
                         }
-                        exchange.setProperty(QUOTE_ID, quoteId);
 
-                        producerTemplate.send("direct:send-quote", exchange);
+                        Exchange exchange = new DefaultExchange(camelContext);
+                        if(isMojaloopEnabled) {
+                            exchange.setProperty(TRANSACTION_ID, existingVariables.get(TRANSACTION_ID));
+                            exchange.setProperty(CHANNEL_REQUEST, existingVariables.get(CHANNEL_REQUEST));
+                            exchange.setProperty(ORIGIN_DATE, existingVariables.get(ORIGIN_DATE));
+                            exchange.setProperty(PARTY_LOOKUP_FSP_ID, existingVariables.get(PARTY_LOOKUP_FSP_ID));
+                            exchange.setProperty(TENANT_ID, existingVariables.get(TENANT_ID));
+                            exchange.setProperty(QUOTE_ID, quoteId);
+                            producerTemplate.send("direct:send-quote", exchange);
+                        } else {
+                            TransactionChannelRequestDTO channelRequest = objectMapper.readValue(exchange.getProperty(CHANNEL_REQUEST, String.class), TransactionChannelRequestDTO.class);
+                            QuoteSwitchResponseDTO response = new QuoteSwitchResponseDTO();
+                            response.setTransferAmount(channelRequest.getAmount());
+                            response.setPayeeFspFee(new FspMoneyData(BigDecimal.ZERO, channelRequest.getAmount().getCurrency()).toMoneyData());
+                            response.setPayeeFspCommission(new FspMoneyData(BigDecimal.ZERO, channelRequest.getAmount().getCurrency()).toMoneyData());
+                            response.setExpiration("never");
+                            response.setIlpPacket("ilp");
+                            response.setCondition("condition");
+
+                            exchange.getIn().setBody(response);
+                            exchange.getIn().setHeader(QUOTE_ID, quoteId);
+                            producerTemplate.send("direct:quotes-step4", exchange);
+                        }
 
                         client.newCompleteCommand(job.getKey())
                                 .variables(existingVariables)

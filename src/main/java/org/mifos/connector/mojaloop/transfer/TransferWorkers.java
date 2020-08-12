@@ -5,6 +5,7 @@ import org.apache.camel.CamelContext;
 import org.apache.camel.Exchange;
 import org.apache.camel.ProducerTemplate;
 import org.apache.camel.support.DefaultExchange;
+import org.mifos.connector.common.mojaloop.dto.TransferSwitchResponseDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,14 +16,16 @@ import javax.annotation.PostConstruct;
 import java.util.List;
 import java.util.Map;
 
+import static org.mifos.connector.common.mojaloop.type.TransferState.COMMITTED;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.CACHED_TRANSACTION_ID;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeProcessStarter.zeebeVariablesToCamelHeaders;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.CHANNEL_REQUEST;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.ERROR_INFORMATION;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.ORIGIN_DATE;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.PAYEE_QUOTE_RESPONSE;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.SWITCH_TRANSFER_REQUEST;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.TRANSACTION_ID;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.TIMEOUT_TRANSFER_RETRY_COUNT;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeProcessStarter.zeebeVariablesToCamelHeaders;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.TRANSACTION_ID;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeeWorkers.WORKER_PAYEE_TRANSFER_RESPONSE;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeeWorkers.WORKER_SEND_TRANSFER_REQUEST;
 
@@ -45,6 +48,9 @@ public class TransferWorkers {
 
     @Value("${zeebe.client.evenly-allocated-max-jobs}")
     private int workerMaxJobs;
+
+    @Value("${mojaloop.enabled:false}")
+    private boolean isMojaloopEnabled;
 
     @PostConstruct
     public void setupWorkers() {
@@ -94,12 +100,22 @@ public class TransferWorkers {
                         variables.put(TIMEOUT_TRANSFER_RETRY_COUNT, 1 + (Integer) variables.getOrDefault(TIMEOUT_TRANSFER_RETRY_COUNT, -1));
 
                         Exchange exchange = new DefaultExchange(camelContext);
-                        exchange.setProperty(TRANSACTION_ID, variables.get(TRANSACTION_ID));
-                        exchange.setProperty(ORIGIN_DATE, variables.get(ORIGIN_DATE));
-                        exchange.setProperty(CHANNEL_REQUEST, variables.get(CHANNEL_REQUEST));
-                        exchange.getIn().setBody(variables.get(PAYEE_QUOTE_RESPONSE));
+                        Object transactionId = variables.get(TRANSACTION_ID);
+                        if(isMojaloopEnabled) {
+                            exchange.setProperty(TRANSACTION_ID, transactionId);
+                            exchange.setProperty(ORIGIN_DATE, variables.get(ORIGIN_DATE));
+                            exchange.setProperty(CHANNEL_REQUEST, variables.get(CHANNEL_REQUEST));
+                            exchange.getIn().setBody(variables.get(PAYEE_QUOTE_RESPONSE));
+                            producerTemplate.send("direct:send-transfer", exchange);
+                        } else {
+                            TransferSwitchResponseDTO response = new TransferSwitchResponseDTO();
+                            response.setTransferState(COMMITTED);
+                            exchange.getIn().setBody(response);
+                            exchange.getIn().setHeader(TRANSACTION_ID, transactionId);
+                            exchange.setProperty(CACHED_TRANSACTION_ID, transactionId);
+                            producerTemplate.send("direct:transfers-step4", exchange);
+                        }
 
-                        producerTemplate.send("direct:send-transfer", exchange);
                         client.newCompleteCommand(job.getKey())
                                 .variables(variables)
                                 .send()

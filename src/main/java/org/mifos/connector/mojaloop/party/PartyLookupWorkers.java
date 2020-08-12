@@ -7,7 +7,10 @@ import org.apache.camel.Exchange;
 import org.apache.camel.ProducerTemplate;
 import org.apache.camel.support.DefaultExchange;
 import org.mifos.connector.common.channel.dto.TransactionChannelRequestDTO;
+import org.mifos.connector.common.mojaloop.dto.Party;
 import org.mifos.connector.common.mojaloop.dto.PartyIdInfo;
+import org.mifos.connector.common.mojaloop.dto.PartySwitchResponseDTO;
+import org.mifos.connector.common.mojaloop.type.IdentifierType;
 import org.mifos.connector.mojaloop.properties.PartyProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,7 +22,9 @@ import javax.annotation.PostConstruct;
 import java.util.List;
 import java.util.Map;
 
+import static org.mifos.connector.common.mojaloop.type.IdentifierType.MSISDN;
 import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.CACHED_TRANSACTION_ID;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeProcessStarter.zeebeVariablesToCamelHeaders;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.ACCOUNT_CURRENCY;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.CHANNEL_REQUEST;
@@ -63,6 +68,9 @@ public class PartyLookupWorkers {
     @Value("${zeebe.client.evenly-allocated-max-jobs}")
     private int workerMaxJobs;
 
+    @Value("${mojaloop.enabled:false}")
+    private boolean isMojaloopEnabled;
+
     @PostConstruct
     public void setupWorkers() {
         for (String dfspId : dfspids) {
@@ -74,23 +82,32 @@ public class PartyLookupWorkers {
                         Map<String, Object> existingVariables = job.getVariablesAsMap();
                         existingVariables.put(PARTY_LOOKUP_RETRY_COUNT, 1 + (Integer) existingVariables.getOrDefault(PARTY_LOOKUP_RETRY_COUNT, -1));
 
-                        Exchange exchange = new DefaultExchange(camelContext);
-                        exchange.setProperty(TRANSACTION_ID, existingVariables.get(TRANSACTION_ID));
-                        Object channelRequest = existingVariables.get(CHANNEL_REQUEST);
-                        exchange.setProperty(CHANNEL_REQUEST, channelRequest);
-                        exchange.setProperty(ORIGIN_DATE, existingVariables.get(ORIGIN_DATE));
                         boolean isTransactionRequest = (boolean) existingVariables.get(IS_RTP_REQUEST);
-                        exchange.setProperty(IS_RTP_REQUEST, isTransactionRequest);
                         String tenantId = (String) existingVariables.get(TENANT_ID);
-                        exchange.setProperty(TENANT_ID, tenantId);
-                        producerTemplate.send("direct:send-party-lookup", exchange);
-
+                        Object channelRequest = existingVariables.get(CHANNEL_REQUEST);
                         // only saved for operations to identify workflow
                         if (existingVariables.get(INITIATOR_FSP_ID) == null) {
                             TransactionChannelRequestDTO channelRequestObject = objectMapper.readValue((String) channelRequest, TransactionChannelRequestDTO.class);
                             PartyIdInfo initiatorParty = isTransactionRequest ? channelRequestObject.getPayee().getPartyIdInfo() : channelRequestObject.getPayer().getPartyIdInfo();
                             String initiatorFspId = partyProperties.getPartyByTenant(tenantId).getFspId();
                             existingVariables.put(INITIATOR_FSP_ID, initiatorFspId);
+                        }
+
+                        Exchange exchange = new DefaultExchange(camelContext);
+                        if(isMojaloopEnabled) {
+                            exchange.setProperty(TRANSACTION_ID, existingVariables.get(TRANSACTION_ID));
+                            exchange.setProperty(CHANNEL_REQUEST, channelRequest);
+                            exchange.setProperty(ORIGIN_DATE, existingVariables.get(ORIGIN_DATE));
+                            exchange.setProperty(IS_RTP_REQUEST, isTransactionRequest);
+                            exchange.setProperty(TENANT_ID, tenantId);
+                            producerTemplate.send("direct:send-party-lookup", exchange);
+                        } else {
+                            PartyIdInfo partyIdInfo = new PartyIdInfo(MSISDN, "27710305999", null, "in03tn05");
+                            Party party = new Party(partyIdInfo, null, null, null);
+                            PartySwitchResponseDTO response = new PartySwitchResponseDTO(party);
+                            exchange.getIn().setBody(response);
+                            exchange.setProperty(CACHED_TRANSACTION_ID, existingVariables.get(TRANSACTION_ID));
+                            producerTemplate.send("direct:parties-step4", exchange);
                         }
 
                         client.newCompleteCommand(job.getKey())

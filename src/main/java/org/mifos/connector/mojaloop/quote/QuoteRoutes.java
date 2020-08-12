@@ -107,8 +107,11 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                 .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(202));
 
         from("rest:PUT:/switch/quotes/{" + QUOTE_ID + "}")
-                .log(LoggingLevel.INFO, "######## SWITCH -> PAYER - response for quote request - STEP 4")
                 .unmarshal().json(JsonLibrary.Jackson, QuoteSwitchResponseDTO.class)
+                .to("direct:quotes-step4");
+
+        from("direct:quotes-step4")
+                .log(LoggingLevel.INFO, "######## SWITCH -> PAYER - response for quote request - STEP 4")
                 .process(quoteResponseProcessor)
                 .setBody(constant(null))
                 .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(200));

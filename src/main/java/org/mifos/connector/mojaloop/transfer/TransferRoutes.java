@@ -98,9 +98,12 @@ public class TransferRoutes extends ErrorHandlerRouteBuilder {
                 .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(202));
 
         from("rest:PUT:/switch/transfers/{"+TRANSACTION_ID+"}")
-                .log(LoggingLevel.INFO, "######## SWITCH -> PAYER - response for transfer request ${header."+TRANSACTION_ID+"} - STEP 4")
                 .unmarshal().json(JsonLibrary.Jackson, TransferSwitchResponseDTO.class)
                 .process(getCachedTransactionIdProcessor)
+                .to("direct:transfers-step4");
+
+        from("direct:transfers-step4")
+                .log(LoggingLevel.INFO, "######## SWITCH -> PAYER - response for transfer request ${header."+TRANSACTION_ID+"} - STEP 4")
                 .process(transferResponseProcessor)
                 .setBody(constant(null))
                 .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(200));

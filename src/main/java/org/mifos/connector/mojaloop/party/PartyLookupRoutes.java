@@ -87,9 +87,12 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                 .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(202));
 
         from("rest:PUT:/switch/parties/" + MSISDN + "/{partyId}")
-                .log(LoggingLevel.DEBUG, "######## SWITCH -> PAYER - response for parties request  - STEP 3")
                 .unmarshal().json(JsonLibrary.Jackson, PartySwitchResponseDTO.class)
                 .process(getCachedTransactionIdProcessor)
+                .to("direct:parties-step4");
+
+        from("direct:parties-step4")
+                .log(LoggingLevel.DEBUG, "######## SWITCH -> PAYER - response for parties request  - STEP 4")
                 .process(partiesResponseProcessor)
                 .setBody(constant(null))
                 .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(200));
@@ -103,6 +106,7 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                 .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(200));
 
         from("direct:send-parties-response")
+                .log(LoggingLevel.DEBUG, "######## PAYEE -> SWITCH - party lookup response - STEP 3")
                 .id("send-parties-response")
                 .process(exchange -> {
                     Party party = objectMapper.readValue(exchange.getProperty(PAYEE_PARTY_RESPONSE, String.class), Party.class);
@@ -116,6 +120,7 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                 .toD("rest:PUT:/parties/${exchangeProperty." + PARTY_ID_TYPE + "}/${exchangeProperty." + PARTY_ID + "}?host={{switch.als-host}}");
 
         from("direct:send-parties-error-response")
+                .log(LoggingLevel.DEBUG, "######## PAYEE -> SWITCH - party lookup error response - STEP 3")
                 .id("send-parties-error-response")
                 .process(exchange -> {
                     exchange.getIn().setBody(exchange.getProperty(ERROR_INFORMATION));

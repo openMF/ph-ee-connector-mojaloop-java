@@ -10,6 +10,7 @@ import org.mifos.connector.common.mojaloop.dto.QuoteSwitchResponseDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
@@ -36,6 +37,9 @@ public class QuoteResponseProcessor implements Processor {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Value("${mojaloop.enabled:false}")
+    private boolean isMojaloopEnabled;
+
     @Override
     public void process(Exchange exchange) throws JsonProcessingException {
         Map<String, Object> variables = new HashMap<>();
@@ -46,7 +50,7 @@ public class QuoteResponseProcessor implements Processor {
             variables.put(QUOTE_FAILED, true);
         } else {
             QuoteSwitchResponseDTO response = exchange.getIn().getBody(QuoteSwitchResponseDTO.class);
-            if (!ilpBuilder.isValidPacketAgainstCondition(response.getIlpPacket(), response.getCondition())) {
+            if (isMojaloopEnabled && !ilpBuilder.isValidPacketAgainstCondition(response.getIlpPacket(), response.getCondition())) {
                 logger.error("Invalid ILP packet for quote: {}", exchange.getIn().getHeader(QUOTE_ID));
                 variables.put(QUOTE_FAILED, true);
             }
