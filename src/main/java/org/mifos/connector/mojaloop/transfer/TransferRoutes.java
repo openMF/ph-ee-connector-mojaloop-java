@@ -7,13 +7,8 @@ import org.apache.camel.Exchange;
 import org.apache.camel.LoggingLevel;
 import org.apache.camel.Processor;
 import org.apache.camel.model.dataformat.JsonLibrary;
-import org.json.JSONObject;
-import org.mifos.connector.common.channel.dto.TransactionChannelRequestDTO;
-import org.mifos.connector.mojaloop.camel.trace.AddTraceHeaderProcessor;
-import org.mifos.connector.mojaloop.camel.trace.GetCachedTransactionIdProcessor;
-import org.mifos.connector.mojaloop.ilp.IlpBuilder;
-import org.mifos.connector.mojaloop.util.MojaloopUtil;
 import org.mifos.connector.common.camel.ErrorHandlerRouteBuilder;
+import org.mifos.connector.common.channel.dto.TransactionChannelRequestDTO;
 import org.mifos.connector.common.mojaloop.dto.MoneyData;
 import org.mifos.connector.common.mojaloop.dto.QuoteSwitchResponseDTO;
 import org.mifos.connector.common.mojaloop.dto.TransferSwitchRequestDTO;
@@ -21,20 +16,24 @@ import org.mifos.connector.common.mojaloop.dto.TransferSwitchResponseDTO;
 import org.mifos.connector.common.mojaloop.ilp.Ilp;
 import org.mifos.connector.common.mojaloop.type.TransferState;
 import org.mifos.connector.common.util.ContextUtil;
+import org.mifos.connector.mojaloop.camel.trace.AddTraceHeaderProcessor;
+import org.mifos.connector.mojaloop.camel.trace.GetCachedTransactionIdProcessor;
+import org.mifos.connector.mojaloop.ilp.IlpBuilder;
+import org.mifos.connector.mojaloop.util.MojaloopUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_DESTINATION;
+import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeMessages.TRANSFER_MESSAGE;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.CHANNEL_REQUEST;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.ERROR_INFORMATION;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.SWITCH_TRANSFER_REQUEST;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.TRANSACTION_ID;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.TRANSFER_FAILED;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeMessages.TRANSFER_MESSAGE;
-import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_DESTINATION;
-import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
 
 @Component
 public class TransferRoutes extends ErrorHandlerRouteBuilder {

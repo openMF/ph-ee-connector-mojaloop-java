@@ -10,7 +10,6 @@ import org.mifos.connector.common.channel.dto.TransactionChannelRequestDTO;
 import org.mifos.connector.common.mojaloop.dto.Party;
 import org.mifos.connector.common.mojaloop.dto.PartyIdInfo;
 import org.mifos.connector.common.mojaloop.dto.PartySwitchResponseDTO;
-import org.mifos.connector.common.mojaloop.type.IdentifierType;
 import org.mifos.connector.mojaloop.properties.PartyProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

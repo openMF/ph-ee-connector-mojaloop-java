@@ -7,10 +7,7 @@ import org.apache.camel.Exchange;
 import org.apache.camel.ProducerTemplate;
 import org.apache.camel.support.DefaultExchange;
 import org.mifos.connector.common.channel.dto.TransactionChannelRequestDTO;
-import org.mifos.connector.common.mojaloop.dto.ExtensionList;
 import org.mifos.connector.common.mojaloop.dto.FspMoneyData;
-import org.mifos.connector.common.mojaloop.dto.GeoCode;
-import org.mifos.connector.common.mojaloop.dto.MoneyData;
 import org.mifos.connector.common.mojaloop.dto.QuoteSwitchResponseDTO;
 import org.mifos.connector.mojaloop.zeebe.ZeebeProcessStarter;
 import org.slf4j.Logger;
@@ -27,6 +24,7 @@ import java.util.UUID;
 
 import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_DESTINATION;
 import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.CHANNEL_REQUEST;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.ERROR_INFORMATION;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.LOCAL_QUOTE_RESPONSE;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.ORIGIN_DATE;
@@ -34,9 +32,8 @@ import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.PARTY_LOOKUP_FSP
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.QUOTE_ID;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.QUOTE_SWITCH_REQUEST;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.TENANT_ID;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.TRANSACTION_ID;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.CHANNEL_REQUEST;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.TIMEOUT_QUOTE_RETRY_COUNT;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.TRANSACTION_ID;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeeWorkers.WORKER_PAYEE_QUOTE_RESPONSE;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeeWorkers.WORKER_QUOTE;
 
