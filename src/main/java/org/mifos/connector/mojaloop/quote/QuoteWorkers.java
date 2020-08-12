@@ -93,7 +93,7 @@ public class QuoteWorkers {
                             exchange.setProperty(QUOTE_ID, quoteId);
                             producerTemplate.send("direct:send-quote", exchange);
                         } else {
-                            TransactionChannelRequestDTO channelRequest = objectMapper.readValue(exchange.getProperty(CHANNEL_REQUEST, String.class), TransactionChannelRequestDTO.class);
+                            TransactionChannelRequestDTO channelRequest = objectMapper.readValue((String)existingVariables.get(CHANNEL_REQUEST), TransactionChannelRequestDTO.class);
                             QuoteSwitchResponseDTO response = new QuoteSwitchResponseDTO();
                             response.setTransferAmount(channelRequest.getAmount());
                             response.setPayeeFspFee(new FspMoneyData(BigDecimal.ZERO, channelRequest.getAmount().getCurrency()).toMoneyData());
