@@ -23,6 +23,9 @@ zeebe:
 connector:
   ilp-secret: h4on38bsDjKiat2783gnklgafikmeuu5123kpobb7jm99
 
+mojaloop:
+  enabled: true
+
 switch:
   quotes-host: http://40.114.81.46
   quote-service: quoting-service.local

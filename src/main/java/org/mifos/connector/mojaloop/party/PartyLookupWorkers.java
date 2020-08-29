@@ -67,7 +67,7 @@ public class PartyLookupWorkers {
     @Value("${zeebe.client.evenly-allocated-max-jobs}")
     private int workerMaxJobs;
 
-    @Value("${mojaloop.enabled:false}")
+    @Value("${mojaloop.enabled}")
     private boolean isMojaloopEnabled;
 
     @PostConstruct

@@ -37,7 +37,7 @@ public class QuoteResponseProcessor implements Processor {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @Value("${mojaloop.enabled:false}")
+    @Value("${mojaloop.enabled}")
     private boolean isMojaloopEnabled;
 
     @Override
