@@ -112,7 +112,7 @@ public class PartyLookupWorkers {
                         client.newCompleteCommand(job.getKey())
                                 .variables(existingVariables)
                                 .send()
-                                .join();
+                                ;
                     })
                     .name(WORKER_PARTY_LOOKUP_REQUEST + dfspId)
                     .maxJobsActive(workerMaxJobs)
@@ -153,7 +153,7 @@ public class PartyLookupWorkers {
 
                         client.newCompleteCommand(job.getKey())
                                 .send()
-                                .join();
+                                ;
                     })
                     .name(WORKER_PARTY_LOOKUP_LOCAL_RESPONSE + dfspId)
                     .maxJobsActive(workerMaxJobs)
@@ -175,7 +175,7 @@ public class PartyLookupWorkers {
 
                         client.newCompleteCommand(job.getKey())
                                 .send()
-                                .join();
+                                ;
                     })
                     .name(WORKER_PARTY_REGISTRATION_ORACLE + dfspId)
                     .maxJobsActive(workerMaxJobs)

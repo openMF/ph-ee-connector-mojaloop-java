@@ -107,7 +107,7 @@ public class QuoteWorkers {
                         client.newCompleteCommand(job.getKey())
                                 .variables(existingVariables)
                                 .send()
-                                .join();
+                                ;
                     })
                     .name(WORKER_QUOTE + dfspId)
                     .maxJobsActive(workerMaxJobs)
@@ -146,7 +146,7 @@ public class QuoteWorkers {
                         }
                         client.newCompleteCommand(job.getKey())
                                 .send()
-                                .join();
+                                ;
                     })
                     .name(WORKER_PAYEE_QUOTE_RESPONSE + dfspId)
                     .maxJobsActive(workerMaxJobs)

@@ -81,7 +81,7 @@ public class TransactionWorkers {
                         client.newCompleteCommand(job.getKey())
                                 .variables(existingVariables)
                                 .send()
-                                .join();
+                                ;
                     })
                     .name(WORKER_TRANSACTION_REQUEST + dfspId)
                     .maxJobsActive(workerMaxJobs)
@@ -101,7 +101,7 @@ public class TransactionWorkers {
 
                         client.newCompleteCommand(job.getKey())
                                 .send()
-                                .join();
+                                ;
                     })
                     .name(WORKER_SEND_AUTH_CONFIRMATION + dfspId)
                     .maxJobsActive(workerMaxJobs)
@@ -123,7 +123,7 @@ public class TransactionWorkers {
                         client.newCompleteCommand(job.getKey())
                                 .variables(existingVariables)
                                 .send()
-                                .join();
+                                ;
                     })
                     .name(WORKER_SEND_AUTH_RESPONSE + dfspId)
                     .maxJobsActive(workerMaxJobs)
@@ -152,7 +152,7 @@ public class TransactionWorkers {
 
                         client.newCompleteCommand(job.getKey())
                                 .send()
-                                .join();
+                                ;
                     })
                     .name(WORKER_SEND_TRANSACTION_STATE_RESPONSE + dfspId)
                     .maxJobsActive(workerMaxJobs)

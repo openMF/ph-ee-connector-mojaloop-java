@@ -85,7 +85,7 @@ public class TransferWorkers {
                         }
                         client.newCompleteCommand(job.getKey())
                                 .send()
-                                .join();
+                                ;
                     })
                     .name(WORKER_PAYEE_TRANSFER_RESPONSE + dfspid)
                     .maxJobsActive(workerMaxJobs)
@@ -119,7 +119,7 @@ public class TransferWorkers {
                         client.newCompleteCommand(job.getKey())
                                 .variables(variables)
                                 .send()
-                                .join();
+                                ;
                     })
                     .name(WORKER_SEND_TRANSFER_REQUEST + dfspid)
                     .maxJobsActive(workerMaxJobs)

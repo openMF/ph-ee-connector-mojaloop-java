@@ -42,6 +42,6 @@ public class TransferResponseProcessor implements Processor {
                 .timeToLive(Duration.ofMillis(30000))
                 .variables(variables)
                 .send()
-                .join();
+                ;
     }
 }

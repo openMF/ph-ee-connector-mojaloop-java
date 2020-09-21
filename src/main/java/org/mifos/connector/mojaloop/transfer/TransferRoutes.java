@@ -90,7 +90,7 @@ public class TransferRoutes extends ErrorHandlerRouteBuilder {
                             .correlationKey(transactionId)
                             .variables(variables)
                             .send()
-                            .join();
+                            ;
                 })
                 .log(LoggingLevel.INFO, "######## SWITCH -> PAYEE - forward transfer request ${exchangeProperty."+TRANSACTION_ID+"} - STEP 2")
                 .setBody(constant(null))

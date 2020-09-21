@@ -73,12 +73,12 @@ public class ZeebeeWorkers {
                                 .correlationKey((String) job.getVariablesAsMap().get(TRANSACTION_ID))
                                 .timeToLive(Duration.ofMillis(30000))
                                 .send()
-                                .join();
+                                ;
 
                         client.newCompleteCommand(job.getKey())
                                 .variables(variables)
                                 .send()
-                                .join();
+                                ;
                     })
                     .name(WORKER_PAYER_REQUEST_CONFIRM + dfspid)
                     .maxJobsActive(workerMaxJobs)
@@ -92,7 +92,7 @@ public class ZeebeeWorkers {
 
                         client.newCompleteCommand(job.getKey())
                                 .send()
-                                .join();
+                                ;
                     })
                     .name(WORKER_GENERATE_OTP + dfspid)
                     .maxJobsActive(workerMaxJobs)
@@ -106,7 +106,7 @@ public class ZeebeeWorkers {
 
                         client.newCompleteCommand(job.getKey())
                                 .send()
-                                .join();
+                                ;
                     })
                     .name(WORKER_VALIDATE_OTP_AUTH_REPONSE + dfspid)
                     .maxJobsActive(workerMaxJobs)
@@ -120,7 +120,7 @@ public class ZeebeeWorkers {
 
                         client.newCompleteCommand(job.getKey())
                                 .send()
-                                .join();
+                                ;
                     })
                     .name(WORKER_SEND_PAYER_AUTHORISATION + dfspid)
                     .maxJobsActive(workerMaxJobs)
