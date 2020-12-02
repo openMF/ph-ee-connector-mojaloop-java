@@ -36,6 +36,7 @@ import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.CHANNEL_REQUEST;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.ERROR_INFORMATION;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.LOCAL_QUOTE_RESPONSE;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.PARTY_LOOKUP_FSP_ID;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.QUOTE_CALLBACK_ID;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.QUOTE_FAILED;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.QUOTE_ID;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.QUOTE_SWITCH_REQUEST;
@@ -90,6 +91,7 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                             zeebeProcessStarter.startZeebeWorkflow(quoteFlow.replace("{tenant}", tenantId),
                                     variables -> {
                                         variables.put(QUOTE_ID, request.getQuoteId());
+                                        variables.put(QUOTE_CALLBACK_ID, request.getQuoteId());
                                         variables.put(FSPIOP_SOURCE.headerName(), payee.getFspId());
                                         variables.put(FSPIOP_DESTINATION.headerName(), request.getPayer().getPartyIdInfo().getFspId());
                                         variables.put(TRANSACTION_ID, request.getTransactionId());

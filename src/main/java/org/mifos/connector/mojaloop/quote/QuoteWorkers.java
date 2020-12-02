@@ -29,6 +29,7 @@ import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.ERROR_INFORMATIO
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.LOCAL_QUOTE_RESPONSE;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.ORIGIN_DATE;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.PARTY_LOOKUP_FSP_ID;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.QUOTE_CALLBACK_ID;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.QUOTE_ID;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.QUOTE_SWITCH_REQUEST;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.TENANT_ID;
@@ -75,14 +76,16 @@ public class QuoteWorkers {
                         Map<String, Object> existingVariables = job.getVariablesAsMap();
                         existingVariables.put(TIMEOUT_QUOTE_RETRY_COUNT, 1 + (Integer) existingVariables.getOrDefault(TIMEOUT_QUOTE_RETRY_COUNT, -1));
                         Object quoteId = existingVariables.get(QUOTE_ID);
+                        String transactionId = (String) existingVariables.get(TRANSACTION_ID);
                         if (quoteId == null) {
                             quoteId = UUID.randomUUID().toString();
                             existingVariables.put(QUOTE_ID, quoteId);
+                            existingVariables.put(QUOTE_CALLBACK_ID, transactionId + "-" + quoteId);
                         }
 
                         Exchange exchange = new DefaultExchange(camelContext);
-                        if(isMojaloopEnabled) {
-                            exchange.setProperty(TRANSACTION_ID, existingVariables.get(TRANSACTION_ID));
+                        if (isMojaloopEnabled) {
+                            exchange.setProperty(TRANSACTION_ID, transactionId);
                             exchange.setProperty(CHANNEL_REQUEST, existingVariables.get(CHANNEL_REQUEST));
                             exchange.setProperty(ORIGIN_DATE, existingVariables.get(ORIGIN_DATE));
                             exchange.setProperty(PARTY_LOOKUP_FSP_ID, existingVariables.get(PARTY_LOOKUP_FSP_ID));
@@ -90,7 +93,7 @@ public class QuoteWorkers {
                             exchange.setProperty(QUOTE_ID, quoteId);
                             producerTemplate.send("direct:send-quote", exchange);
                         } else {
-                            TransactionChannelRequestDTO channelRequest = objectMapper.readValue((String)existingVariables.get(CHANNEL_REQUEST), TransactionChannelRequestDTO.class);
+                            TransactionChannelRequestDTO channelRequest = objectMapper.readValue((String) existingVariables.get(CHANNEL_REQUEST), TransactionChannelRequestDTO.class);
                             QuoteSwitchResponseDTO response = new QuoteSwitchResponseDTO();
                             response.setTransferAmount(channelRequest.getAmount());
                             response.setPayeeFspFee(new FspMoneyData(BigDecimal.ZERO, channelRequest.getAmount().getCurrency()).toMoneyData());

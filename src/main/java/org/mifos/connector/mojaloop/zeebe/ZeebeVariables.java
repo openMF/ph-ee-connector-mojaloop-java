@@ -25,6 +25,7 @@ public class ZeebeVariables {
     public static final String PAYER_CONFIRMATION_RETRY_COUNT = "payerConfirmationRetryCount";
     public static final String PAYER_CONFIRMED = "payerConfirmed";
     public static final String QUOTE_ID = "quoteId";
+    public static final String QUOTE_CALLBACK_ID = "quoteCallbackId";
     public static final String QUOTE_FAILED = "quoteFailed";
     public static final String QUOTE_SWITCH_REQUEST = "quoteSwitchRequest";
     public static final String SWITCH_TRANSFER_REQUEST = "switchTransferRequest";
