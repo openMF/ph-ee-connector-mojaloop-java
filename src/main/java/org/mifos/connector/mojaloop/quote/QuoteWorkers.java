@@ -29,7 +29,6 @@ import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.ERROR_INFORMATIO
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.LOCAL_QUOTE_RESPONSE;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.ORIGIN_DATE;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.PARTY_LOOKUP_FSP_ID;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.QUOTE_CALLBACK_ID;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.QUOTE_ID;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.QUOTE_SWITCH_REQUEST;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.TENANT_ID;
@@ -80,7 +79,6 @@ public class QuoteWorkers {
                         if (quoteId == null) {
                             quoteId = UUID.randomUUID().toString();
                             existingVariables.put(QUOTE_ID, quoteId);
-                            existingVariables.put(QUOTE_CALLBACK_ID, transactionId + "-" + quoteId);
                         }
 
                         Exchange exchange = new DefaultExchange(camelContext);
