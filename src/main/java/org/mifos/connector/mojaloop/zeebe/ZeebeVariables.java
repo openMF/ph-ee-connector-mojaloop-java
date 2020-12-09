@@ -27,6 +27,7 @@ public class ZeebeVariables {
     public static final String QUOTE_ID = "quoteId";
     public static final String QUOTE_FAILED = "quoteFailed";
     public static final String QUOTE_SWITCH_REQUEST = "quoteSwitchRequest";
+    public static final String QUOTE_SWITCH_REQUEST_AMOUNT = "quoteSwitchRequestAmount";
     public static final String SWITCH_TRANSFER_REQUEST = "switchTransferRequest";
     public static final String TENANT_ID = "tenantId";
     public static final String TIMEOUT_QUOTE_RETRY_COUNT = "quoteRetryCount";

@@ -39,6 +39,7 @@ import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.PARTY_LOOKUP_FSP
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.QUOTE_FAILED;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.QUOTE_ID;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.QUOTE_SWITCH_REQUEST;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.QUOTE_SWITCH_REQUEST_AMOUNT;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.TENANT_ID;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.TRANSACTION_ID;
 
@@ -94,6 +95,7 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                                         variables.put(FSPIOP_DESTINATION.headerName(), request.getPayer().getPartyIdInfo().getFspId());
                                         variables.put(TRANSACTION_ID, request.getTransactionId());
                                         variables.put(QUOTE_SWITCH_REQUEST, exchange.getProperty(QUOTE_SWITCH_REQUEST));
+                                        variables.put(QUOTE_SWITCH_REQUEST_AMOUNT, request.getAmount());
                                         variables.put(TENANT_ID, tenantId);
 
                                         ZeebeProcessStarter.camelHeadersToZeebeVariables(exchange, variables,
