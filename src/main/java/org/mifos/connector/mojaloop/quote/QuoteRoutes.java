@@ -8,6 +8,8 @@ import org.apache.camel.model.dataformat.JsonLibrary;
 import org.mifos.connector.common.ams.dto.QuoteFspResponseDTO;
 import org.mifos.connector.common.camel.ErrorHandlerRouteBuilder;
 import org.mifos.connector.common.channel.dto.TransactionChannelRequestDTO;
+import org.mifos.connector.common.mojaloop.dto.Extension;
+import org.mifos.connector.common.mojaloop.dto.ExtensionList;
 import org.mifos.connector.common.mojaloop.dto.FspMoneyData;
 import org.mifos.connector.common.mojaloop.dto.MoneyData;
 import org.mifos.connector.common.mojaloop.dto.Party;
@@ -90,6 +92,21 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
 
                             zeebeProcessStarter.startZeebeWorkflow(quoteFlow.replace("{tenant}", tenantId),
                                     variables -> {
+                                        variables.put("initiator", request.getTransactionType().getInitiator());
+                                        variables.put("initiatorType", request.getTransactionType().getInitiatorType());
+                                        variables.put("scenario", request.getTransactionType().getScenario());
+                                        variables.put("amount", new FspMoneyData(request.getAmount().getAmountDecimal(), request.getAmount().getCurrency()));
+                                        variables.put("transactionId", request.getTransactionId());
+                                        variables.put("transferCode", request.getTransactionRequestId());    // TODO is that right?
+
+                                        ExtensionList extensionList = request.getExtensionList();
+                                        String note = extensionList == null ? "" : extensionList.getExtension().stream()
+                                                .filter(e -> "comment".equals(e.getKey()))
+                                                .findFirst()
+                                                .map(Extension::getValue)
+                                                .orElse("");
+                                        variables.put("note", note);
+
                                         variables.put(QUOTE_ID, request.getQuoteId());
                                         variables.put(FSPIOP_SOURCE.headerName(), payee.getFspId());
                                         variables.put(FSPIOP_DESTINATION.headerName(), request.getPayer().getPartyIdInfo().getFspId());
