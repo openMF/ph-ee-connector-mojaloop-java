@@ -86,14 +86,14 @@ public class PartyLookupWorkers {
                         Object channelRequest = existingVariables.get(CHANNEL_REQUEST);
                         // only saved for operations to identify workflow
                         if (existingVariables.get(INITIATOR_FSP_ID) == null) {
-                            TransactionChannelRequestDTO channelRequestObject = objectMapper.readValue((String) channelRequest, TransactionChannelRequestDTO.class);
-                            PartyIdInfo initiatorParty = isTransactionRequest ? channelRequestObject.getPayee().getPartyIdInfo() : channelRequestObject.getPayer().getPartyIdInfo();
+//                            TransactionChannelRequestDTO channelRequestObject = objectMapper.readValue((String) channelRequest, TransactionChannelRequestDTO.class);
+//                            PartyIdInfo initiatorParty = isTransactionRequest ? channelRequestObject.getPayee().getPartyIdInfo() : channelRequestObject.getPayer().getPartyIdInfo();
                             String initiatorFspId = partyProperties.getPartyByTenant(tenantId).getFspId();
                             existingVariables.put(INITIATOR_FSP_ID, initiatorFspId);
                         }
 
                         Exchange exchange = new DefaultExchange(camelContext);
-                        if(isMojaloopEnabled) {
+                        if (isMojaloopEnabled) {
                             exchange.setProperty(TRANSACTION_ID, existingVariables.get(TRANSACTION_ID));
                             exchange.setProperty(CHANNEL_REQUEST, channelRequest);
                             exchange.setProperty(ORIGIN_DATE, existingVariables.get(ORIGIN_DATE));
@@ -112,7 +112,7 @@ public class PartyLookupWorkers {
                         client.newCompleteCommand(job.getKey())
                                 .variables(existingVariables)
                                 .send()
-                                ;
+                        ;
                     })
                     .name(WORKER_PARTY_LOOKUP_REQUEST + dfspId)
                     .maxJobsActive(workerMaxJobs)
@@ -153,7 +153,7 @@ public class PartyLookupWorkers {
 
                         client.newCompleteCommand(job.getKey())
                                 .send()
-                                ;
+                        ;
                     })
                     .name(WORKER_PARTY_LOOKUP_LOCAL_RESPONSE + dfspId)
                     .maxJobsActive(workerMaxJobs)
@@ -175,7 +175,7 @@ public class PartyLookupWorkers {
 
                         client.newCompleteCommand(job.getKey())
                                 .send()
-                                ;
+                        ;
                     })
                     .name(WORKER_PARTY_REGISTRATION_ORACLE + dfspId)
                     .maxJobsActive(workerMaxJobs)
