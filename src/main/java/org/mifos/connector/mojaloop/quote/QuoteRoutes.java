@@ -24,6 +24,8 @@ import org.mifos.connector.mojaloop.ilp.IlpBuilder;
 import org.mifos.connector.mojaloop.properties.PartyProperties;
 import org.mifos.connector.mojaloop.util.MojaloopUtil;
 import org.mifos.connector.mojaloop.zeebe.ZeebeProcessStarter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -47,6 +49,7 @@ import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.TRANSACTION_ID;
 
 @Component
 public class QuoteRoutes extends ErrorHandlerRouteBuilder {
+    private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Value("${bpmn.flows.quote}")
     private String quoteFlow;
@@ -170,7 +173,9 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                             request.getPayee(),
                             requestAmount.getAmountDecimal());
 
-                    QuoteFspResponseDTO localQuoteResponse = objectMapper.readValue(exchange.getIn().getHeader(LOCAL_QUOTE_RESPONSE, String.class), QuoteFspResponseDTO.class);
+                    String localQuoteResponseString = exchange.getIn().getHeader(LOCAL_QUOTE_RESPONSE, String.class);
+                    logger.info("## parsing local quote response string: {}", localQuoteResponseString);
+                    QuoteFspResponseDTO localQuoteResponse = objectMapper.readValue(localQuoteResponseString, QuoteFspResponseDTO.class);
                     FspMoneyData fspFee = localQuoteResponse.getFspFee();
                     FspMoneyData fspCommission = localQuoteResponse.getFspCommission();
 
