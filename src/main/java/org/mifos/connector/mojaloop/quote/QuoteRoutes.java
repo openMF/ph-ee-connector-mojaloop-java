@@ -203,6 +203,7 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                     mojaloopUtil.setQuoteHeadersResponse(exchange, request);
                 })
                 .process(pojoToString)
+                .log(LoggingLevel.INFO, "Quote response from payee: ${body}")
                 .toD("rest:PUT:/quotes/${exchangeProperty." + QUOTE_ID + "}?host={{switch.quotes-host}}");
 
         from("direct:send-quote")

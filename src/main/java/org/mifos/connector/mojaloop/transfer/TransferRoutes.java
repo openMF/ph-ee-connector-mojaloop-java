@@ -142,6 +142,7 @@ public class TransferRoutes extends ErrorHandlerRouteBuilder {
                     mojaloopUtil.setTransferHeadersResponse(exchange, ilp.getTransaction());
                 })
                 .process(pojoToString)
+                .log(LoggingLevel.INFO, "Transfer response from payee: ${body}")
                 .toD("rest:PUT:/transfers/${exchangeProperty."+TRANSACTION_ID+"}?host={{switch.transfers-host}}");
 
         from("direct:send-transfer")

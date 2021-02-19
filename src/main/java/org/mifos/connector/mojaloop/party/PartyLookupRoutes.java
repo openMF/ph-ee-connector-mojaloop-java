@@ -117,6 +117,7 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                     mojaloopUtil.setPartyHeadersResponse(exchange);
                 })
                 .process(pojoToString)
+                .log(LoggingLevel.INFO, "Party response from payee: ${body}")
                 .toD("rest:PUT:/parties/${exchangeProperty." + PARTY_ID_TYPE + "}/${exchangeProperty." + PARTY_ID + "}?host={{switch.als-host}}");
 
         from("direct:send-parties-error-response")

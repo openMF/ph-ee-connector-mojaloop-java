@@ -168,6 +168,7 @@ public class TransactionRoutes extends ErrorHandlerRouteBuilder {
                     mojaloopUtil.setTransactionRequestHeadersRequest(e);
                 })
                 .process(pojoToString)
+                .log(LoggingLevel.INFO, "Transaction request from payee: ${body}")
                 .process(addTraceHeaderProcessor)
                 .toD("rest:POST:/transactionRequests?host={{switch.transactions-host}}");
 
@@ -182,6 +183,7 @@ public class TransactionRoutes extends ErrorHandlerRouteBuilder {
                     mojaloopUtil.setTransactionRequestHeadersResponse(e);
                 })
                 .process(pojoToString)
+                .log(LoggingLevel.INFO, "Transaction request response from payer: ${body}")
                 .toD("rest:PUT:/transactionRequests/${exchangeProperty." + TRANSACTION_ID + "}?host={{switch.transactions-host}}");
 
         //  --- Authorizations endpoints ---
