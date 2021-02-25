@@ -51,6 +51,12 @@ import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.TRANSACTION_ID;
 public class QuoteRoutes extends ErrorHandlerRouteBuilder {
     private Logger logger = LoggerFactory.getLogger(this.getClass());
 
+    @Value("${mojaloop.perf-mode}")
+    private boolean mojaPerfMode;
+
+    @Value("${mojaloop.perf-resp-delay}")
+    private int mojaPerfRespDelay;
+
     @Value("${bpmn.flows.quote}")
     private String quoteFlow;
 
@@ -87,46 +93,69 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
         from("rest:POST:/switch/quotes")
                 .log(LoggingLevel.INFO, "######## SWITCH -> PAYEE - forward quote request - STEP 2")
                 .setProperty(QUOTE_SWITCH_REQUEST, bodyAs(String.class))
-                .unmarshal().json(JsonLibrary.Jackson, QuoteSwitchRequestDTO.class)
-                .process(exchange -> {
-                            QuoteSwitchRequestDTO request = exchange.getIn().getBody(QuoteSwitchRequestDTO.class);
-                            PartyIdInfo payee = request.getPayee().getPartyIdInfo();
-                            String tenantId = partyProperties.getPartyByDfsp(payee.getFspId()).getTenantId();
+                .choice() // @formatter:off
+                    .when(e -> mojaPerfMode)
+                        .wireTap("direct:send-delayed-quote-dummy-response")
+                    .endChoice()
+                .otherwise()
+                    .unmarshal().json(JsonLibrary.Jackson, QuoteSwitchRequestDTO.class)
+                    .process(exchange -> { // @formatter:on
+                                QuoteSwitchRequestDTO request = exchange.getIn().getBody(QuoteSwitchRequestDTO.class);
+                                PartyIdInfo payee = request.getPayee().getPartyIdInfo();
+                                String tenantId = partyProperties.getPartyByDfsp(payee.getFspId()).getTenantId();
 
-                            zeebeProcessStarter.startZeebeWorkflow(quoteFlow.replace("{tenant}", tenantId),
-                                    variables -> {
-                                        variables.put("initiator", request.getTransactionType().getInitiator());
-                                        variables.put("initiatorType", request.getTransactionType().getInitiatorType());
-                                        variables.put("scenario", request.getTransactionType().getScenario());
-                                        variables.put("amount", new FspMoneyData(request.getAmount().getAmountDecimal(), request.getAmount().getCurrency()));
-                                        variables.put("transactionId", request.getTransactionId());
-                                        variables.put("transferCode", request.getTransactionRequestId());    // TODO is that right?
+                                zeebeProcessStarter.startZeebeWorkflow(quoteFlow.replace("{tenant}", tenantId),
+                                        variables -> {
+                                            variables.put("initiator", request.getTransactionType().getInitiator());
+                                            variables.put("initiatorType", request.getTransactionType().getInitiatorType());
+                                            variables.put("scenario", request.getTransactionType().getScenario());
+                                            variables.put("amount", new FspMoneyData(request.getAmount().getAmountDecimal(), request.getAmount().getCurrency()));
+                                            variables.put("transactionId", request.getTransactionId());
+                                            variables.put("transferCode", request.getTransactionRequestId());    // TODO is that right?
 
-                                        ExtensionList extensionList = request.getExtensionList();
-                                        String note = extensionList == null ? "" : extensionList.getExtension().stream()
-                                                .filter(e -> "comment".equals(e.getKey()))
-                                                .findFirst()
-                                                .map(Extension::getValue)
-                                                .orElse("");
-                                        variables.put("note", note);
+                                            ExtensionList extensionList = request.getExtensionList();
+                                            String note = extensionList == null ? "" : extensionList.getExtension().stream()
+                                                    .filter(e -> "comment".equals(e.getKey()))
+                                                    .findFirst()
+                                                    .map(Extension::getValue)
+                                                    .orElse("");
+                                            variables.put("note", note);
 
-                                        variables.put(QUOTE_ID, request.getQuoteId());
-                                        variables.put(FSPIOP_SOURCE.headerName(), payee.getFspId());
-                                        variables.put(FSPIOP_DESTINATION.headerName(), request.getPayer().getPartyIdInfo().getFspId());
-                                        variables.put(TRANSACTION_ID, request.getTransactionId());
-                                        variables.put(QUOTE_SWITCH_REQUEST, exchange.getProperty(QUOTE_SWITCH_REQUEST));
-                                        variables.put(QUOTE_SWITCH_REQUEST_AMOUNT, request.getAmount());
-                                        variables.put(TENANT_ID, tenantId);
+                                            variables.put(QUOTE_ID, request.getQuoteId());
+                                            variables.put(FSPIOP_SOURCE.headerName(), payee.getFspId());
+                                            variables.put(FSPIOP_DESTINATION.headerName(), request.getPayer().getPartyIdInfo().getFspId());
+                                            variables.put(TRANSACTION_ID, request.getTransactionId());
+                                            variables.put(QUOTE_SWITCH_REQUEST, exchange.getProperty(QUOTE_SWITCH_REQUEST));
+                                            variables.put(QUOTE_SWITCH_REQUEST_AMOUNT, request.getAmount());
+                                            variables.put(TENANT_ID, tenantId);
 
-                                        ZeebeProcessStarter.camelHeadersToZeebeVariables(exchange, variables,
-                                                "Date",
-                                                "traceparent"
-                                        );
-                                    });
-                        }
-                )
+                                            ZeebeProcessStarter.camelHeadersToZeebeVariables(exchange, variables,
+                                                    "Date",
+                                                    "traceparent"
+                                            );
+                                        });
+                            }
+                    )
+                .endChoice()
+                .end()
                 .setBody(constant(null))
                 .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(202));
+
+        from("direct:send-delayed-quote-dummy-response")
+                .delay(mojaPerfRespDelay)
+                .process(exchange -> {
+                    String currency = "TZS";
+                    FspMoneyData fspFee = new FspMoneyData(ZERO, currency);
+                    FspMoneyData fspCommission = new FspMoneyData(ZERO, currency);
+
+                    QuoteFspResponseDTO response = new QuoteFspResponseDTO();
+                    response.setFspFee(fspFee);
+                    response.setFspCommission(fspCommission);
+
+                    exchange.getIn().setHeader(LOCAL_QUOTE_RESPONSE, objectMapper.writeValueAsString(response));
+                })
+                .to("direct:send-quote-to-switch");
+
 
         from("rest:PUT:/switch/quotes/{" + QUOTE_ID + "}")
                 .unmarshal().json(JsonLibrary.Jackson, QuoteSwitchResponseDTO.class)
