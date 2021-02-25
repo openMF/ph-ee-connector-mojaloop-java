@@ -4,6 +4,8 @@ import io.zeebe.client.ZeebeClient;
 import org.apache.camel.Exchange;
 import org.apache.camel.Processor;
 import org.mifos.connector.common.mojaloop.dto.TransferSwitchResponseDTO;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -21,6 +23,8 @@ import static org.mifos.connector.mojaloop.zeebe.ZeebeMessages.TRANSFER_RESPONSE
 @Component
 public class TransferResponseProcessor implements Processor {
 
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
     @Autowired(required = false)
     private ZeebeClient zeebeClient;
 
@@ -28,20 +32,24 @@ public class TransferResponseProcessor implements Processor {
     public void process(Exchange exchange) {
         Map<String, Object> variables = new HashMap<>();
         Object isPayeeTransferFailed = exchange.getProperty(TRANSFER_FAILED);
+        String error = exchange.getIn().getBody(String.class);
         if (isPayeeTransferFailed != null && (boolean)isPayeeTransferFailed) {
-            variables.put(ERROR_INFORMATION, exchange.getIn().getBody(String.class));
+            variables.put(ERROR_INFORMATION, error);
             variables.put(TRANSFER_FAILED, true);
         } else {
             variables.put(TRANSFER_STATE, exchange.getIn().getBody(TransferSwitchResponseDTO.class).getTransferState().name());
             variables.put(TRANSFER_FAILED, false);
         }
 
-        zeebeClient.newPublishMessageCommand()
-                .messageName(TRANSFER_RESPONSE)
-                .correlationKey(exchange.getProperty(CACHED_TRANSACTION_ID, String.class))
-                .timeToLive(Duration.ofMillis(30000))
-                .variables(variables)
-                .send()
-                ;
+        if(zeebeClient != null) {
+            zeebeClient.newPublishMessageCommand()
+                    .messageName(TRANSFER_RESPONSE)
+                    .correlationKey(exchange.getProperty(CACHED_TRANSACTION_ID, String.class))
+                    .timeToLive(Duration.ofMillis(30000))
+                    .variables(variables)
+                    .send();
+        } else {
+            logger.error("FSP -> Mojaloop transfer response error: {}", error);
+        }
     }
 }

@@ -46,9 +46,10 @@ public class QuoteResponseProcessor implements Processor {
         Map<String, Object> variables = new HashMap<>();
 
         String messageName;
+        String error = exchange.getIn().getBody(String.class);
         if (exchange.getProperty(QUOTE_FAILED, false, Boolean.class)) {
             messageName = QUOTE_ERROR;
-            variables.put(ERROR_INFORMATION, exchange.getIn().getBody(String.class));
+            variables.put(ERROR_INFORMATION, error);
             variables.put(QUOTE_FAILED, true);
         } else {
             QuoteSwitchResponseDTO response = exchange.getIn().getBody(QuoteSwitchResponseDTO.class);
@@ -62,11 +63,15 @@ public class QuoteResponseProcessor implements Processor {
             }
         }
 
-        zeebeClient.newPublishMessageCommand()
-                .messageName(messageName)
-                .correlationKey(exchange.getIn().getHeader(QUOTE_ID, String.class))
-                .timeToLive(Duration.ofMillis(30000))
-                .variables(variables)
-                .send();
+        if(zeebeClient != null) {
+            zeebeClient.newPublishMessageCommand()
+                    .messageName(messageName)
+                    .correlationKey(exchange.getIn().getHeader(QUOTE_ID, String.class))
+                    .timeToLive(Duration.ofMillis(30000))
+                    .variables(variables)
+                    .send();
+        } else {
+            logger.error("FSP -> Mojaloop quote response error: {}", error);
+        }
     }
 }

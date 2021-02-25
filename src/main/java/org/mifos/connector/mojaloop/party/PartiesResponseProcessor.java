@@ -4,6 +4,8 @@ import io.zeebe.client.ZeebeClient;
 import org.apache.camel.Exchange;
 import org.apache.camel.Processor;
 import org.mifos.connector.common.mojaloop.dto.PartySwitchResponseDTO;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -20,6 +22,8 @@ import static org.mifos.connector.mojaloop.zeebe.ZeebeMessages.PARTY_LOOKUP;
 @Component
 public class PartiesResponseProcessor implements Processor {
 
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
     @Autowired(required = false)
     private ZeebeClient zeebeClient;
 
@@ -27,8 +31,9 @@ public class PartiesResponseProcessor implements Processor {
     public void process(Exchange exchange) {
         Map<String, Object> variables = new HashMap<>();
         Object isPayeePartyLookupFailed = exchange.getProperty(PARTY_LOOKUP_FAILED);
+        String error = exchange.getIn().getBody(String.class);
         if (isPayeePartyLookupFailed != null && (boolean) isPayeePartyLookupFailed) {
-            variables.put(ERROR_INFORMATION, exchange.getIn().getBody(String.class));
+            variables.put(ERROR_INFORMATION, error);
             variables.put(PARTY_LOOKUP_FAILED, true);
         } else {
             PartySwitchResponseDTO response = exchange.getIn().getBody(PartySwitchResponseDTO.class);
@@ -36,12 +41,15 @@ public class PartiesResponseProcessor implements Processor {
             variables.put(PARTY_LOOKUP_FAILED, false);
         }
 
-        zeebeClient.newPublishMessageCommand()
-                .messageName(PARTY_LOOKUP)
-                .correlationKey(exchange.getProperty(CACHED_TRANSACTION_ID, String.class))
-                .timeToLive(Duration.ofMillis(30000))
-                .variables(variables)
-                .send()
-                ;
+        if(zeebeClient != null) {
+            zeebeClient.newPublishMessageCommand()
+                    .messageName(PARTY_LOOKUP)
+                    .correlationKey(exchange.getProperty(CACHED_TRANSACTION_ID, String.class))
+                    .timeToLive(Duration.ofMillis(30000))
+                    .variables(variables)
+                    .send();
+        } else {
+            logger.error("FSP -> Mojaloop party response error: {}", error);
+        }
     }
 }
