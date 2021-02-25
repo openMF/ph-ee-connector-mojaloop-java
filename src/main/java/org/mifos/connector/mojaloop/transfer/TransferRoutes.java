@@ -51,7 +51,7 @@ public class TransferRoutes extends ErrorHandlerRouteBuilder {
     @Autowired
     private Processor pojoToString;
 
-    @Autowired
+    @Autowired(required = false)
     private ZeebeClient zeebeClient;
 
     @Autowired

@@ -21,7 +21,7 @@ import static org.mifos.connector.mojaloop.zeebe.ZeebeMessages.TRANSFER_RESPONSE
 @Component
 public class TransferResponseProcessor implements Processor {
 
-    @Autowired
+    @Autowired(required = false)
     private ZeebeClient zeebeClient;
 
     @Override

@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -22,6 +23,7 @@ import static org.mifos.connector.mojaloop.zeebe.ZeebeMessages.ACCEPT_QUOTE;
 
 
 @Component
+@ConditionalOnExpression("!${mojaloop.perf-mode:false}")
 public class ZeebeeWorkers {
 
     public static final String WORKER_GENERATE_OTP = "generate-otp-";

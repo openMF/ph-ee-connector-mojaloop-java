@@ -6,7 +6,6 @@ import org.apache.camel.CamelContext;
 import org.apache.camel.Exchange;
 import org.apache.camel.ProducerTemplate;
 import org.apache.camel.support.DefaultExchange;
-import org.mifos.connector.common.channel.dto.TransactionChannelRequestDTO;
 import org.mifos.connector.common.mojaloop.dto.Party;
 import org.mifos.connector.common.mojaloop.dto.PartyIdInfo;
 import org.mifos.connector.common.mojaloop.dto.PartySwitchResponseDTO;
@@ -15,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -42,6 +42,7 @@ import static org.mifos.connector.mojaloop.zeebe.ZeebeeWorkers.WORKER_PARTY_LOOK
 import static org.mifos.connector.mojaloop.zeebe.ZeebeeWorkers.WORKER_PARTY_REGISTRATION_ORACLE;
 
 @Component
+@ConditionalOnExpression("!${mojaloop.perf-mode:false}")
 public class PartyLookupWorkers {
 
     private Logger logger = LoggerFactory.getLogger(this.getClass());

@@ -20,7 +20,7 @@ import static org.mifos.connector.mojaloop.zeebe.ZeebeMessages.PARTY_LOOKUP;
 @Component
 public class PartiesResponseProcessor implements Processor {
 
-    @Autowired
+    @Autowired(required = false)
     private ZeebeClient zeebeClient;
 
     @Override

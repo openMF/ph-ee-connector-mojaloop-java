@@ -18,7 +18,7 @@ public class ZeebeProcessStarter {
 
     private static Logger logger = LoggerFactory.getLogger(ZeebeProcessStarter.class);
 
-    @Autowired
+    @Autowired(required = false)
     private ZeebeClient zeebeClient;
 
     public void startZeebeWorkflow(String workflowId, Consumer<Map<String, Object>> variablesLambda) {

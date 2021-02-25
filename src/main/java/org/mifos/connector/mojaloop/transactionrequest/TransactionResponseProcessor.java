@@ -22,7 +22,7 @@ import static org.mifos.connector.mojaloop.zeebe.ZeebeMessages.TRANSACTION_REQUE
 @Component
 public class TransactionResponseProcessor implements Processor {
 
-    @Autowired
+    @Autowired(required = false)
     private ZeebeClient zeebeClient;
 
     @Autowired

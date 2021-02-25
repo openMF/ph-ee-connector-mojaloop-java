@@ -27,9 +27,9 @@ import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.QUOTE_ID;
 @Component
 public class QuoteResponseProcessor implements Processor {
 
-    private Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    @Autowired
+    @Autowired(required = false)
     private ZeebeClient zeebeClient;
 
     @Autowired
