@@ -7,17 +7,34 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.apache.camel.Processor;
 import org.mifos.connector.mojaloop.properties.PartyProperties;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 
+import javax.annotation.PostConstruct;
+
 @SpringBootApplication
 @EnableConfigurationProperties(PartyProperties.class)
 public class MojaloopConnectorApplication {
 
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
+    @Value("${mojaloop.perf-mode}")
+    private boolean mojaPerfMode;
+
     public static void main(String[] args) {
         SpringApplication.run(MojaloopConnectorApplication.class, args);
+    }
+
+    @PostConstruct
+    public void setup() {
+        if(mojaPerfMode) {
+            logger.info("----- PERF mode is turned on, no AMS and ZEEBE is running! -----");
+        }
     }
 
     @Bean
