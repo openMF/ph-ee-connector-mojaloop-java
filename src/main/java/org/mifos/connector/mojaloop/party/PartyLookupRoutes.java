@@ -11,6 +11,7 @@ import org.mifos.connector.common.channel.dto.TransactionChannelRequestDTO;
 import org.mifos.connector.common.mojaloop.dto.Party;
 import org.mifos.connector.common.mojaloop.dto.PartyIdInfo;
 import org.mifos.connector.common.mojaloop.dto.PartySwitchResponseDTO;
+import org.mifos.connector.common.mojaloop.type.IdentifierType;
 import org.mifos.connector.mojaloop.camel.trace.AddTraceHeaderProcessor;
 import org.mifos.connector.mojaloop.camel.trace.GetCachedTransactionIdProcessor;
 import org.mifos.connector.mojaloop.properties.PartyProperties;
@@ -36,6 +37,12 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
 
     @Value("${bpmn.flows.party-lookup}")
     private String partyLookupFlow;
+
+    @Value("${mojaloop.perf-mode}")
+    private boolean mojaPerfMode;
+
+    @Value("${mojaloop.perf-resp-delay}")
+    private int mojaPerfRespDelay;
 
     @Autowired
     private Processor pojoToString;
@@ -67,24 +74,33 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
 
     @Override
     public void configure() {
+        //@formatter:off
         from("rest:GET:/switch/parties/{" + PARTY_ID_TYPE + "}/{" + PARTY_ID + "}")
                 .log(LoggingLevel.DEBUG, "## SWITCH -> PAYER/PAYEE inbound GET parties - STEP 2")
-                .process(e -> {
-                    String host = e.getIn().getHeader("Host", String.class).split(":")[0];
-                    String tenantId = partyProperties.getPartyByDomain(host).getTenantId();
-                            zeebeProcessStarter.startZeebeWorkflow(partyLookupFlow.replace("{tenant}", tenantId),
-                                    variables -> {
-                                        variables.put("Date", e.getIn().getHeader("Date"));
-                                        variables.put("traceparent", e.getIn().getHeader("traceparent"));
-                                        variables.put(FSPIOP_SOURCE.headerName(), e.getIn().getHeader(FSPIOP_SOURCE.headerName()));
-                                        variables.put(PARTY_ID_TYPE, e.getIn().getHeader(PARTY_ID_TYPE));
-                                        variables.put(PARTY_ID, e.getIn().getHeader(PARTY_ID));
-                                        variables.put(TENANT_ID, tenantId);
-                                    });
-                        }
-                )
+                .choice()
+                    .when(e -> mojaPerfMode)
+                        .wireTap("direct:send-delayed-dummy-response")
+                    .endChoice()
+                    .otherwise()
+                        .process(e -> {
+                            String host = e.getIn().getHeader("Host", String.class).split(":")[0];
+                            String tenantId = partyProperties.getPartyByDomain(host).getTenantId();
+                                    zeebeProcessStarter.startZeebeWorkflow(partyLookupFlow.replace("{tenant}", tenantId),
+                                            variables -> {
+                                                variables.put("Date", e.getIn().getHeader("Date"));
+                                                variables.put("traceparent", e.getIn().getHeader("traceparent"));
+                                                variables.put(FSPIOP_SOURCE.headerName(), e.getIn().getHeader(FSPIOP_SOURCE.headerName()));
+                                                variables.put(PARTY_ID_TYPE, e.getIn().getHeader(PARTY_ID_TYPE));
+                                                variables.put(PARTY_ID, e.getIn().getHeader(PARTY_ID));
+                                                variables.put(TENANT_ID, tenantId);
+                                            });
+                                }
+                        )
+                    .endChoice()
+                .end()
                 .setBody(constant(null))
                 .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(202));
+        //@formatter:on
 
         from("rest:PUT:/switch/parties/" + MSISDN + "/{partyId}")
                 .unmarshal().json(JsonLibrary.Jackson, PartySwitchResponseDTO.class)
@@ -104,6 +120,23 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                 .process(partiesResponseProcessor)
                 .setBody(constant(null))
                 .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(200));
+
+        from("direct:send-delayed-dummy-response")
+                .delay(mojaPerfRespDelay)
+                .process(e -> {
+                    String host = e.getIn().getHeader("Host", String.class).split(":")[0];
+
+                    Party party = new Party( // only return fspId from configuration
+                            new PartyIdInfo(IdentifierType.valueOf(e.getIn().getHeader(PARTY_ID_TYPE, String.class)),
+                                    e.getIn().getHeader(PARTY_ID, String.class),
+                                    null,
+                                    partyProperties.getPartyByDomain(host).getFspId()),
+                            null,
+                            null,
+                            null);
+                    e.setProperty(PAYEE_PARTY_RESPONSE, objectMapper.writeValueAsString(party));
+                })
+                .to("direct:send-parties-response");
 
         from("direct:send-parties-response")
                 .log(LoggingLevel.DEBUG, "######## PAYEE -> SWITCH - party lookup response - STEP 3")

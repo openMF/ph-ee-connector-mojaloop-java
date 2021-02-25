@@ -27,6 +27,8 @@ connector:
 
 mojaloop:
   enabled: true
+  perf-mode: false
+  perf-resp-delay: 100
 
 switch:
   quotes-host: http://40.114.81.46
