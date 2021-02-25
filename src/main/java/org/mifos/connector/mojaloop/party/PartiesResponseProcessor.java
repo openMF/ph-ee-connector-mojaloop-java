@@ -49,7 +49,7 @@ public class PartiesResponseProcessor implements Processor {
                     .variables(variables)
                     .send();
         } else {
-            logger.error("FSP -> Mojaloop party response error: {}", error);
+            logger.error("Mojaloop party request failed: {}", error);
         }
     }
 }

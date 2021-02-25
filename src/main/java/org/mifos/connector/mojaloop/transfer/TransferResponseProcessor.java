@@ -49,7 +49,7 @@ public class TransferResponseProcessor implements Processor {
                     .variables(variables)
                     .send();
         } else {
-            logger.error("FSP -> Mojaloop transfer response error: {}", error);
+            logger.error("Mojaloop transfer request failed: {}", error);
         }
     }
 }

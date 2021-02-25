@@ -71,7 +71,7 @@ public class QuoteResponseProcessor implements Processor {
                     .variables(variables)
                     .send();
         } else {
-            logger.error("FSP -> Mojaloop quote response error: {}", error);
+            logger.error("Mojaloop quote request failed: {}", error);
         }
     }
 }
