@@ -27,7 +27,7 @@ public class CamelContextConfig {
                 rest.setComponent("jetty");
                 rest.setProducerComponent("jetty");
                 Map<String, Object> props = new HashMap<>();
-                props.put("minThreads", "20");
+                props.put("minThreads", "10");
                 props.put("maxThreads", "100");
                 rest.setComponentProperties(props);
                 rest.setPort(serverPort);

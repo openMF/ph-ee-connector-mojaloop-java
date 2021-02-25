@@ -14,7 +14,6 @@
 
     <logger name="org" level="INFO"/>
     <logger name="io" level="INFO"/>
-    <logger name="org.apache.camel.component.undertow" level="DEBUG"/>
 <!--    <logger name="io.zeebe.client.job.poller" level="TRACE"/>-->
 <!--    <logger name="hu.dpc" level="TRACE"/>-->
 <!--    <logger name="org.eclipse" level="TRACE"/>-->
