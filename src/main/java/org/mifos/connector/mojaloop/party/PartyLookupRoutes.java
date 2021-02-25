@@ -79,7 +79,7 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                 .log(LoggingLevel.DEBUG, "## SWITCH -> PAYER/PAYEE inbound GET parties - STEP 2")
                 .choice()
                     .when(e -> mojaPerfMode)
-                        .wireTap("direct:send-delayed-dummy-response")
+                        .wireTap("direct:send-delayed-party-dummy-response")
                     .endChoice()
                     .otherwise()
                         .process(e -> {
@@ -121,7 +121,7 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                 .setBody(constant(null))
                 .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(200));
 
-        from("direct:send-delayed-dummy-response")
+        from("direct:send-delayed-party-dummy-response")
                 .delay(mojaPerfRespDelay)
                 .process(e -> {
                     String host = e.getIn().getHeader("Host", String.class).split(":")[0];
