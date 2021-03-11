@@ -175,6 +175,7 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                     mojaloopUtil.setPartyHeadersRequest(e);
                 })
                 .process(addTraceHeaderProcessor)
-                .toD("rest:GET:/parties/${exchangeProperty." + PARTY_ID_TYPE + "}/${exchangeProperty." + PARTY_ID + "}?host={{switch.als-host}}&bridgeEndpoint=true");
+                .setHeader(Exchange.HTTP_METHOD, constant("GET"))
+                .toD("{{switch.als-host}}/parties/${exchangeProperty." + PARTY_ID_TYPE + "}/${exchangeProperty." + PARTY_ID + "}");
     }
 }
