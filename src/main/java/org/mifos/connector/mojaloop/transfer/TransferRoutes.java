@@ -139,7 +139,7 @@ public class TransferRoutes extends ErrorHandlerRouteBuilder {
                     mojaloopUtil.setTransferHeadersResponse(e, ilpBuilder.parse(request.getIlpPacket(), request.getCondition()).getTransaction());
                     e.getIn().setBody(e.getProperty(ERROR_INFORMATION));
                 })
-                .toD("rest:PUT:/transfers/${exchangeProperty."+TRANSACTION_ID+"}/error?host={{switch.transfers-host}}&bridgeEndpoint=true");
+                .toD("rest:PUT:/transfers/${exchangeProperty."+TRANSACTION_ID+"}/error?host={{switch.transfers-host}}");
 
         from("direct:send-delayed-transfer-dummy-response")
                 .delay(mojaPerfRespDelay)
@@ -169,7 +169,7 @@ public class TransferRoutes extends ErrorHandlerRouteBuilder {
                 })
                 .process(pojoToString)
                 .log(LoggingLevel.INFO, "Transfer response from payee: ${body}")
-                .toD("rest:PUT:/transfers/${exchangeProperty." + TRANSACTION_ID + "}?host={{switch.transfers-host}}&bridgeEndpoint=true");
+                .toD("rest:PUT:/transfers/${exchangeProperty." + TRANSACTION_ID + "}?host={{switch.transfers-host}}");
 
         from("direct:send-transfer")
                 .id("send-transfer")
@@ -195,6 +195,6 @@ public class TransferRoutes extends ErrorHandlerRouteBuilder {
                 })
                 .process(pojoToString)
                 .process(addTraceHeaderProcessor)
-                .toD("rest:POST:/transfers?host={{switch.transfers-host}}&bridgeEndpoint=true");
+                .toD("rest:POST:/transfers?host={{switch.transfers-host}}");
     }
 }

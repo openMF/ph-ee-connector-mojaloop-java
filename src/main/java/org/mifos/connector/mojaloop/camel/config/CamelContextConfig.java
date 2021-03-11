@@ -24,12 +24,8 @@ public class CamelContextConfig {
                 camelContext.disableJMX();
 
                 RestConfiguration rest = new RestConfiguration();
-                rest.setComponent("jetty");
-                rest.setProducerComponent("http");
-                Map<String, Object> props = new HashMap<>();
-                props.put("minThreads", "10");
-                props.put("maxThreads", "100");
-                rest.setComponentProperties(props);
+                rest.setComponent("undertow");
+                rest.setProducerComponent("undertow");
                 rest.setPort(serverPort);
                 rest.setBindingMode(RestConfiguration.RestBindingMode.json);
                 rest.setScheme("http");

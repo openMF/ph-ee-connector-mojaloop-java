@@ -151,7 +151,7 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                 })
                 .process(pojoToString)
                 .log(LoggingLevel.INFO, "Party response from payee: ${body}")
-                .toD("rest:PUT:/parties/${exchangeProperty." + PARTY_ID_TYPE + "}/${exchangeProperty." + PARTY_ID + "}?host={{switch.als-host}}&bridgeEndpoint=true");
+                .toD("rest:PUT:/parties/${exchangeProperty." + PARTY_ID_TYPE + "}/${exchangeProperty." + PARTY_ID + "}?host={{switch.als-host}}");
 
         from("direct:send-parties-error-response")
                 .log(LoggingLevel.DEBUG, "######## PAYEE -> SWITCH - party lookup error response - STEP 3")
@@ -160,7 +160,7 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                     exchange.getIn().setBody(exchange.getProperty(ERROR_INFORMATION));
                     mojaloopUtil.setPartyHeadersResponse(exchange);
                 })
-                .toD("rest:PUT:/parties/${exchangeProperty." + PARTY_ID_TYPE + "}/${exchangeProperty." + PARTY_ID + "}/error?host={{switch.als-host}}&bridgeEndpoint=true");
+                .toD("rest:PUT:/parties/${exchangeProperty." + PARTY_ID_TYPE + "}/${exchangeProperty." + PARTY_ID + "}/error?host={{switch.als-host}}");
 
         from("direct:send-party-lookup")
                 .id("send-party-lookup")
@@ -176,6 +176,6 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                 })
                 .process(addTraceHeaderProcessor)
                 .setHeader(Exchange.HTTP_METHOD, constant("GET"))
-                .toD("{{switch.als-host}}/parties/${exchangeProperty." + PARTY_ID_TYPE + "}/${exchangeProperty." + PARTY_ID + "}");
+                .toD("rest:GET:/parties/${exchangeProperty." + PARTY_ID_TYPE + "}/${exchangeProperty." + PARTY_ID + "}?host={{switch.als-host}}");
     }
 }
