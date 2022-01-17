@@ -1,10 +1,26 @@
 name: Test
-on: [push]
+on: [push, pull_request]
 jobs:
   Assemble:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code
         uses: actions/checkout@v2
+
+      - name: Check out ph-ee-connector-common repository code
+        uses: actions/checkout@master
+        with:
+          repository: openMF/ph-ee-connector-common
+          ref: 'ac68e99aed3cc48542c207212c528f005bf02531'
+          path: 'ph-ee-connector-common'
+
+      - name: Copy settings.xml
+        run: mkdir $HOME/.m2 ; cp -v .github/contrib/settings.xml $HOME/.m2/
+
+      - name: Install ph-ee-connector-common
+        working-directory: ph-ee-connector-common
+#        run: ./gradlew clean install
+        run: mvn clean install
+
       - name: Package project
-        run: mvn -U clean package
+        run: mvn -U clean test package

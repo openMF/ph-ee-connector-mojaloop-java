@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.1.0 http://maven.apache.org/xsd/settings-1.1.0.xsd" xmlns="http://maven.apache.org/SETTINGS/1.1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <servers>
+      <server>
+      <username>mb-gatesprojects</username>
+      <password>ModusBox</password>
+      <id>modusbox-release-local</id>
+    </server>
+  </servers>
+  <profiles>
+    <profile>
+      <repositories>
+        <repository>
+          <id>central</id>
+          <name>Central Repository</name>
+          <url>http://repo.maven.apache.org/maven2</url>
+          <layout>default</layout>
+          <snapshots><enabled>false</enabled></snapshots>
+        </repository>
+        <repository>
+          <snapshots><enabled>false</enabled></snapshots>
+          <id>modusbox-release-local</id>
+          <name>libs-release</name>
+          <url>https://modusbox.jfrog.io/modusbox/libs-release</url>
+        </repository>
+      </repositories>
+      <pluginRepositories>
+        <pluginRepository>
+          <id>central</id>
+          <name>Central Repository</name>
+          <url>http://repo.maven.apache.org/maven2</url>
+          <layout>default</layout>
+          <snapshots><enabled>false</enabled></snapshots>
+          <releases><updatePolicy>never</updatePolicy></releases>
+        </pluginRepository>
+        <pluginRepository>
+          <snapshots><enabled>false</enabled></snapshots>
+          <id>modusbox-plugin-release</id>
+          <name>plugins-release</name>
+          <url>https://modusbox.jfrog.io/modusbox/plugins-release</url>
+        </pluginRepository>
+      </pluginRepositories>
+      <id>artifactory</id>
+    </profile>
+  </profiles>
+</settings>
+
