@@ -11,16 +11,16 @@ jobs:
         uses: actions/checkout@master
         with:
           repository: openMF/ph-ee-connector-common
-          ref: 'ac68e99aed3cc48542c207212c528f005bf02531'
+          ref: 'refs/heads/master'
           path: 'ph-ee-connector-common'
-
-      - name: Copy settings.xml
-        run: mkdir $HOME/.m2 ; cp -v .github/contrib/settings.xml $HOME/.m2/
 
       - name: Install ph-ee-connector-common
         working-directory: ph-ee-connector-common
-#        run: ./gradlew clean install
-        run: mvn clean install
+        run: ./gradlew clean install
+#        run: mvn clean install
+
+      - name: Copy settings.xml
+        run: cp -v .github/contrib/settings.xml $HOME/.m2/
 
       - name: Package project
         run: mvn -U clean test package
