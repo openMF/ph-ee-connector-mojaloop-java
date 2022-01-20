@@ -14,8 +14,6 @@ import org.interledger.Condition;
 import org.interledger.Fulfillment;
 import org.interledger.InterledgerAddress;
 import org.interledger.codecs.CodecContext;
-import org.mifos.connector.common.mojaloop.ilp.CodecContextFactory;
-import org.mifos.connector.common.mojaloop.ilp.InterledgerPayment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

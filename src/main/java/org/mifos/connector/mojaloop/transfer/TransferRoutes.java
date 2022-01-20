@@ -13,7 +13,7 @@ import org.mifos.connector.common.mojaloop.dto.MoneyData;
 import org.mifos.connector.common.mojaloop.dto.QuoteSwitchResponseDTO;
 import org.mifos.connector.common.mojaloop.dto.TransferSwitchRequestDTO;
 import org.mifos.connector.common.mojaloop.dto.TransferSwitchResponseDTO;
-import org.mifos.connector.common.mojaloop.ilp.Ilp;
+import org.mifos.connector.mojaloop.ilp.Ilp;
 import org.mifos.connector.common.mojaloop.type.TransferState;
 import org.mifos.connector.common.util.ContextUtil;
 import org.mifos.connector.mojaloop.camel.trace.AddTraceHeaderProcessor;

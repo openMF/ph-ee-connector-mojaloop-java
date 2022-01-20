@@ -7,16 +7,16 @@
  */
 package org.mifos.connector.mojaloop.ilp;
 
-import com.ilp.conditions.models.pdp.Money;
-import com.ilp.conditions.models.pdp.PartyIdInfo;
-import com.ilp.conditions.models.pdp.Transaction;
+import com.ilp.conditions.models.pdp.*;
+import org.mifos.connector.common.mojaloop.dto.ComplexName;
 import org.mifos.connector.common.mojaloop.dto.Party;
-import org.mifos.connector.common.mojaloop.ilp.Ilp;
+import org.mifos.connector.common.mojaloop.dto.PersonalInfo;
 import org.mifos.connector.common.util.ContextUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.beans.Transient;
 import java.io.IOException;
 import java.math.BigDecimal;
 
@@ -74,9 +74,39 @@ public class IlpBuilder {
         transaction.setTransactionId(transactionId);
         transaction.setQuoteId(quoteId);
         transaction.setAmount(transactionAmount);
-        transaction.setPayer(payer.getIlpParty());
-        transaction.setPayee(payee.getIlpParty());
+        transaction.setPayer(getIlpPartyFromParty(payer));
+        transaction.setPayee(getIlpPartyFromParty(payee));
 
         return transaction;
+    }
+
+    @Transient
+    public com.ilp.conditions.models.pdp.Party getIlpPartyFromParty(Party party) {
+        com.ilp.conditions.models.pdp.Party ilpParty = new com.ilp.conditions.models.pdp.Party();
+        ilpParty.setMerchantClassificationCode(party.getMerchantClassificationCode());
+        ilpParty.setName(party.getName());
+
+        org.mifos.connector.common.mojaloop.dto.PartyIdInfo partyIdInfo = party.getPartyIdInfo();
+        com.ilp.conditions.models.pdp.PartyIdInfo ilpPartyIdInfo = new com.ilp.conditions.models.pdp.PartyIdInfo();
+        ilpPartyIdInfo.setFspId(partyIdInfo.getFspId());
+        ilpPartyIdInfo.setPartyIdentifier(partyIdInfo.getPartyIdentifier());
+        ilpPartyIdInfo.setPartyIdType(partyIdInfo.getPartyIdType().name());
+        ilpPartyIdInfo.setPartySubIdOrType(partyIdInfo.getPartySubIdOrType());
+        ilpParty.setPartyIdInfo(ilpPartyIdInfo);
+
+        PersonalInfo personalInfo = party.getPersonalInfo();
+        if (personalInfo != null) {
+            PartyPersonalInfo ilpPersonalInfo = new PartyPersonalInfo();
+            ilpPersonalInfo.setDateOfBirth(personalInfo.getDateOfBirth());
+            PartyComplexName payerComplexName = new PartyComplexName();
+            ComplexName complexName = personalInfo.getComplexName();
+            payerComplexName.setFirstName(complexName.getFirstName());
+            payerComplexName.setLastName(complexName.getLastName());
+            payerComplexName.setMiddleName(complexName.getMiddleName());
+            ilpPersonalInfo.setComplexName(payerComplexName);
+            ilpParty.setPersonalInfo(ilpPersonalInfo);
+        }
+
+        return ilpParty;
     }
 }

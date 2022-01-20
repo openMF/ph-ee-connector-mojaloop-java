@@ -68,6 +68,16 @@
 			<artifactId>interop-ilp-conditions</artifactId>
 			<version>${ilp.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>org.json</groupId>
+			<artifactId>json</artifactId>
+			<version>20190722</version>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.datatype</groupId>
+			<artifactId>jackson-datatype-jsr310</artifactId>
+			<version>2.10.1</version>
+		</dependency>
 
 		<!-- test deps -->
 		<dependency>
