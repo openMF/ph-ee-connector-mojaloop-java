@@ -24,3 +24,6 @@ jobs:
 
       - name: Package project
         run: mvn -U clean test package
+
+      - name: Build Docker image
+        run: docker build . -t paymenthubee.mifos.io/phee/connector-mojaloop-java
