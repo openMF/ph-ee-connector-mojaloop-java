@@ -17,7 +17,7 @@ import org.mifos.connector.common.mojaloop.dto.PartyIdInfo;
 import org.mifos.connector.common.mojaloop.dto.QuoteSwitchRequestDTO;
 import org.mifos.connector.common.mojaloop.dto.QuoteSwitchResponseDTO;
 import org.mifos.connector.common.mojaloop.dto.TransactionType;
-import org.mifos.connector.common.mojaloop.ilp.Ilp;
+import org.mifos.connector.mojaloop.ilp.Ilp;
 import org.mifos.connector.common.mojaloop.type.AmountType;
 import org.mifos.connector.mojaloop.camel.trace.AddTraceHeaderProcessor;
 import org.mifos.connector.mojaloop.ilp.IlpBuilder;

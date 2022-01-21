@@ -1,0 +1,29 @@
+name: Test
+on: [push, pull_request]
+jobs:
+  Assemble:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v2
+
+      - name: Check out ph-ee-connector-common repository code
+        uses: actions/checkout@master
+        with:
+          repository: openMF/ph-ee-connector-common
+          ref: 'refs/heads/master'
+          path: 'ph-ee-connector-common'
+
+      - name: Install ph-ee-connector-common
+        working-directory: ph-ee-connector-common
+        run: ./gradlew clean install
+#        run: mvn clean install
+
+      - name: Copy settings.xml
+        run: cp -v .github/contrib/settings.xml $HOME/.m2/
+
+      - name: Package project
+        run: mvn -U clean test package
+
+      - name: Build Docker image
+        run: docker build . -t paymenthubee.mifos.io/phee/connector-mojaloop-java

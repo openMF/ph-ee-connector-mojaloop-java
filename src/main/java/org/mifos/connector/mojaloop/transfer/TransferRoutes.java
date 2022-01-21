@@ -2,7 +2,7 @@ package org.mifos.connector.mojaloop.transfer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ilp.conditions.models.pdp.Transaction;
-import io.zeebe.client.ZeebeClient;
+import io.camunda.zeebe.client.ZeebeClient;
 import org.apache.camel.Exchange;
 import org.apache.camel.LoggingLevel;
 import org.apache.camel.Processor;
@@ -13,7 +13,7 @@ import org.mifos.connector.common.mojaloop.dto.MoneyData;
 import org.mifos.connector.common.mojaloop.dto.QuoteSwitchResponseDTO;
 import org.mifos.connector.common.mojaloop.dto.TransferSwitchRequestDTO;
 import org.mifos.connector.common.mojaloop.dto.TransferSwitchResponseDTO;
-import org.mifos.connector.common.mojaloop.ilp.Ilp;
+import org.mifos.connector.mojaloop.ilp.Ilp;
 import org.mifos.connector.common.mojaloop.type.TransferState;
 import org.mifos.connector.common.util.ContextUtil;
 import org.mifos.connector.mojaloop.camel.trace.AddTraceHeaderProcessor;
