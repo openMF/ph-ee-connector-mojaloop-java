@@ -7,22 +7,6 @@
  */
 
 package org.mifos.connector.mojaloop.ilp;
-//
-//import org.interledger.Condition;
-//import org.interledger.InterledgerAddress;
-//import org.interledger.codecs.CodecContext;
-//import org.interledger.codecs.oer.*;
-//import org.interledger.codecs.oer.ilp.ConditionOerCodec;
-//import org.interledger.codecs.oer.ilp.InterledgerAddressOerCodec;
-//import org.interledger.codecs.oer.ilp.InterledgerPacketTypeOerCodec;
-//import org.interledger.codecs.oer.ilp.InterledgerPaymentOerCodec;
-//import org.interledger.codecs.oer.ilqp.*;
-//import org.interledger.codecs.oer.ipr.InterledgerPaymentRequestOerCodec;
-//import org.interledger.codecs.packettypes.InterledgerPacketType;
-//import org.interledger.codecs.psk.PskMessageBinaryCodec;
-//import org.interledger.ilqp.*;
-//import org.interledger.ipr.InterledgerPaymentRequest;
-//import org.interledger.psk.PskMessage;
 
 import org.interledger.Condition;
 import org.interledger.InterledgerAddress;
