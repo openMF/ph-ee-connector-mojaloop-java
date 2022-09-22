@@ -31,14 +31,14 @@ mojaloop:
   perf-resp-delay: 100
 
 switch:
-  quotes-host: http://40.114.81.46
+  quotes-host: http://mojaloop.g2pconnect.io
   quote-service: quoting-service.local
-  als-host: http://40.114.81.46
+  als-host: http://mojaloop.g2pconnect.io
   account-lookup-service: account-lookup-service.local
-  transfers-host: http://40.114.81.46
+  transfers-host: http://mojaloop.g2pconnect.io
   transfer-service: ml-api-adapter.local
-  transactions-host: http://40.114.81.46
+  transactions-host: http://mojaloop.g2pconnect.io
   transaction-request-service: transaction-request-service.local
   oracle-host: http://account-oracle.mifos.io:4100
 
-dfspids: "DFSPID"
+dfspids: "lion,gorilla"
