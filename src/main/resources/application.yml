@@ -1,5 +1,5 @@
 camel:
-  server-port: 5002
+  server-port: 5000
   springboot:
     main-run-controller: true
   dataformat:
@@ -20,7 +20,7 @@ zeebe:
   #    number-of-workers: 15
   #    evenly-allocated-max-jobs: "#{${zeebe.client.max-execution-threads} / ${zeebe.client.number-of-workers}}"
   broker:
-    contactpoint: "localhost:26500"
+    contactpoint: "127.0.0.1:26500"
 
 connector:
   ilp-secret: h4on38bsDjKiat2783gnklgafikmeuu5123kpobb7jm99
@@ -31,14 +31,22 @@ mojaloop:
   perf-resp-delay: 100
 
 switch:
-  quotes-host: http://40.114.81.46
+  quotes-host: http://3.6.25.92
   quote-service: quoting-service.local
-  als-host: http://40.114.81.46
+  als-host: http://3.6.25.92
   account-lookup-service: account-lookup-service.local
-  transfers-host: http://40.114.81.46
+  transfers-host: http://3.6.25.92
   transfer-service: ml-api-adapter.local
-  transactions-host: http://40.114.81.46
+  transactions-host: http://3.6.25.92
   transaction-request-service: transaction-request-service.local
   oracle-host: http://account-oracle.mifos.io:4100
 
 dfspids: "ibank-usa"
+
+parties:
+  - tenantId: ibank-usa
+    fspId: ibank-usa
+    domain: ibank-usa.mifos.g2pconnect.io
+  - tenantId: ibank-india
+    fspId: ibank-india
+    domain: ibank-india.mifos.g2pconnect.io

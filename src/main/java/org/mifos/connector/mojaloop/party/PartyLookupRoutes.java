@@ -8,6 +8,7 @@ import org.apache.camel.Processor;
 import org.apache.camel.model.dataformat.JsonLibrary;
 import org.mifos.connector.common.camel.ErrorHandlerRouteBuilder;
 import org.mifos.connector.common.channel.dto.TransactionChannelRequestDTO;
+import org.mifos.connector.common.mojaloop.dto.MoneyData;
 import org.mifos.connector.common.mojaloop.dto.Party;
 import org.mifos.connector.common.mojaloop.dto.PartyIdInfo;
 import org.mifos.connector.common.mojaloop.dto.PartySwitchResponseDTO;
@@ -166,6 +167,7 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                 .id("send-party-lookup")
                 .log(LoggingLevel.DEBUG, "######## PAYER -> SWITCH - party lookup request - STEP 1")
                 .process(e -> {
+                    System.out.println("Channel request" + e.getProperty(CHANNEL_REQUEST, String.class));
                     TransactionChannelRequestDTO channelRequest = objectMapper.readValue(e.getProperty(CHANNEL_REQUEST, String.class), TransactionChannelRequestDTO.class);
                     PartyIdInfo requestedParty = e.getProperty(IS_RTP_REQUEST, Boolean.class) ? channelRequest.getPayer().getPartyIdInfo() : channelRequest.getPayee().getPartyIdInfo();
                     e.setProperty(PARTY_ID_TYPE, requestedParty.getPartyIdType());

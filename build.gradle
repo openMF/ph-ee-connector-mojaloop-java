@@ -35,7 +35,7 @@ configurations.all {
 }
 
 dependencies {
-    implementation 'org.mifos:ph-ee-connector-common:1.0.0-SNAPSHOT'
+    //implementation 'org.mifos:ph-ee-connector-common:1.1.0-SNAPSHOT'
     implementation "org.apache.camel.springboot:camel-spring-boot-starter:$camelVersion"
     implementation "org.apache.camel:camel-undertow:$camelVersion"
     implementation 'org.apache.camel.springboot:camel-jackson-starter:3.16.0'

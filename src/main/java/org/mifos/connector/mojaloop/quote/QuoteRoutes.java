@@ -295,6 +295,6 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
     }
 
     private void stripAmount(MoneyData requestAmount) {
-        requestAmount.setAmount(requestAmount.getAmountDecimal().stripTrailingZeros().toPlainString());
+        requestAmount.setAmountStr(requestAmount.getAmountDecimal().stripTrailingZeros().toPlainString());
     }
 }
