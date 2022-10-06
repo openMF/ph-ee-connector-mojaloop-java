@@ -194,13 +194,13 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                     MoneyData requestAmount = request.getAmount();
                     stripAmount(requestAmount);
 
-                    Ilp ilp = ilpBuilder.build(request.getTransactionId(),
+                    /*Ilp ilp = ilpBuilder.build(request.getTransactionId(),
                             request.getQuoteId(),
                             requestAmount.getAmountDecimal(),
                             requestAmount.getCurrency(),
                             request.getPayer(),
                             request.getPayee(),
-                            requestAmount.getAmountDecimal());
+                            requestAmount.getAmountDecimal());*/
 
                     String localQuoteResponseString = exchange.getIn().getHeader(LOCAL_QUOTE_RESPONSE, String.class);
                     logger.info("## parsing local quote response string: {}", localQuoteResponseString);
@@ -222,8 +222,8 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                             new MoneyData(fspCommissionAmount.compareTo(ZERO) == 0 ? "0" : fspCommissionAmount.toPlainString(), fspCommissionCurrency),
                             LocalDateTime.now().plusHours(1),
                             null,
-                            ilp.getPacket(),
-                            ilp.getCondition(),
+                            null,
+                            null,
                             request.getExtensionList());
 
                     exchange.getIn().setBody(response);

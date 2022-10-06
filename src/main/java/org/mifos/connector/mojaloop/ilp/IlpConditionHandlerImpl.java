@@ -14,13 +14,11 @@ import org.interledger.Condition;
 import org.interledger.Fulfillment;
 import org.interledger.InterledgerAddress;
 import org.interledger.codecs.CodecContext;
-import org.mifos.connector.common.mojaloop.ilp.CodecContextFactory;
-import org.mifos.connector.common.mojaloop.ilp.InterledgerPayment;
+import org.interledger.ilp.InterledgerPayment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.ByteArrayInputStream;
@@ -45,7 +43,7 @@ public class IlpConditionHandlerImpl {
         InterledgerAddress address = InterledgerAddress.builder().value(ilpAddress).build();
         InterledgerPayment.Builder paymentBuilder = InterledgerPayment.builder();
         paymentBuilder.destinationAccount(address);
-        paymentBuilder.destinationAmount(amount);
+        paymentBuilder.destinationAmount(Long.valueOf(amount));
         mapper.setSerializationInclusion(Include.NON_NULL);
         String notificationJson = mapper.writeValueAsString(transaction);
         byte[] serializedTransaction = Base64.getUrlEncoder().encode(notificationJson.getBytes());
@@ -75,9 +73,10 @@ public class IlpConditionHandlerImpl {
     }
 
     public String generateCondition(String ilpPacket, byte[] secret) {
-        byte[] bFulfillment = this.getFulfillmentBytes(ilpPacket, secret);
+        /*byte[] bFulfillment = this.getFulfillmentBytes(ilpPacket, secret);
         Fulfillment fulfillment = Fulfillment.builder().preimage(bFulfillment).build();
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(fulfillment.getCondition().getHash());
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(fulfillment.getCondition().getHash());*/
+        return "";
     }
 
     public boolean validateFulfillmentAgainstCondition(String strFulfillment, String strCondition) {
@@ -86,6 +85,7 @@ public class IlpConditionHandlerImpl {
         byte[] bCondition = getUrlDecoder().decode(strCondition);
         Condition condition = Condition.of(bCondition);
         return fulfillment.validate(condition);
+        //return true;
     }
 
     private byte[] getFulfillmentBytes(String ilpPacket, byte[] secret) {

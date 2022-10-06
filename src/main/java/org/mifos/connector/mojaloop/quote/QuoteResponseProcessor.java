@@ -55,7 +55,7 @@ public class QuoteResponseProcessor implements Processor {
             QuoteSwitchResponseDTO response = exchange.getIn().getBody(QuoteSwitchResponseDTO.class);
             messageName = QUOTE_CALLBACK;
             variables.put(PAYEE_QUOTE_RESPONSE, objectMapper.writeValueAsString(response));
-            if (isMojaloopEnabled && !ilpBuilder.isValidPacketAgainstCondition(response.getIlpPacket(), response.getCondition())) {
+            if (isMojaloopEnabled) {
                 logger.error("Invalid ILP packet for quote: {}", exchange.getIn().getHeader(QUOTE_ID));
                 variables.put(QUOTE_FAILED, true);
             } else {
