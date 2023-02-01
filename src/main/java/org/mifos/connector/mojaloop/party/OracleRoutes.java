@@ -47,6 +47,7 @@ public class OracleRoutes extends ErrorHandlerRouteBuilder {
                 .id("get-dfsp-from-oracle")
                 .removeHeaders("*")
                 .toD("rest:GET:/oracle/participants/${exchangeProperty." + PARTY_ID_TYPE + "}/${exchangeProperty." + PARTY_ID + "}?host={{switch.oracle-host}}")
+                .log(LoggingLevel.INFO, "get-dfsp-from-oracle response ${body}")
                 .process(e -> {
                     try {
                         e.setProperty(PARTY_EXISTS, !new JSONArray(e.getIn().getBody(String.class)).isEmpty());
@@ -67,11 +68,13 @@ public class OracleRoutes extends ErrorHandlerRouteBuilder {
                     e.getIn().setHeader("Content-Type", "application/json");
                     e.getIn().setHeader("Accept", "application/json");
                 })
-                .toD("rest:POST:/oracle/participants/${exchangeProperty." + PARTY_ID_TYPE + "}/${exchangeProperty." + PARTY_ID + "}?host={{switch.oracle-host}}");
+                .toD("rest:POST:/oracle/participants/${exchangeProperty." + PARTY_ID_TYPE + "}/${exchangeProperty." + PARTY_ID + "}?host={{switch.oracle-host}}")
+                .log(LoggingLevel.INFO, "add-party-identifier-to-dfsp-in-oracle response ${body}");
 
         from("direct:remove-party-identifier-from-dfsp-in-oracle")
                 .id("remove-party-to-dfsp-in-oracle")
                 .removeHeaders("*")
-                .toD("rest:DELETE:/oracle/participants/${exchangeProperty." + PARTY_ID_TYPE + "}/${exchangeProperty." + PARTY_ID + "}?host={{switch.oracle-host}}");
+                .toD("rest:DELETE:/oracle/participants/${exchangeProperty." + PARTY_ID_TYPE + "}/${exchangeProperty." + PARTY_ID + "}?host={{switch.oracle-host}}")
+                .log(LoggingLevel.INFO, "remove-party-identifier-from-dfsp-in-oracle response ${body}");
     }
 }

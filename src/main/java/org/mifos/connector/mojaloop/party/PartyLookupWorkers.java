@@ -177,6 +177,8 @@ public class PartyLookupWorkers {
                         client.newCompleteCommand(job.getKey())
                                 .send()
                         ;
+
+                        logger.info("Job '{}' completed from process '{}' with key {}", job.getType(), job.getBpmnProcessId(), job.getKey());
                     })
                     .name(WORKER_PARTY_REGISTRATION_ORACLE + dfspId)
                     .maxJobsActive(workerMaxJobs)
