@@ -39,6 +39,9 @@ dependencies {
     implementation "org.apache.camel.springboot:camel-spring-boot-starter:$camelVersion"
     implementation "org.apache.camel:camel-undertow:$camelVersion"
     implementation 'org.apache.camel.springboot:camel-jackson-starter:3.16.0'
+    implementation "org.apache.camel:camel-http:$camelVersion"
+    implementation "org.apache.camel:camel-endpointdsl:$camelVersion"
+    implementation "org.apache.camel:camel-jetty:$camelVersion"
     implementation("io.zeebe:zeebe-client-java:$zeebClientVersion")
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.0'

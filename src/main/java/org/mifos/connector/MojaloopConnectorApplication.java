@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 //import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.apache.camel.Processor;
+import org.mifos.connector.mojaloop.party.CustomHeaderFilterStrategy;
 import org.mifos.connector.mojaloop.properties.PartyProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +17,8 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 
 import javax.annotation.PostConstruct;
+
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.CUSTOM_HEADER_FILTER_STRATEGY;
 
 @SpringBootApplication
 @EnableConfigurationProperties(PartyProperties.class)
@@ -51,5 +54,10 @@ public class MojaloopConnectorApplication {
     @Bean
     public Processor pojoToString(ObjectMapper objectMapper) {
         return exchange -> exchange.getIn().setBody(objectMapper.writeValueAsString(exchange.getIn().getBody()));
+    }
+
+    @Bean(CUSTOM_HEADER_FILTER_STRATEGY)
+    public CustomHeaderFilterStrategy headerFilterStrategy() {
+        return new CustomHeaderFilterStrategy();
     }
 }

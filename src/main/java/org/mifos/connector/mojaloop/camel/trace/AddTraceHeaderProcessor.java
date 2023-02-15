@@ -31,6 +31,7 @@ public class AddTraceHeaderProcessor implements Processor {
 
         exchange.getIn().setHeader("traceparent", traceParent);
         exchange.getIn().setHeader("tracestate", "ph=" + Base64.getEncoder().encodeToString(transactionIdKey.getBytes()));
+
         exchange.getIn().setHeader("Date",
                 ContextUtil.formatToDateHeader(exchange.getProperty(ORIGIN_DATE, Long.class)));
     }
