@@ -152,7 +152,7 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
 
 
         from("rest:PUT:/switch/quotes/{" + QUOTE_ID + "}")
-                .unmarshal().json(JsonLibrary.Jackson, QuoteSwitchResponseDTO.class)
+                .unmarshal().json(JsonLibrary.Gson, QuoteSwitchResponseDTO.class)
                 .to("direct:quotes-step4");
 
         from("direct:quotes-step4")
