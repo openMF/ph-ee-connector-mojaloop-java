@@ -20,6 +20,7 @@ public class ExternalApiCallRoute extends RouteBuilder {
                 })
                 .log("Host: ${exchangeProperty." + HOST + "}")
                 .log("Endpoint: ${exchangeProperty." + ENDPOINT + "}")
+                .log("Headers: ${headers}")
                 .log("Request Body: ${body}")
                 .toD("${exchangeProperty." + HOST + "}/${exchangeProperty." + ENDPOINT + "}" +
                         "?bridgeEndpoint=true" + "&throwExceptionOnFailure=false" +

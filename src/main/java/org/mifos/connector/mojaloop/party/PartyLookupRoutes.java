@@ -188,7 +188,7 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                 .log("Response body: ${body}");
 
         // todo create new sample route with simple date header
-        from("direct:date-header-test")
+        from("rest:GET:/t")
                 .id("date-header-test")
                 .log(LoggingLevel.DEBUG, "######## DATE: Test 1")
                 .process(exchange -> {

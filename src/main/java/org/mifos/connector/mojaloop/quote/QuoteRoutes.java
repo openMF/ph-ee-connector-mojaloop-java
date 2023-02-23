@@ -36,16 +36,10 @@ import java.time.LocalDateTime;
 import static java.math.BigDecimal.ZERO;
 import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_DESTINATION;
 import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.CHANNEL_REQUEST;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.ERROR_INFORMATION;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.LOCAL_QUOTE_RESPONSE;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.PARTY_LOOKUP_FSP_ID;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.QUOTE_FAILED;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.QUOTE_ID;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.QUOTE_SWITCH_REQUEST;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.QUOTE_SWITCH_REQUEST_AMOUNT;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.TENANT_ID;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.TRANSACTION_ID;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.ENDPOINT;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.HOST;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.*;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.PARTY_ID;
 
 @Component
 public class QuoteRoutes extends ErrorHandlerRouteBuilder {
@@ -291,7 +285,11 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                 })
                 .process(pojoToString)
                 .process(addTraceHeaderProcessor)
-                .toD("rest:POST:/quotes?host={{switch.quotes-host}}");
+                .setHeader(Exchange.HTTP_METHOD, constant("POST"))
+                .process(e -> log.info("Mojaloop headers : {}", e.getIn().getHeaders()))
+                .setProperty(HOST, simple("{{switch.quotes-host}}"))
+                .setProperty(ENDPOINT, constant("/quotes"))
+                .to("direct:external-api-call");
     }
 
     private void stripAmount(MoneyData requestAmount) {
