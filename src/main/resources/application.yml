@@ -20,7 +20,7 @@ zeebe:
   #    number-of-workers: 15
   #    evenly-allocated-max-jobs: "#{${zeebe.client.max-execution-threads} / ${zeebe.client.number-of-workers}}"
   broker:
-    contactpoint: "127.0.0.1:26500"
+    contactpoint: "127.0.0.1:54971"
 
 connector:
   ilp-secret: h4on38bsDjKiat2783gnklgafikmeuu5123kpobb7jm99
@@ -41,12 +41,12 @@ switch:
   transaction-request-service: transaction-request-service.local
   oracle-host: http://account-oracle.mifos.io:4100
 
-dfspids: "ibank-usa"
+dfspids: "gorilla,lion"
 
 parties:
-  - tenantId: ibank-usa
-    fspId: ibank-usa
-    domain: ibank-usa.mifos.g2pconnect.io
-  - tenantId: ibank-india
-    fspId: ibank-india
-    domain: ibank-india.mifos.g2pconnect.io
+  - tenantId: lion
+    fspId: payeefsp
+    domain: lion.mifos.g2pconnect.io
+  - tenantId: gorilla
+    fspId: payerfsp
+    domain: mojaloop.sandbox.fynarfin.io

@@ -107,7 +107,7 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
         //@formatter:on
 
         from("rest:PUT:/switch/parties/" + MSISDN + "/{partyId}")
-                .unmarshal().json(JsonLibrary.Jackson, PartySwitchResponseDTO.class)
+                .unmarshal().json(JsonLibrary.Gson, PartySwitchResponseDTO.class)
                 .process(getCachedTransactionIdProcessor)
                 .to("direct:parties-step4");
 
