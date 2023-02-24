@@ -48,7 +48,6 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.9.0'
     implementation 'org.json:json:20210307'
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation "org.apache.camel:camel-gson:$camelVersion"
 }
 
 group = 'org.mifos'

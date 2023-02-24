@@ -13,4 +13,6 @@ public class CamelProperties {
 
     public static final String CUSTOM_HEADER_FILTER_STRATEGY = "customHeaderFilterStrategy";
 
+    public static final String CLASS_TYPE = "classType";
+
 }

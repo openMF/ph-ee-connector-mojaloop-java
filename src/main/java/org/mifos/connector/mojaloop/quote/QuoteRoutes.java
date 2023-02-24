@@ -17,7 +17,6 @@ import org.mifos.connector.common.mojaloop.dto.PartyIdInfo;
 import org.mifos.connector.common.mojaloop.dto.QuoteSwitchRequestDTO;
 import org.mifos.connector.common.mojaloop.dto.QuoteSwitchResponseDTO;
 import org.mifos.connector.common.mojaloop.dto.TransactionType;
-//import org.mifos.connector.common.mojaloop.ilp.Ilp;
 import org.mifos.connector.common.mojaloop.type.AmountType;
 import org.mifos.connector.mojaloop.camel.trace.AddTraceHeaderProcessor;
 import org.mifos.connector.mojaloop.ilp.IlpBuilder;
@@ -29,17 +28,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-
 import static java.math.BigDecimal.ZERO;
 import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_DESTINATION;
 import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.ENDPOINT;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.HOST;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.*;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.*;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.PARTY_ID;
 
 @Component
 public class QuoteRoutes extends ErrorHandlerRouteBuilder {
@@ -152,7 +147,8 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
 
 
         from("rest:PUT:/switch/quotes/{" + QUOTE_ID + "}")
-                .unmarshal().json(JsonLibrary.Gson, QuoteSwitchResponseDTO.class)
+                .setProperty(CLASS_TYPE, constant(QuoteSwitchRequestDTO.class))
+                .to("direct:body-unmarshling")
                 .to("direct:quotes-step4");
 
         from("direct:quotes-step4")

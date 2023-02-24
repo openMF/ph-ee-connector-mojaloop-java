@@ -2,20 +2,15 @@ package org.mifos.connector.mojaloop.party;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sun.jndi.url.dns.dnsURLContextFactory;
 import org.apache.camel.Exchange;
 import org.apache.camel.LoggingLevel;
 import org.apache.camel.Processor;
-import org.apache.camel.model.dataformat.JsonLibrary;
-import org.apache.camel.support.DefaultHeaderFilterStrategy;
 import org.mifos.connector.common.camel.ErrorHandlerRouteBuilder;
 import org.mifos.connector.common.channel.dto.TransactionChannelRequestDTO;
-import org.mifos.connector.common.mojaloop.dto.MoneyData;
 import org.mifos.connector.common.mojaloop.dto.Party;
 import org.mifos.connector.common.mojaloop.dto.PartyIdInfo;
 import org.mifos.connector.common.mojaloop.dto.PartySwitchResponseDTO;
 import org.mifos.connector.common.mojaloop.type.IdentifierType;
-import org.mifos.connector.common.util.ContextUtil;
 import org.mifos.connector.mojaloop.camel.trace.AddTraceHeaderProcessor;
 import org.mifos.connector.mojaloop.camel.trace.GetCachedTransactionIdProcessor;
 import org.mifos.connector.mojaloop.properties.PartyProperties;
@@ -23,17 +18,11 @@ import org.mifos.connector.mojaloop.util.MojaloopUtil;
 import org.mifos.connector.mojaloop.zeebe.ZeebeProcessStarter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
-
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
 import static org.mifos.connector.common.ams.dto.InteropIdentifierType.MSISDN;
 import static org.mifos.connector.common.mojaloop.type.InteroperabilityType.PARTIES_CONTENT_TYPE;
 import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.ENDPOINT;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.HOST;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.*;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.*;
 
 @Component
@@ -107,7 +96,8 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
         //@formatter:on
 
         from("rest:PUT:/switch/parties/" + MSISDN + "/{partyId}")
-                .unmarshal().json(JsonLibrary.Gson, PartySwitchResponseDTO.class)
+                .setProperty(CLASS_TYPE, constant(PartySwitchResponseDTO.class))
+                .to("direct:body-unmarshling")
                 .process(getCachedTransactionIdProcessor)
                 .to("direct:parties-step4");
 
