@@ -231,7 +231,7 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                 .log(LoggingLevel.INFO, "######## PAYER -> SWITCH - quote request - STEP 1")
                 .process(exchange -> {
                     TransactionChannelRequestDTO channelRequest = objectMapper.readValue(exchange.getProperty(CHANNEL_REQUEST, String.class), TransactionChannelRequestDTO.class);
-
+                    logger.info("Channel request: {}", channelRequest);
                     TransactionType transactionType = new TransactionType();
                     transactionType.setInitiator(channelRequest.getTransactionType().getInitiator());
                     transactionType.setInitiatorType(channelRequest.getTransactionType().getInitiatorType());
@@ -259,6 +259,7 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                             null);
 
                     MoneyData requestAmount = channelRequest.getAmount();
+                    logger.info("Amount decimal: {}", channelRequest.getAmount().getAmountDecimal());
                     stripAmount(requestAmount);
                     QuoteSwitchRequestDTO quoteRequest = new QuoteSwitchRequestDTO(
                             exchange.getProperty(TRANSACTION_ID, String.class),
@@ -274,6 +275,8 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                             null, // TODO should be used other then extensions for comment?
                             null,
                             channelRequest.getExtensionList());
+                    String bdy = objectMapper.writeValueAsString(quoteRequest);
+                    logger.info("Converted body: {}", bdy);
                     exchange.getIn().setBody(quoteRequest);
 
                     exchange.setProperty(FSPIOP_SOURCE.headerName(), payerFspId);
