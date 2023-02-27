@@ -5,6 +5,7 @@ import org.apache.camel.Exchange;
 import org.apache.camel.LoggingLevel;
 import org.apache.camel.Processor;
 import org.apache.camel.model.dataformat.JsonLibrary;
+import org.json.JSONObject;
 import org.mifos.connector.common.ams.dto.QuoteFspResponseDTO;
 import org.mifos.connector.common.camel.ErrorHandlerRouteBuilder;
 import org.mifos.connector.common.channel.dto.TransactionChannelRequestDTO;
@@ -20,6 +21,7 @@ import org.mifos.connector.common.mojaloop.dto.TransactionType;
 import org.mifos.connector.common.mojaloop.type.AmountType;
 import org.mifos.connector.mojaloop.camel.trace.AddTraceHeaderProcessor;
 import org.mifos.connector.mojaloop.ilp.IlpBuilder;
+import org.mifos.connector.mojaloop.model.QuoteCallbackDTO;
 import org.mifos.connector.mojaloop.properties.PartyProperties;
 import org.mifos.connector.mojaloop.util.MojaloopUtil;
 import org.mifos.connector.mojaloop.zeebe.ZeebeProcessStarter;
@@ -147,7 +149,7 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
 
 
         from("rest:PUT:/switch/quotes/{" + QUOTE_ID + "}")
-                .setProperty(CLASS_TYPE, constant(QuoteSwitchRequestDTO.class))
+                .setProperty(CLASS_TYPE, constant(QuoteCallbackDTO.class))
                 .to("direct:body-unmarshling")
                 .to("direct:quotes-step4");
 
@@ -275,8 +277,12 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                             null, // TODO should be used other then extensions for comment?
                             null,
                             channelRequest.getExtensionList());
+
+                    // todo temporary fix for removing transient property from DTO
                     String bdy = objectMapper.writeValueAsString(quoteRequest);
-                    logger.info("Converted body: {}", bdy);
+                    JSONObject jsonObject = new JSONObject(bdy);
+                    jsonObject.getJSONObject("amount").remove("amountDecimal");
+                    
                     exchange.getIn().setBody(quoteRequest);
 
                     exchange.setProperty(FSPIOP_SOURCE.headerName(), payerFspId);

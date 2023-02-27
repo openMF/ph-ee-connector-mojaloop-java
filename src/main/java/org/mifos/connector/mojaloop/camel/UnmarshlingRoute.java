@@ -27,6 +27,7 @@ public class UnmarshlingRoute extends RouteBuilder {
                         Class type = (Class) exchange.getProperty(CLASS_TYPE);
                         String bdy = exchange.getIn().getBody(String.class);
                         exchange.getIn().setBody(objectMapper.readValue(bdy, type));
+                        logger.info("Converted dto: {}", exchange.getIn().getBody());
                     } catch (Exception e) {
                         logger.error("Error while unmarshling body: {}", e.getMessage());
                         e.printStackTrace();

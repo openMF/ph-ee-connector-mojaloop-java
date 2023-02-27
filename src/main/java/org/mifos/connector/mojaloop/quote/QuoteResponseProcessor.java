@@ -7,6 +7,7 @@ import org.apache.camel.Exchange;
 import org.apache.camel.Processor;
 import org.mifos.connector.common.mojaloop.dto.QuoteSwitchResponseDTO;
 import org.mifos.connector.mojaloop.ilp.IlpBuilder;
+import org.mifos.connector.mojaloop.model.QuoteCallbackDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,7 +53,7 @@ public class QuoteResponseProcessor implements Processor {
             variables.put(ERROR_INFORMATION, error);
             variables.put(QUOTE_FAILED, true);
         } else {
-            QuoteSwitchResponseDTO response = exchange.getIn().getBody(QuoteSwitchResponseDTO.class);
+            QuoteCallbackDTO response = exchange.getIn().getBody(QuoteCallbackDTO.class);
             messageName = QUOTE_CALLBACK;
             variables.put(PAYEE_QUOTE_RESPONSE, objectMapper.writeValueAsString(response));
             if (isMojaloopEnabled) {
