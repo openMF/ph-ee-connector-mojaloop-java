@@ -73,10 +73,9 @@ public class IlpConditionHandlerImpl {
     }
 
     public String generateCondition(String ilpPacket, byte[] secret) {
-        /*byte[] bFulfillment = this.getFulfillmentBytes(ilpPacket, secret);
+        byte[] bFulfillment = this.getFulfillmentBytes(ilpPacket, secret);
         Fulfillment fulfillment = Fulfillment.builder().preimage(bFulfillment).build();
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(fulfillment.getCondition().getHash());*/
-        return "";
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(fulfillment.getCondition().getHash());
     }
 
     public boolean validateFulfillmentAgainstCondition(String strFulfillment, String strCondition) {
@@ -98,5 +97,4 @@ public class IlpConditionHandlerImpl {
             throw new RuntimeException("Error getting HMAC", var5);
         }
     }
-
 }

@@ -6,6 +6,7 @@
  *  https://mozilla.org/MPL/2.0/.
  */
 package org.mifos.connector.mojaloop.ilp;
+
 import com.ilp.conditions.models.pdp.Money;
 import com.ilp.conditions.models.pdp.PartyIdInfo;
 import com.ilp.conditions.models.pdp.Transaction;

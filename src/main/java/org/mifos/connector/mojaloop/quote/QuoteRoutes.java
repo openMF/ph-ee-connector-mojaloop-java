@@ -151,6 +151,7 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
         from("rest:PUT:/switch/quotes/{" + QUOTE_ID + "}")
                 .setProperty(CLASS_TYPE, constant(QuoteCallbackDTO.class))
                 .to("direct:body-unmarshling")
+                .process(exchange -> logger.info("Received callback: {}", objectMapper.writeValueAsString(exchange.getIn().getBody(QuoteCallbackDTO.class))))
                 .to("direct:quotes-step4");
 
         from("direct:quotes-step4")
@@ -277,12 +278,6 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                             null, // TODO should be used other then extensions for comment?
                             null,
                             channelRequest.getExtensionList());
-
-                    // todo temporary fix for removing transient property from DTO
-                    String bdy = objectMapper.writeValueAsString(quoteRequest);
-                    JSONObject jsonObject = new JSONObject(bdy);
-                    jsonObject.getJSONObject("amount").remove("amountDecimal");
-                    
                     exchange.getIn().setBody(quoteRequest);
 
                     exchange.setProperty(FSPIOP_SOURCE.headerName(), payerFspId);
