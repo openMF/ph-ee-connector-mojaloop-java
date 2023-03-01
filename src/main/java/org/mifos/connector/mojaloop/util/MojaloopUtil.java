@@ -1,6 +1,6 @@
 package org.mifos.connector.mojaloop.util;
 
-//import com.ilp.conditions.models.pdp.Transaction;
+import com.ilp.conditions.models.pdp.Transaction;
 import org.apache.camel.Exchange;
 import org.mifos.connector.common.mojaloop.dto.QuoteSwitchRequestDTO;
 import org.springframework.beans.factory.annotation.Value;
@@ -75,10 +75,10 @@ public class MojaloopUtil {
         finalizeHeaders(e, headers);
     }
 
-    public void setTransferHeadersResponse(Exchange e) {
+    public void setTransferHeadersResponse(Exchange e, Transaction transaction) {
         Map<String, Object> headers = new HashMap<>();
-        headers.put(FSPIOP_SOURCE.headerName(), null);
-        headers.put(FSPIOP_DESTINATION.headerName(), null);
+        headers.put(FSPIOP_SOURCE.headerName(), transaction.getPayee().getPartyIdInfo().getFspId());
+        headers.put(FSPIOP_DESTINATION.headerName(), transaction.getPayer().getPartyIdInfo().getFspId());
         headers.put("Content-Type", TRANSFERS_CONTENT_TYPE.headerValue());
         headers.put("Accept", TRANSFERS_ACCEPT_TYPE.headerValue());
         headers.put("Host", transferService);
@@ -86,10 +86,10 @@ public class MojaloopUtil {
         finalizeHeaders(e, headers);
     }
 
-    public void setTransferHeadersRequest(Exchange e) {
+    public void setTransferHeadersRequest(Exchange e, Transaction transaction) {
         Map<String, Object> headers = new HashMap<>();
-        headers.put(FSPIOP_SOURCE.headerName(), null);
-        headers.put(FSPIOP_DESTINATION.headerName(), null);
+        headers.put(FSPIOP_SOURCE.headerName(), transaction.getPayer().getPartyIdInfo().getFspId());
+        headers.put(FSPIOP_DESTINATION.headerName(), transaction.getPayee().getPartyIdInfo().getFspId());
         headers.put("Content-Type", TRANSFERS_CONTENT_TYPE.headerValue());
         headers.put("Accept", TRANSFERS_ACCEPT_TYPE.headerValue());
         headers.put("Host", transferService);

@@ -1,7 +1,7 @@
 package org.mifos.connector.mojaloop.transfer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-//import com.ilp.conditions.models.pdp.Transaction;
+import com.ilp.conditions.models.pdp.Transaction;
 import io.zeebe.client.ZeebeClient;
 import org.apache.camel.Exchange;
 import org.apache.camel.LoggingLevel;
@@ -13,12 +13,13 @@ import org.mifos.connector.common.mojaloop.dto.MoneyData;
 import org.mifos.connector.common.mojaloop.dto.QuoteSwitchResponseDTO;
 import org.mifos.connector.common.mojaloop.dto.TransferSwitchRequestDTO;
 import org.mifos.connector.common.mojaloop.dto.TransferSwitchResponseDTO;
-//import org.mifos.connector.common.mojaloop.ilp.Ilp;
 import org.mifos.connector.common.mojaloop.type.TransferState;
 import org.mifos.connector.common.util.ContextUtil;
 import org.mifos.connector.mojaloop.camel.trace.AddTraceHeaderProcessor;
 import org.mifos.connector.mojaloop.camel.trace.GetCachedTransactionIdProcessor;
+import org.mifos.connector.mojaloop.ilp.Ilp;
 import org.mifos.connector.mojaloop.ilp.IlpBuilder;
+import org.mifos.connector.mojaloop.model.QuoteCallbackDTO;
 import org.mifos.connector.mojaloop.util.MojaloopUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,6 +30,7 @@ import java.util.Map;
 
 import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_DESTINATION;
 import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.*;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeMessages.TRANSFER_MESSAGE;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.CHANNEL_REQUEST;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.ERROR_INFORMATION;
@@ -86,11 +88,11 @@ public class TransferRoutes extends ErrorHandlerRouteBuilder {
                     .otherwise()
                         .process(exchange -> {
                             TransferSwitchRequestDTO request = exchange.getIn().getBody(TransferSwitchRequestDTO.class);
-                            //Ilp ilp = ilpBuilder.parse(request.getIlpPacket(), request.getCondition());
+                            Ilp ilp = ilpBuilder.parse(request.getIlpPacket(), request.getCondition());
 
                             Map<String, Object> variables = new HashMap<>();
                             variables.put(SWITCH_TRANSFER_REQUEST, exchange.getProperty(SWITCH_TRANSFER_REQUEST));
-                            String transactionId = null; //ilp.getTransaction().getTransactionId();
+                            String transactionId = ilp.getTransaction().getTransactionId();
                             exchange.setProperty(TRANSACTION_ID, transactionId);
                             variables.put(TRANSACTION_ID, transactionId);
                             variables.put(FSPIOP_SOURCE.headerName(), request.getPayeeFsp());
@@ -136,7 +138,7 @@ public class TransferRoutes extends ErrorHandlerRouteBuilder {
                 .unmarshal().json(JsonLibrary.Jackson, TransferSwitchRequestDTO.class)
                 .process(e -> {
                     TransferSwitchRequestDTO request = e.getIn().getBody(TransferSwitchRequestDTO.class);
-                    mojaloopUtil.setTransferHeadersResponse(e);
+                    mojaloopUtil.setTransferHeadersResponse(e, ilpBuilder.parse(request.getIlpPacket(), request.getCondition()).getTransaction());
                     e.getIn().setBody(e.getProperty(ERROR_INFORMATION));
                 })
                 .toD("rest:PUT:/transfers/${exchangeProperty."+TRANSACTION_ID+"}/error?host={{switch.transfers-host}}");
@@ -145,9 +147,8 @@ public class TransferRoutes extends ErrorHandlerRouteBuilder {
                 .delay(mojaPerfRespDelay)
                 .process(e -> {
                     TransferSwitchRequestDTO transactionRequest = e.getIn().getBody(TransferSwitchRequestDTO.class);
-                    //Ilp ilp = ilpBuilder.parse(transactionRequest.getIlpPacket(), transactionRequest.getCondition());
-                    //e.setProperty(TRANSACTION_ID, ilp.getTransaction().getTransactionId());
-                    e.setProperty(TRANSACTION_ID, null);
+                    Ilp ilp = ilpBuilder.parse(transactionRequest.getIlpPacket(), transactionRequest.getCondition());
+                    e.setProperty(TRANSACTION_ID, ilp.getTransaction().getTransactionId());
                     e.getIn().setBody(objectMapper.writeValueAsString(transactionRequest));
                 })
                 .to("direct:send-transfer-to-switch");
@@ -157,16 +158,16 @@ public class TransferRoutes extends ErrorHandlerRouteBuilder {
                 .unmarshal().json(JsonLibrary.Jackson, TransferSwitchRequestDTO.class)
                 .process(exchange -> {
                     TransferSwitchRequestDTO request = exchange.getIn().getBody(TransferSwitchRequestDTO.class);
-                    //Ilp ilp = ilpBuilder.parse(request.getIlpPacket(), request.getCondition());
+                    Ilp ilp = ilpBuilder.parse(request.getIlpPacket(), request.getCondition());
 
                     TransferSwitchResponseDTO response = new TransferSwitchResponseDTO(
-                            null,
+                            ilp.getFulfilment(),
                             ContextUtil.parseMojaDate(exchange.getIn().getHeader("Date", String.class)), // there is a validation at fulfiltransfer: completedTimestamp.getTime() > now.getTime() + maxCallbackTimeLagDilation(200ms by default)
                             TransferState.COMMITTED,
                             null);
 
                     exchange.getIn().setBody(response);
-                    mojaloopUtil.setTransferHeadersResponse(exchange);
+                    mojaloopUtil.setTransferHeadersResponse(exchange, ilp.getTransaction());
                 })
                 .process(pojoToString)
                 .log(LoggingLevel.INFO, "Transfer response from payee: ${body}")
@@ -175,27 +176,31 @@ public class TransferRoutes extends ErrorHandlerRouteBuilder {
         from("direct:send-transfer")
                 .id("send-transfer")
                 .log(LoggingLevel.INFO, "######## PAYER -> SWITCH - transfer request ${exchangeProperty."+TRANSACTION_ID+"} - STEP 1")
-                .unmarshal().json(JsonLibrary.Jackson, QuoteSwitchResponseDTO.class)
+                .setProperty(CLASS_TYPE, constant(QuoteSwitchResponseDTO.class))
+                .to("direct:body-unmarshling")
                 .process(exchange -> {
                     QuoteSwitchResponseDTO quoteResponse = exchange.getIn().getBody(QuoteSwitchResponseDTO.class);
-                    //Ilp ilp = ilpBuilder.parse(quoteResponse.getIlpPacket(), quoteResponse.getCondition());
+                    Ilp ilp = ilpBuilder.parse(quoteResponse.getIlpPacket(), quoteResponse.getCondition());
 
-                    //Transaction transaction = ilp.getTransaction();
+                    Transaction transaction = ilp.getTransaction();
                     TransferSwitchRequestDTO request = new TransferSwitchRequestDTO(
-                            null,
-                            null,
-                            null,
-                            new MoneyData(),
-                            null,
-                            null,
+                            transaction.getTransactionId(),
+                            transaction.getPayer().getPartyIdInfo().getFspId(),
+                            transaction.getPayee().getPartyIdInfo().getFspId(),
+                            new MoneyData(transaction.getAmount().getAmount(), transaction.getAmount().getCurrency()),
+                            ilp.getPacket(),
+                            ilp.getCondition(),
                             ContextUtil.parseDate(quoteResponse.getExpiration()).plusHours(1),
                             objectMapper.readValue(exchange.getProperty(CHANNEL_REQUEST, String.class), TransactionChannelRequestDTO.class).getExtensionList());
 
                     exchange.getIn().setBody(request);
-                    mojaloopUtil.setTransferHeadersRequest(exchange);
+                    mojaloopUtil.setTransferHeadersRequest(exchange, transaction);
                 })
                 .process(pojoToString)
                 .process(addTraceHeaderProcessor)
-                .toD("rest:POST:/transfers?host={{switch.transfers-host}}");
+                .setHeader(Exchange.HTTP_METHOD, constant("POST"))
+                .setProperty(HOST, simple("{{switch.transfers-host}}"))
+                .setProperty(ENDPOINT, constant("/transfers"))
+                .to("direct:external-api-call");
     }
 }
