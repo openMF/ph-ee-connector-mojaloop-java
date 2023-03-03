@@ -77,7 +77,9 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                     .otherwise()
                         .process(e -> {
                             String host = e.getIn().getHeader("Host", String.class).split(":")[0];
+                            log.info("HOST: {}", host);
                             String tenantId = partyProperties.getPartyByDomain(host).getTenantId();
+                            log.info("TENANT ID: {}", tenantId);
                                     zeebeProcessStarter.startZeebeWorkflow(partyLookupFlow.replace("{tenant}", tenantId),
                                             variables -> {
                                                 variables.put("Date", e.getIn().getHeader("Date"));

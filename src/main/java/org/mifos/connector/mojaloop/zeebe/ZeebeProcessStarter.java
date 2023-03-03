@@ -1,6 +1,7 @@
 package org.mifos.connector.mojaloop.zeebe;
 
 import io.zeebe.client.ZeebeClient;
+import io.zeebe.client.api.response.WorkflowInstanceEvent;
 import org.apache.camel.Exchange;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,14 +27,13 @@ public class ZeebeProcessStarter {
         variables.put(ZeebeVariables.ORIGIN_DATE, Instant.now().toEpochMilli());
         variablesLambda.accept(variables);
 
-        zeebeClient.newCreateInstanceCommand()
+        WorkflowInstanceEvent instance = zeebeClient.newCreateInstanceCommand()
                 .bpmnProcessId(workflowId)
                 .latestVersion()
                 .variables(variables)
-                .send()
-                ;
+                .send().join();
 
-        logger.info("zeebee workflow instance from process {} started", workflowId);
+        logger.info("zeebee workflow instance from process {} started with key {}", workflowId, instance.getWorkflowInstanceKey());
     }
 
     public static void zeebeVariablesToCamelHeaders(Map<String, Object> variables, Exchange exchange, String... names) {
