@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import static org.mifos.connector.common.ams.dto.InteropIdentifierType.MSISDN;
 import static org.mifos.connector.common.mojaloop.type.InteroperabilityType.PARTIES_CONTENT_TYPE;
+import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_DESTINATION;
 import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.*;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.*;
@@ -81,11 +82,15 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                             String tenantId = partyProperties.getPartyByDomain(host).getTenantId();
                             log.info("TENANT ID: {}", tenantId);
                             log.info("Headers: {}", e.getIn().getHeaders());
+                            String payeeFsp = e.getIn().getHeader(FSPIOP_DESTINATION.headerName(), String.class);
+                            log.info("Payeefsp: {}", payeeFsp);
+                            log.info("PAYEE TENANT: {}", partyProperties.getPartyByDfsp(payeeFsp).getTenantId());
                                     zeebeProcessStarter.startZeebeWorkflow(partyLookupFlow.replace("{tenant}", tenantId),
                                             variables -> {
                                                 variables.put("Date", e.getIn().getHeader("Date"));
                                                 variables.put("traceparent", e.getIn().getHeader("traceparent"));
                                                 variables.put(FSPIOP_SOURCE.headerName(), e.getIn().getHeader(FSPIOP_SOURCE.headerName()));
+                                                variables.put(PAYEE_TENANT_ID, partyProperties.getPartyByDfsp(payeeFsp).getTenantId());
                                                 variables.put(PARTY_ID_TYPE, e.getIn().getHeader(PARTY_ID_TYPE));
                                                 variables.put(PARTY_ID, e.getIn().getHeader(PARTY_ID));
                                                 variables.put(TENANT_ID, tenantId);

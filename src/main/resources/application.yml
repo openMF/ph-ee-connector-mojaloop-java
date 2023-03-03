@@ -49,4 +49,4 @@ parties:
     domain: mojaloop.sandbox.fynarfin.io
   - tenantId: gorilla
     fspId: payerfsp
-    domain: gorilla.sandbox.fynarfin.io
+    domain: mojaloop.sandbox.fynarfin.io

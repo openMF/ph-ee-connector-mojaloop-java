@@ -40,5 +40,6 @@ public class ZeebeVariables {
     public static final String TRANSACTION_STATE = "transactionState";
     public static final String TRANSFER_FAILED = "transferFailed";
     public static final String TRANSFER_STATE = "transferState";
+    public static final String PAYEE_TENANT_ID = "payeeTenantId";
 
 }
