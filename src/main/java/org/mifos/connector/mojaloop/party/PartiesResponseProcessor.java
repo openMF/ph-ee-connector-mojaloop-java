@@ -1,6 +1,6 @@
 package org.mifos.connector.mojaloop.party;
 
-import io.zeebe.client.ZeebeClient;
+import io.camunda.zeebe.client.ZeebeClient;
 import org.apache.camel.Exchange;
 import org.apache.camel.Processor;
 import org.mifos.connector.common.mojaloop.dto.PartySwitchResponseDTO;

@@ -2,7 +2,7 @@ package org.mifos.connector.mojaloop.transfer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ilp.conditions.models.pdp.Transaction;
-import io.zeebe.client.ZeebeClient;
+import io.camunda.zeebe.client.ZeebeClient;
 import org.apache.camel.Exchange;
 import org.apache.camel.LoggingLevel;
 import org.apache.camel.Processor;
