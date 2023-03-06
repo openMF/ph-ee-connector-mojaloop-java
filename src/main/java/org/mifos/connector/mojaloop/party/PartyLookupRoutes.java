@@ -84,6 +84,7 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                             log.info("Headers: {}", e.getIn().getHeaders());
                             String payeeFsp = e.getIn().getHeader(FSPIOP_DESTINATION.headerName(), String.class);
                             log.info("Payeefsp: {}", payeeFsp);
+                            log.info("PARTIES: {}", objectMapper.writeValueAsString(partyProperties.getParties()));
                             log.info("PAYEE TENANT: {}", partyProperties.getPartyByDfsp(payeeFsp).getTenantId());
                                     zeebeProcessStarter.startZeebeWorkflow(partyLookupFlow.replace("{tenant}", tenantId),
                                             variables -> {

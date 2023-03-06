@@ -1,7 +1,7 @@
 parties:
-  - tenantId: lion
+  - tenantId: rhino
     fspId: payeefsp
-    domain: lion.mifos.g2pconnect.io
+    domain: mojaloop.sandbox.fynarfin.io
   - tenantId: gorilla
     fspId: payerfsp
     domain: mojaloop.sandbox.fynarfin.io
