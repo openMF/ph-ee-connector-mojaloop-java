@@ -141,7 +141,10 @@ public class TransferRoutes extends ErrorHandlerRouteBuilder {
                     mojaloopUtil.setTransferHeadersResponse(e, ilpBuilder.parse(request.getIlpPacket(), request.getCondition()).getTransaction());
                     e.getIn().setBody(e.getProperty(ERROR_INFORMATION));
                 })
-                .toD("rest:PUT:/transfers/${exchangeProperty."+TRANSACTION_ID+"}/error?host={{switch.transfers-host}}");
+                .setHeader(Exchange.HTTP_METHOD, constant("PUT"))
+                .setProperty(HOST, simple("{{switch.transfers-host}}"))
+                .setProperty(ENDPOINT, simple("transfers/${exchangeProperty."+TRANSACTION_ID+"}/error"))
+                .to("direct:external-api-call");
 
         from("direct:send-delayed-transfer-dummy-response")
                 .delay(mojaPerfRespDelay)
@@ -171,7 +174,10 @@ public class TransferRoutes extends ErrorHandlerRouteBuilder {
                 })
                 .process(pojoToString)
                 .log(LoggingLevel.INFO, "Transfer response from payee: ${body}")
-                .toD("rest:PUT:/transfers/${exchangeProperty." + TRANSACTION_ID + "}?host={{switch.transfers-host}}");
+                .setHeader(Exchange.HTTP_METHOD, constant("PUT"))
+                .setProperty(HOST, simple("{{switch.transfers-host}}"))
+                .setProperty(ENDPOINT, simple("transfers/${exchangeProperty." + TRANSACTION_ID + "}"))
+                .to("direct:external-api-call");
 
         from("direct:send-transfer")
                 .id("send-transfer")
@@ -198,6 +204,7 @@ public class TransferRoutes extends ErrorHandlerRouteBuilder {
                 })
                 .process(pojoToString)
                 .process(addTraceHeaderProcessor)
+                .log(LoggingLevel.INFO, "Transfer body: ${body}")
                 .setHeader(Exchange.HTTP_METHOD, constant("POST"))
                 .setProperty(HOST, simple("{{switch.transfers-host}}"))
                 .setProperty(ENDPOINT, constant("/transfers"))
