@@ -4,8 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.camel.Exchange;
 import org.apache.camel.LoggingLevel;
 import org.apache.camel.Processor;
-import org.apache.camel.model.dataformat.JsonLibrary;
-import org.json.JSONObject;
 import org.mifos.connector.common.ams.dto.QuoteFspResponseDTO;
 import org.mifos.connector.common.camel.ErrorHandlerRouteBuilder;
 import org.mifos.connector.common.channel.dto.TransactionChannelRequestDTO;
@@ -20,6 +18,7 @@ import org.mifos.connector.common.mojaloop.dto.QuoteSwitchResponseDTO;
 import org.mifos.connector.common.mojaloop.dto.TransactionType;
 import org.mifos.connector.common.mojaloop.type.AmountType;
 import org.mifos.connector.mojaloop.camel.trace.AddTraceHeaderProcessor;
+import org.mifos.connector.mojaloop.ilp.Ilp;
 import org.mifos.connector.mojaloop.ilp.IlpBuilder;
 import org.mifos.connector.mojaloop.model.QuoteCallbackDTO;
 import org.mifos.connector.mojaloop.properties.PartyProperties;
@@ -89,7 +88,9 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                         .wireTap("direct:send-delayed-quote-dummy-response")
                     .endChoice()
                 .otherwise()
-                    .unmarshal().json(JsonLibrary.Jackson, QuoteSwitchRequestDTO.class)
+                    //.unmarshal().json(JsonLibrary.Jackson, QuoteSwitchRequestDTO.class)
+                    .setProperty(CLASS_TYPE, constant(QuoteSwitchRequestDTO.class))
+                    .to("direct:body-unmarshling")
                     .process(exchange -> { // @formatter:on
                                 QuoteSwitchRequestDTO request = exchange.getIn().getBody(QuoteSwitchRequestDTO.class);
                                 PartyIdInfo payee = request.getPayee().getPartyIdInfo();
@@ -170,7 +171,9 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
 
         from("direct:send-quote-error-to-switch")
                 .id("send-quote-error-to-switch")
-                .unmarshal().json(JsonLibrary.Jackson, QuoteSwitchRequestDTO.class)
+                //.unmarshal().json(JsonLibrary.Jackson, QuoteSwitchRequestDTO.class)
+                .setProperty(CLASS_TYPE, constant(QuoteSwitchRequestDTO.class))
+                .to("direct:body-unmarshling")
                 .process(e -> {
                     QuoteSwitchRequestDTO request = e.getIn().getBody(QuoteSwitchRequestDTO.class);
                     mojaloopUtil.setQuoteHeadersResponse(e, request);
@@ -182,22 +185,27 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
         from("direct:send-quote-to-switch")
                 .id("send-quote-to-switch")
                 .log(LoggingLevel.INFO, "######## PAYEE -> SWITCH - response for quote request - STEP 3")
-                .unmarshal().json(JsonLibrary.Jackson, QuoteSwitchRequestDTO.class)
+                //.unmarshal().json(JsonLibrary.Jackson, QuoteSwitchRequestDTO.class)
+                .setProperty(CLASS_TYPE, constant(QuoteSwitchRequestDTO.class))
+                .to("direct:body-unmarshling")
                 .process(exchange -> {
                     QuoteSwitchRequestDTO request = exchange.getIn().getBody(QuoteSwitchRequestDTO.class);
                     MoneyData requestAmount = request.getAmount();
                     stripAmount(requestAmount);
 
-                    /*Ilp ilp = ilpBuilder.build(request.getTransactionId(),
+                    Ilp ilp = ilpBuilder.build(request.getTransactionId(),
                             request.getQuoteId(),
                             requestAmount.getAmountDecimal(),
                             requestAmount.getCurrency(),
-                            request.getPayer(),
-                            request.getPayee(),
-                            requestAmount.getAmountDecimal());*/
+                            objectMapper.readValue(objectMapper.writeValueAsString(request.getPayer()),
+                                    org.mifos.connector.mojaloop.ilp.Party.class),
+                            objectMapper.readValue(objectMapper.writeValueAsString(request.getPayee()),
+                                    org.mifos.connector.mojaloop.ilp.Party.class),
+                            requestAmount.getAmountDecimal());
 
                     String localQuoteResponseString = exchange.getIn().getHeader(LOCAL_QUOTE_RESPONSE, String.class);
                     logger.info("## parsing local quote response string: {}", localQuoteResponseString);
+                    logger.info("ILP object: {}", objectMapper.writeValueAsString(ilp));
                     QuoteFspResponseDTO localQuoteResponse = objectMapper.readValue(localQuoteResponseString, QuoteFspResponseDTO.class);
                     FspMoneyData fspFee = localQuoteResponse.getFspFee();
                     FspMoneyData fspCommission = localQuoteResponse.getFspCommission();
@@ -216,8 +224,8 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                             new MoneyData(fspCommissionAmount.compareTo(ZERO) == 0 ? "0" : fspCommissionAmount.toPlainString(), fspCommissionCurrency),
                             LocalDateTime.now().plusHours(1),
                             null,
-                            null,
-                            null,
+                            ilp.getPacket(),
+                            ilp.getCondition(),
                             request.getExtensionList());
 
                     exchange.getIn().setBody(response);
@@ -227,7 +235,10 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                 })
                 .process(pojoToString)
                 .log(LoggingLevel.INFO, "Quote response from payee: ${body}")
-                .toD("rest:PUT:/quotes/${exchangeProperty." + QUOTE_ID + "}?host={{switch.quotes-host}}");
+                .setHeader(Exchange.HTTP_METHOD, constant("PUT"))
+                .setProperty(HOST, simple("{{switch.quotes-host}}"))
+                .setProperty(ENDPOINT, simple("/quotes/${exchangeProperty." + QUOTE_ID + "}"))
+                .to("direct:external-api-call");
 
         from("direct:send-quote")
                 .id("send-quote")
@@ -287,7 +298,6 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                 .process(pojoToString)
                 .process(addTraceHeaderProcessor)
                 .setHeader(Exchange.HTTP_METHOD, constant("POST"))
-                .process(e -> log.info("Mojaloop headers : {}", e.getIn().getHeaders()))
                 .setProperty(HOST, simple("{{switch.quotes-host}}"))
                 .setProperty(ENDPOINT, constant("/quotes"))
                 .to("direct:external-api-call");
