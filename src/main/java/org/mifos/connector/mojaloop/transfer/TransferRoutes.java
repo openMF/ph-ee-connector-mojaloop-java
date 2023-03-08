@@ -9,10 +9,7 @@ import org.apache.camel.Processor;
 import org.apache.camel.model.dataformat.JsonLibrary;
 import org.mifos.connector.common.camel.ErrorHandlerRouteBuilder;
 import org.mifos.connector.common.channel.dto.TransactionChannelRequestDTO;
-import org.mifos.connector.common.mojaloop.dto.MoneyData;
-import org.mifos.connector.common.mojaloop.dto.QuoteSwitchResponseDTO;
-import org.mifos.connector.common.mojaloop.dto.TransferSwitchRequestDTO;
-import org.mifos.connector.common.mojaloop.dto.TransferSwitchResponseDTO;
+import org.mifos.connector.common.mojaloop.dto.*;
 import org.mifos.connector.common.mojaloop.type.TransferState;
 import org.mifos.connector.common.util.ContextUtil;
 import org.mifos.connector.mojaloop.camel.trace.AddTraceHeaderProcessor;
@@ -80,7 +77,8 @@ public class TransferRoutes extends ErrorHandlerRouteBuilder {
         //@formatter:off
         from("rest:POST:/switch/transfers")
                 .setProperty(SWITCH_TRANSFER_REQUEST, bodyAs(String.class))
-                .unmarshal().json(JsonLibrary.Jackson, TransferSwitchRequestDTO.class)
+                .setProperty(CLASS_TYPE, constant(TransferSwitchRequestDTO.class))
+                .to("direct:body-unmarshling")
                 .choice()
                     .when(e -> mojaPerfMode)
                         .wireTap("direct:send-delayed-transfer-dummy-response")
@@ -115,7 +113,8 @@ public class TransferRoutes extends ErrorHandlerRouteBuilder {
         //@formatter:on
 
         from("rest:PUT:/switch/transfers/{"+TRANSACTION_ID+"}")
-                .unmarshal().json(JsonLibrary.Jackson, TransferSwitchResponseDTO.class)
+                .setProperty(CLASS_TYPE, constant(TransferSwitchResponseDTO.class))
+                .to("direct:body-unmarshling")
                 .process(getCachedTransactionIdProcessor)
                 .to("direct:transfers-step4");
 
@@ -135,7 +134,8 @@ public class TransferRoutes extends ErrorHandlerRouteBuilder {
 
         from("direct:send-transfer-error-to-switch")
                 .id("send-transfer-error-to-switch")
-                .unmarshal().json(JsonLibrary.Jackson, TransferSwitchRequestDTO.class)
+                .setProperty(CLASS_TYPE, constant(TransferSwitchRequestDTO.class))
+                .to("direct:body-unmarshling")
                 .process(e -> {
                     TransferSwitchRequestDTO request = e.getIn().getBody(TransferSwitchRequestDTO.class);
                     mojaloopUtil.setTransferHeadersResponse(e, ilpBuilder.parse(request.getIlpPacket(), request.getCondition()).getTransaction());
@@ -158,7 +158,8 @@ public class TransferRoutes extends ErrorHandlerRouteBuilder {
 
         from("direct:send-transfer-to-switch")
                 .log(LoggingLevel.INFO, "######## PAYEE -> SWITCH - transfer response ${exchangeProperty."+TRANSACTION_ID+"} - STEP 3")
-                .unmarshal().json(JsonLibrary.Jackson, TransferSwitchRequestDTO.class)
+                .setProperty(CLASS_TYPE, constant(TransferSwitchRequestDTO.class))
+                .to("direct:body-unmarshling")
                 .process(exchange -> {
                     TransferSwitchRequestDTO request = exchange.getIn().getBody(TransferSwitchRequestDTO.class);
                     Ilp ilp = ilpBuilder.parse(request.getIlpPacket(), request.getCondition());
