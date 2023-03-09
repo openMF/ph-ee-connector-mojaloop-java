@@ -27,9 +27,7 @@ import java.io.IOException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
-
 import static java.util.Base64.getUrlDecoder;
-
 
 @Component
 public class IlpConditionHandlerImpl {
@@ -84,7 +82,6 @@ public class IlpConditionHandlerImpl {
         byte[] bCondition = getUrlDecoder().decode(strCondition);
         Condition condition = Condition.of(bCondition);
         return fulfillment.validate(condition);
-        //return true;
     }
 
     private byte[] getFulfillmentBytes(String ilpPacket, byte[] secret) {

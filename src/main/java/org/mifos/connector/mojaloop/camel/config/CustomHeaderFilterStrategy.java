@@ -1,4 +1,4 @@
-package org.mifos.connector.mojaloop.party;
+package org.mifos.connector.mojaloop.camel.config;
 
 import org.apache.camel.support.DefaultHeaderFilterStrategy;
 

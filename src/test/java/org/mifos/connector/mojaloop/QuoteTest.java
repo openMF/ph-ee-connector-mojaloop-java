@@ -28,9 +28,9 @@ public class QuoteTest {
 
     @Test
     public void testDateDeser() throws IOException {
-        /*String json = "{}";
-        TestDto testDto = objectMapper.readValue(json, TestDto.class);
+        String json = "{}";
+        QuoteFspResponseDTO testDto = objectMapper.readValue(json, QuoteFspResponseDTO.class);
 
-        logger.info("Test dto: {}", testDto);*/
+        logger.info("Test dto: {}", testDto);
     }
 }

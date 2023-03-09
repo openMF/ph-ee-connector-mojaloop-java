@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.camunda.zeebe.client.ZeebeClient;
 import org.apache.camel.Exchange;
 import org.apache.camel.Processor;
-import org.mifos.connector.common.mojaloop.dto.QuoteSwitchResponseDTO;
 import org.mifos.connector.mojaloop.ilp.IlpBuilder;
 import org.mifos.connector.mojaloop.model.QuoteCallbackDTO;
 import org.slf4j.Logger;
@@ -13,11 +12,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
-
 import static org.mifos.connector.mojaloop.zeebe.ZeebeMessages.QUOTE_CALLBACK;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeMessages.QUOTE_ERROR;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.ERROR_INFORMATION;

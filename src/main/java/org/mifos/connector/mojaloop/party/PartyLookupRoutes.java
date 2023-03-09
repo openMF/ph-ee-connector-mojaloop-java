@@ -20,7 +20,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import static org.mifos.connector.common.ams.dto.InteropIdentifierType.MSISDN;
-import static org.mifos.connector.common.mojaloop.type.InteroperabilityType.PARTIES_CONTENT_TYPE;
 import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_DESTINATION;
 import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.*;
@@ -175,7 +174,6 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                 .id("send-party-lookup")
                 .log(LoggingLevel.DEBUG, "######## PAYER -> SWITCH - party lookup request - STEP 1")
                 .process(e -> {
-                    System.out.println("Channel request" + e.getProperty(CHANNEL_REQUEST, String.class));
                     TransactionChannelRequestDTO channelRequest = objectMapper.readValue(e.getProperty(CHANNEL_REQUEST, String.class), TransactionChannelRequestDTO.class);
                     PartyIdInfo requestedParty = e.getProperty(IS_RTP_REQUEST, Boolean.class) ? channelRequest.getPayer().getPartyIdInfo() : channelRequest.getPayee().getPartyIdInfo();
                     e.setProperty(PARTY_ID_TYPE, requestedParty.getPartyIdType());
@@ -191,20 +189,5 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                 .setProperty(ENDPOINT, simple("/parties/${exchangeProperty." + PARTY_ID_TYPE + "}/${exchangeProperty." + PARTY_ID + "}"))
                 .to("direct:external-api-call")
                 .log("Response body: ${body}");
-
-        // todo create new sample route with simple date header
-        from("rest:GET:/t")
-                .id("date-header-test")
-                .log(LoggingLevel.DEBUG, "######## DATE: Test 1")
-                .process(exchange -> {
-                    exchange.getIn().setHeader("Date", "Thu, 16 Feb 2023 07:57:52 GMT");
-                    exchange.getIn().setHeader("random", "Some random value");
-                    exchange.getIn().setHeader("Content-Type", PARTIES_CONTENT_TYPE.headerValue());
-                })
-                .process(e -> log.info("Mojaloop headers : {}", e.getIn().getHeaders()))
-                .setHeader(Exchange.HTTP_METHOD, constant("POST"))
-                .setProperty(HOST, simple("{{switch.als-host}}"))
-                .setProperty(ENDPOINT, constant("/test"))
-                .to("direct:external-api-call");
     }
 }

@@ -17,13 +17,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import java.io.IOException;
 
 /*
- * ILP PACKET -> AQAAAAAAAABkGmcuei5mc3Bpb3MucGF5ZXJmc3AubXNpc2RuggGEZXlKd1lYbGxaU0k2ZXlKd1lYSjBlVWxrU1c1bWJ5STZleUp3WVhKMGVVbGtWSGx3WlNJNklrMVRTVk5FVGlJc0luQmhjblI1U1dSbGJuUnBabWxsY2lJNklqTXlNVE15TVRNeU1TSjlmU3dpY0dGNVpYSWlPbnNpY0dGeWRIbEpaRWx1Wm04aU9uc2ljR0Z5ZEhsSlpGUjVjR1VpT2lKTlUwbFRSRTRpTENKd1lYSjBlVWxrWlc1MGFXWnBaWElpT2lJeE1qTXhNak14TWpNaWZYMHNJbUZ0YjNWdWRDSTZleUpqZFhKeVpXNWplU0k2SWxWVFJDSXNJbUZ0YjNWdWRDSTZJakV3TUNKOUxDSjBjbUZ1YzJGamRHbHZibFI1Y0dVaU9uc2ljMk5sYm1GeWFXOGlPaUpVVWtGT1UwWkZVaUlzSW1sdWFYUnBZWFJ2Y2lJNklsQkJXVVZTSWl3aWFXNXBkR2xoZEc5eVZIbHdaU0k2SWtOUFRsTlZUVVZTSW4xOQ==
- * ILP = random + ilp address + base64(txnPayload)
- *
- *
+ * ILP_PACKET = random + ilp address + base64(txnPayload)
  * F -> HMCASHA256(ilpPacket, secret)
  * C -> SHA256(F)
- *
  */
 @SpringBootTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
