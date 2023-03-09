@@ -16,11 +16,11 @@ zeebe:
   client:
     max-execution-threads: 1000
     evenly-allocated-max-jobs: 1000
-  #    max-execution-threads: 100
-  #    number-of-workers: 15
-  #    evenly-allocated-max-jobs: "#{${zeebe.client.max-execution-threads} / ${zeebe.client.number-of-workers}}"
+#    max-execution-threads: 100
+#    number-of-workers: 15
+#    evenly-allocated-max-jobs: "#{${zeebe.client.max-execution-threads} / ${zeebe.client.number-of-workers}}"
   broker:
-    contactpoint: "127.0.0.1:26500"
+    contactpoint: "ph-ee-zeebe:26500"
 
 connector:
   ilp-secret: h4on38bsDjKiat2783gnklgafikmeuu5123kpobb7jm99
@@ -31,22 +31,14 @@ mojaloop:
   perf-resp-delay: 100
 
 switch:
-  quotes-host: http://3.6.25.92
+  quotes-host: http://40.114.81.46
   quote-service: quoting-service.local
-  als-host: http://3.6.25.92
+  als-host: http://40.114.81.46
   account-lookup-service: account-lookup-service.local
-  transfers-host: http://3.6.25.92
+  transfers-host: http://40.114.81.46
   transfer-service: ml-api-adapter.local
-  transactions-host: http://3.6.25.92
+  transactions-host: http://40.114.81.46
   transaction-request-service: transaction-request-service.local
   oracle-host: http://account-oracle.mifos.io:4100
 
-dfspids: "gorilla,lion"
-
-parties:
-  - tenantId: rhino
-    fspId: payeefsp
-    domain: mojaloop.sandbox.fynarfin.io
-  - tenantId: gorilla
-    fspId: payerfsp
-    domain: mojaloop.sandbox.fynarfin.io
+dfspids: "DFSPID"
