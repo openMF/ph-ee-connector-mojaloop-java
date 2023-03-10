@@ -1,7 +1,7 @@
 package org.mifos.connector.mojaloop.quote;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.zeebe.client.ZeebeClient;
+import io.camunda.zeebe.client.ZeebeClient;
 import org.apache.camel.CamelContext;
 import org.apache.camel.Exchange;
 import org.apache.camel.ProducerTemplate;
@@ -16,15 +16,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
-
 import javax.annotation.PostConstruct;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-
 import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_DESTINATION;
 import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.HEADER_DATE;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.HEADER_TRACEPARENT;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.CHANNEL_REQUEST;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.ERROR_INFORMATION;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.LOCAL_QUOTE_RESPONSE;
@@ -130,8 +130,8 @@ public class QuoteWorkers {
                             ZeebeProcessStarter.zeebeVariablesToCamelHeaders(existingVariables, exchange,
                                     FSPIOP_SOURCE.headerName(),
                                     FSPIOP_DESTINATION.headerName(),
-                                    "Date",
-                                    "traceparent"
+                                    HEADER_DATE,
+                                    HEADER_TRACEPARENT
                             );
 
                             exchange.setProperty(ERROR_INFORMATION, errorInformation);
@@ -140,8 +140,8 @@ public class QuoteWorkers {
                             ZeebeProcessStarter.zeebeVariablesToCamelHeaders(existingVariables, exchange,
                                     FSPIOP_SOURCE.headerName(),
                                     FSPIOP_DESTINATION.headerName(),
-                                    "Date",
-                                    "traceparent",
+                                    HEADER_DATE,
+                                    HEADER_TRACEPARENT,
                                     LOCAL_QUOTE_RESPONSE
                             );
 

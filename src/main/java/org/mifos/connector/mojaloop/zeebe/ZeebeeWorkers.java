@@ -1,6 +1,6 @@
 package org.mifos.connector.mojaloop.zeebe;
 
-import io.zeebe.client.ZeebeClient;
+import io.camunda.zeebe.client.ZeebeClient;
 import org.mifos.connector.common.mojaloop.type.TransactionRequestState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,13 +8,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
-
 import javax.annotation.PostConstruct;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.TRANSACTION_ID;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.AUTH_VALIDATION_SUCCESS;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.PAYER_CONFIRMED;

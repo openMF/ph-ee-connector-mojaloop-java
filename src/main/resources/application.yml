@@ -42,3 +42,7 @@ switch:
   oracle-host: http://account-oracle.mifos.io:4100
 
 dfspids: "DFSPID"
+
+logging:
+  level:
+    root: ERROR

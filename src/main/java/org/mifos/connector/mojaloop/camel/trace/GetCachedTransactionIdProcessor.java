@@ -10,6 +10,8 @@ import org.springframework.stereotype.Component;
 import java.math.BigInteger;
 import java.util.UUID;
 
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.HEADER_TRACEPARENT;
+
 @Component
 public class GetCachedTransactionIdProcessor implements Processor {
 
@@ -18,12 +20,12 @@ public class GetCachedTransactionIdProcessor implements Processor {
     @Override
     public void process(Exchange exchange) {
         String transactionIdKey = null;
-        String traceparent = exchange.getIn().getHeader("traceparent", String.class);
-        logger.info("trace parent header: {}", traceparent);
+        String traceparent = exchange.getIn().getHeader(HEADER_TRACEPARENT, String.class);
+        logger.debug("trace parent header: {}", traceparent);
 
         String transactionId = resolveTransactionIdFromTraceparent(traceparent);
 
-        logger.info("resolved parent {} to transactionId {}", traceparent, transactionId);
+        logger.debug("resolved parent {} to transactionId {}", traceparent, transactionId);
         exchange.setProperty(CamelProperties.CACHED_TRANSACTION_ID, transactionId);
 
         if (transactionId == null) {

@@ -1,6 +1,6 @@
 package org.mifos.connector.mojaloop.transfer;
 
-import io.zeebe.client.ZeebeClient;
+import io.camunda.zeebe.client.ZeebeClient;
 import org.apache.camel.CamelContext;
 import org.apache.camel.Exchange;
 import org.apache.camel.ProducerTemplate;
@@ -12,13 +12,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
-
 import javax.annotation.PostConstruct;
 import java.util.List;
 import java.util.Map;
-
 import static org.mifos.connector.common.mojaloop.type.TransferState.COMMITTED;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.CACHED_TRANSACTION_ID;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.*;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeProcessStarter.zeebeVariablesToCamelHeaders;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.CHANNEL_REQUEST;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.ERROR_INFORMATION;
@@ -69,8 +67,8 @@ public class TransferWorkers {
                         Object errorInformation = existingVariables.get(ERROR_INFORMATION);
                         if (errorInformation != null) {
                             zeebeVariablesToCamelHeaders(existingVariables, exchange,
-                                    "Date",
-                                    "traceparent"
+                                    HEADER_DATE,
+                                    HEADER_TRACEPARENT
                             );
 
                             exchange.setProperty(ERROR_INFORMATION, errorInformation);
@@ -78,8 +76,8 @@ public class TransferWorkers {
                             producerTemplate.send("direct:send-transfer-error-to-switch", exchange);
                         } else {
                             zeebeVariablesToCamelHeaders(existingVariables, exchange,
-                                    "Date",
-                                    "traceparent"
+                                    HEADER_DATE,
+                                    HEADER_TRACEPARENT
                             );
 
                             exchange.setProperty(TRANSACTION_ID, existingVariables.get(TRANSACTION_ID));
@@ -108,6 +106,7 @@ public class TransferWorkers {
                             exchange.setProperty(ORIGIN_DATE, variables.get(ORIGIN_DATE));
                             exchange.setProperty(CHANNEL_REQUEST, variables.get(CHANNEL_REQUEST));
                             exchange.getIn().setBody(variables.get(PAYEE_QUOTE_RESPONSE));
+                            logger.debug("PAYEE QUOTE RESPONSE ZEEBE VARIABLE: {}", variables.get(PAYEE_QUOTE_RESPONSE));
                             producerTemplate.send("direct:send-transfer", exchange);
                         } else {
                             TransferSwitchResponseDTO response = new TransferSwitchResponseDTO();

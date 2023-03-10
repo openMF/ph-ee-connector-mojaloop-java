@@ -10,13 +10,10 @@ package org.mifos.connector.mojaloop.ilp;
 import com.ilp.conditions.models.pdp.Money;
 import com.ilp.conditions.models.pdp.PartyIdInfo;
 import com.ilp.conditions.models.pdp.Transaction;
-import org.mifos.connector.common.mojaloop.dto.Party;
-import org.mifos.connector.common.mojaloop.ilp.Ilp;
 import org.mifos.connector.common.util.ContextUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-
 import java.io.IOException;
 import java.math.BigDecimal;
 

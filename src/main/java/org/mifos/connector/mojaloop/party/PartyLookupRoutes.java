@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.camel.Exchange;
 import org.apache.camel.LoggingLevel;
 import org.apache.camel.Processor;
-import org.apache.camel.model.dataformat.JsonLibrary;
 import org.mifos.connector.common.camel.ErrorHandlerRouteBuilder;
 import org.mifos.connector.common.channel.dto.TransactionChannelRequestDTO;
 import org.mifos.connector.common.mojaloop.dto.Party;
@@ -20,17 +19,11 @@ import org.mifos.connector.mojaloop.zeebe.ZeebeProcessStarter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-
 import static org.mifos.connector.common.ams.dto.InteropIdentifierType.MSISDN;
+import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_DESTINATION;
 import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.CHANNEL_REQUEST;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.ERROR_INFORMATION;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.IS_RTP_REQUEST;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.PARTY_ID;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.PARTY_ID_TYPE;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.PARTY_LOOKUP_FAILED;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.PAYEE_PARTY_RESPONSE;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.TENANT_ID;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.*;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.*;
 
 @Component
 public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
@@ -84,12 +77,20 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                     .otherwise()
                         .process(e -> {
                             String host = e.getIn().getHeader("Host", String.class).split(":")[0];
+                            log.debug("HOST: {}", host);
                             String tenantId = partyProperties.getPartyByDomain(host).getTenantId();
+                            log.debug("TENANT ID: {}", tenantId);
+                            log.debug("Headers: {}", e.getIn().getHeaders());
+                            String payeeFsp = e.getIn().getHeader(FSPIOP_DESTINATION.headerName(), String.class);
+                            log.debug("Payeefsp: {}", payeeFsp);
+                            log.debug("PARTIES: {}", objectMapper.writeValueAsString(partyProperties.getParties()));
+                            log.debug("PAYEE TENANT: {}", partyProperties.getPartyByDfsp(payeeFsp).getTenantId());
                                     zeebeProcessStarter.startZeebeWorkflow(partyLookupFlow.replace("{tenant}", tenantId),
                                             variables -> {
-                                                variables.put("Date", e.getIn().getHeader("Date"));
-                                                variables.put("traceparent", e.getIn().getHeader("traceparent"));
+                                                variables.put(HEADER_DATE, e.getIn().getHeader(HEADER_DATE));
+                                                variables.put(HEADER_TRACEPARENT, e.getIn().getHeader(HEADER_TRACEPARENT));
                                                 variables.put(FSPIOP_SOURCE.headerName(), e.getIn().getHeader(FSPIOP_SOURCE.headerName()));
+                                                variables.put(PAYEE_TENANT_ID, partyProperties.getPartyByDfsp(payeeFsp).getTenantId());
                                                 variables.put(PARTY_ID_TYPE, e.getIn().getHeader(PARTY_ID_TYPE));
                                                 variables.put(PARTY_ID, e.getIn().getHeader(PARTY_ID));
                                                 variables.put(TENANT_ID, tenantId);
@@ -103,7 +104,8 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
         //@formatter:on
 
         from("rest:PUT:/switch/parties/" + MSISDN + "/{partyId}")
-                .unmarshal().json(JsonLibrary.Jackson, PartySwitchResponseDTO.class)
+                .setProperty(CLASS_TYPE, constant(PartySwitchResponseDTO.class))
+                .to("direct:body-unmarshling")
                 .process(getCachedTransactionIdProcessor)
                 .to("direct:parties-step4");
 
@@ -150,8 +152,11 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                     mojaloopUtil.setPartyHeadersResponse(exchange);
                 })
                 .process(pojoToString)
-                .log(LoggingLevel.INFO, "Party response from payee: ${body}")
-                .toD("rest:PUT:/parties/${exchangeProperty." + PARTY_ID_TYPE + "}/${exchangeProperty." + PARTY_ID + "}?host={{switch.als-host}}");
+                .log(LoggingLevel.DEBUG, "Party response from payee: ${body}")
+                .setHeader(Exchange.HTTP_METHOD, constant("PUT"))
+                .setProperty(HOST, simple("{{switch.als-host}}"))
+                .setProperty(ENDPOINT, simple("/parties/${exchangeProperty." + PARTY_ID_TYPE + "}/${exchangeProperty." + PARTY_ID + "}"))
+                .to("direct:external-api-call");
 
         from("direct:send-parties-error-response")
                 .log(LoggingLevel.DEBUG, "######## PAYEE -> SWITCH - party lookup error response - STEP 3")
@@ -160,7 +165,10 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                     exchange.getIn().setBody(exchange.getProperty(ERROR_INFORMATION));
                     mojaloopUtil.setPartyHeadersResponse(exchange);
                 })
-                .toD("rest:PUT:/parties/${exchangeProperty." + PARTY_ID_TYPE + "}/${exchangeProperty." + PARTY_ID + "}/error?host={{switch.als-host}}");
+                .setHeader(Exchange.HTTP_METHOD, constant("PUT"))
+                .setProperty(HOST, simple("{{switch.als-host}}"))
+                .setProperty(ENDPOINT, simple("/parties/${exchangeProperty." + PARTY_ID_TYPE + "}/${exchangeProperty." + PARTY_ID + "}/error"))
+                .to("direct:external-api-call");
 
         from("direct:send-party-lookup")
                 .id("send-party-lookup")
@@ -176,6 +184,10 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                 })
                 .process(addTraceHeaderProcessor)
                 .setHeader(Exchange.HTTP_METHOD, constant("GET"))
-                .toD("rest:GET:/parties/${exchangeProperty." + PARTY_ID_TYPE + "}/${exchangeProperty." + PARTY_ID + "}?host={{switch.als-host}}");
+                .process(e -> log.info("Mojaloop headers : {}", e.getIn().getHeaders()))
+                .setProperty(HOST, simple("{{switch.als-host}}"))
+                .setProperty(ENDPOINT, simple("/parties/${exchangeProperty." + PARTY_ID_TYPE + "}/${exchangeProperty." + PARTY_ID + "}"))
+                .to("direct:external-api-call")
+                .log(LoggingLevel.DEBUG,"Response body: ${body}");
     }
 }

@@ -2,21 +2,19 @@ package org.mifos.connector.mojaloop.quote;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.zeebe.client.ZeebeClient;
+import io.camunda.zeebe.client.ZeebeClient;
 import org.apache.camel.Exchange;
 import org.apache.camel.Processor;
-import org.mifos.connector.common.mojaloop.dto.QuoteSwitchResponseDTO;
 import org.mifos.connector.mojaloop.ilp.IlpBuilder;
+import org.mifos.connector.mojaloop.model.QuoteCallbackDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
-
 import static org.mifos.connector.mojaloop.zeebe.ZeebeMessages.QUOTE_CALLBACK;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeMessages.QUOTE_ERROR;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.ERROR_INFORMATION;
@@ -52,7 +50,9 @@ public class QuoteResponseProcessor implements Processor {
             variables.put(ERROR_INFORMATION, error);
             variables.put(QUOTE_FAILED, true);
         } else {
-            QuoteSwitchResponseDTO response = exchange.getIn().getBody(QuoteSwitchResponseDTO.class);
+            QuoteCallbackDTO response = exchange.getIn().getBody(QuoteCallbackDTO.class);
+            logger.debug("ILP PACKET: {}", response.getIlpPacket());
+            logger.debug("CONDITION: {}", response.getCondition());
             messageName = QUOTE_CALLBACK;
             variables.put(PAYEE_QUOTE_RESPONSE, objectMapper.writeValueAsString(response));
             if (isMojaloopEnabled && !ilpBuilder.isValidPacketAgainstCondition(response.getIlpPacket(), response.getCondition())) {

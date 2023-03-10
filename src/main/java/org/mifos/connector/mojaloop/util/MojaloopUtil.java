@@ -5,10 +5,8 @@ import org.apache.camel.Exchange;
 import org.mifos.connector.common.mojaloop.dto.QuoteSwitchRequestDTO;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-
 import java.util.HashMap;
 import java.util.Map;
-
 import static org.mifos.connector.common.mojaloop.type.InteroperabilityType.PARTIES_ACCEPT_TYPE;
 import static org.mifos.connector.common.mojaloop.type.InteroperabilityType.PARTIES_CONTENT_TYPE;
 import static org.mifos.connector.common.mojaloop.type.InteroperabilityType.QUOTES_ACCEPT_TYPE;
@@ -19,6 +17,7 @@ import static org.mifos.connector.common.mojaloop.type.InteroperabilityType.TRAN
 import static org.mifos.connector.common.mojaloop.type.InteroperabilityType.TRANSFERS_CONTENT_TYPE;
 import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_DESTINATION;
 import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.*;
 
 @Component
 public class MojaloopUtil {
@@ -39,9 +38,9 @@ public class MojaloopUtil {
         Map<String, Object> headers = new HashMap<>();
         headers.put(FSPIOP_SOURCE.headerName(), exchange.getIn().getHeader(FSPIOP_SOURCE.headerName()));
         headers.put(FSPIOP_DESTINATION.headerName(), exchange.getIn().getHeader(FSPIOP_SOURCE.headerName()));
-        headers.put("Content-Type", PARTIES_CONTENT_TYPE.headerValue());
-        headers.put("Accept", PARTIES_ACCEPT_TYPE.headerValue());
-        headers.put("Host", accountLookupService);
+        headers.put(HEADER_CONTENT_TYPE, PARTIES_CONTENT_TYPE.headerValue());
+        headers.put(HEADER_ACCEPT, PARTIES_ACCEPT_TYPE.headerValue());
+        headers.put(HEADER_HOST, accountLookupService);
         setResponseTraceHeaders(exchange, headers);
         finalizeHeaders(exchange, headers);
     }
@@ -49,9 +48,9 @@ public class MojaloopUtil {
     public void setPartyHeadersRequest(Exchange exchange) {
         Map<String, Object> headers = new HashMap<>();
         headers.put(FSPIOP_SOURCE.headerName(), exchange.getIn().getHeader(FSPIOP_SOURCE.headerName()));
-        headers.put("Content-Type", PARTIES_CONTENT_TYPE.headerValue());
-        headers.put("Accept", PARTIES_ACCEPT_TYPE.headerValue());
-        headers.put("Host", accountLookupService);
+        headers.put(HEADER_CONTENT_TYPE, PARTIES_CONTENT_TYPE.headerValue());
+        headers.put(HEADER_ACCEPT, PARTIES_ACCEPT_TYPE.headerValue());
+        headers.put(HEADER_HOST, accountLookupService);
         finalizeHeaders(exchange, headers);
     }
 
@@ -59,8 +58,8 @@ public class MojaloopUtil {
         Map<String, Object> headers = new HashMap<>();
         headers.put(FSPIOP_SOURCE.headerName(), request.getPayee().getPartyIdInfo().getFspId());
         headers.put(FSPIOP_DESTINATION.headerName(), request.getPayer().getPartyIdInfo().getFspId());
-        headers.put("Content-Type", QUOTES_CONTENT_TYPE.headerValue());
-        headers.put("Host", switchQuoteService);
+        headers.put(HEADER_CONTENT_TYPE, QUOTES_CONTENT_TYPE.headerValue());
+        headers.put(HEADER_HOST, switchQuoteService);
         setResponseTraceHeaders(e, headers);
         finalizeHeaders(e, headers);
     }
@@ -69,9 +68,9 @@ public class MojaloopUtil {
         Map<String, Object> headers = new HashMap<>();
         headers.put(FSPIOP_SOURCE.headerName(), e.getProperty(FSPIOP_SOURCE.headerName()));
         headers.put(FSPIOP_DESTINATION.headerName(), e.getProperty(FSPIOP_DESTINATION.headerName()));
-        headers.put("Content-Type", QUOTES_CONTENT_TYPE.headerValue());
-        headers.put("Accept", QUOTES_ACCEPT_TYPE.headerValue());
-        headers.put("Host", switchQuoteService);
+        headers.put(HEADER_CONTENT_TYPE, QUOTES_CONTENT_TYPE.headerValue());
+        headers.put(HEADER_ACCEPT, QUOTES_ACCEPT_TYPE.headerValue());
+        headers.put(HEADER_HOST, switchQuoteService);
         finalizeHeaders(e, headers);
     }
 
@@ -79,9 +78,9 @@ public class MojaloopUtil {
         Map<String, Object> headers = new HashMap<>();
         headers.put(FSPIOP_SOURCE.headerName(), transaction.getPayee().getPartyIdInfo().getFspId());
         headers.put(FSPIOP_DESTINATION.headerName(), transaction.getPayer().getPartyIdInfo().getFspId());
-        headers.put("Content-Type", TRANSFERS_CONTENT_TYPE.headerValue());
-        headers.put("Accept", TRANSFERS_ACCEPT_TYPE.headerValue());
-        headers.put("Host", transferService);
+        headers.put(HEADER_CONTENT_TYPE, TRANSFERS_CONTENT_TYPE.headerValue());
+        headers.put(HEADER_ACCEPT, TRANSFERS_ACCEPT_TYPE.headerValue());
+        headers.put(HEADER_HOST, transferService);
         setResponseTraceHeaders(e, headers);
         finalizeHeaders(e, headers);
     }
@@ -90,9 +89,9 @@ public class MojaloopUtil {
         Map<String, Object> headers = new HashMap<>();
         headers.put(FSPIOP_SOURCE.headerName(), transaction.getPayer().getPartyIdInfo().getFspId());
         headers.put(FSPIOP_DESTINATION.headerName(), transaction.getPayee().getPartyIdInfo().getFspId());
-        headers.put("Content-Type", TRANSFERS_CONTENT_TYPE.headerValue());
-        headers.put("Accept", TRANSFERS_ACCEPT_TYPE.headerValue());
-        headers.put("Host", transferService);
+        headers.put(HEADER_CONTENT_TYPE, TRANSFERS_CONTENT_TYPE.headerValue());
+        headers.put(HEADER_ACCEPT, TRANSFERS_ACCEPT_TYPE.headerValue());
+        headers.put(HEADER_HOST, transferService);
         finalizeHeaders(e, headers);
     }
 
@@ -100,9 +99,9 @@ public class MojaloopUtil {
         Map<String, Object> headers = new HashMap<>();
         headers.put(FSPIOP_SOURCE.headerName(), e.getProperty(FSPIOP_SOURCE.headerName()));
         headers.put(FSPIOP_DESTINATION.headerName(), e.getProperty(FSPIOP_DESTINATION.headerName()));
-        headers.put("Content-Type", TRANSACTIONS_CONTENT_TYPE.headerValue());
-        headers.put("Accept", TRANSACTIONS_ACCEPT_TYPE.headerValue());
-        headers.put("Host", transactionRequestService);
+        headers.put(HEADER_CONTENT_TYPE, TRANSACTIONS_CONTENT_TYPE.headerValue());
+        headers.put(HEADER_ACCEPT, TRANSACTIONS_ACCEPT_TYPE.headerValue());
+        headers.put(HEADER_HOST, transactionRequestService);
         setResponseTraceHeaders(e, headers);
         finalizeHeaders(e, headers);
     }
@@ -111,9 +110,9 @@ public class MojaloopUtil {
         Map<String, Object> headers = new HashMap<>();
         headers.put(FSPIOP_SOURCE.headerName(), e.getProperty(FSPIOP_SOURCE.headerName()));
         headers.put(FSPIOP_DESTINATION.headerName(), e.getProperty(FSPIOP_DESTINATION.headerName()));
-        headers.put("Content-Type", TRANSACTIONS_CONTENT_TYPE.headerValue());
-        headers.put("Accept", TRANSACTIONS_ACCEPT_TYPE.headerValue());
-        headers.put("Host", transactionRequestService);
+        headers.put(HEADER_CONTENT_TYPE, TRANSACTIONS_CONTENT_TYPE.headerValue());
+        headers.put(HEADER_ACCEPT, TRANSACTIONS_ACCEPT_TYPE.headerValue());
+        headers.put(HEADER_HOST, transactionRequestService);
         finalizeHeaders(e, headers);
     }
 
@@ -123,11 +122,11 @@ public class MojaloopUtil {
     }
 
     private void setResponseTraceHeaders(Exchange exchange, Map<String, Object> headers) {
-        headers.put("Date", exchange.getIn().getHeader("Date"));
-        headers.put("traceparent", exchange.getIn().getHeader("traceparent"));
-        Object tracestate = exchange.getIn().getHeader("tracestate");
+        headers.put(HEADER_DATE, exchange.getIn().getHeader(HEADER_DATE));
+        headers.put(HEADER_TRACEPARENT, exchange.getIn().getHeader(HEADER_TRACEPARENT));
+        Object tracestate = exchange.getIn().getHeader(HEADER_TRACESTATE);
         if (tracestate != null) {
-            headers.put("tracestate", tracestate);
+            headers.put(HEADER_TRACESTATE, tracestate);
         }
     }
 }

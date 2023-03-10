@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.camel.Exchange;
 import org.apache.camel.LoggingLevel;
 import org.apache.camel.Processor;
-import org.apache.camel.model.dataformat.JsonLibrary;
 import org.mifos.connector.common.ams.dto.QuoteFspResponseDTO;
 import org.mifos.connector.common.camel.ErrorHandlerRouteBuilder;
 import org.mifos.connector.common.channel.dto.TransactionChannelRequestDTO;
@@ -17,10 +16,11 @@ import org.mifos.connector.common.mojaloop.dto.PartyIdInfo;
 import org.mifos.connector.common.mojaloop.dto.QuoteSwitchRequestDTO;
 import org.mifos.connector.common.mojaloop.dto.QuoteSwitchResponseDTO;
 import org.mifos.connector.common.mojaloop.dto.TransactionType;
-import org.mifos.connector.common.mojaloop.ilp.Ilp;
 import org.mifos.connector.common.mojaloop.type.AmountType;
 import org.mifos.connector.mojaloop.camel.trace.AddTraceHeaderProcessor;
+import org.mifos.connector.mojaloop.ilp.Ilp;
 import org.mifos.connector.mojaloop.ilp.IlpBuilder;
+import org.mifos.connector.mojaloop.model.QuoteCallbackDTO;
 import org.mifos.connector.mojaloop.properties.PartyProperties;
 import org.mifos.connector.mojaloop.util.MojaloopUtil;
 import org.mifos.connector.mojaloop.zeebe.ZeebeProcessStarter;
@@ -29,23 +29,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-
 import static java.math.BigDecimal.ZERO;
 import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_DESTINATION;
 import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.CHANNEL_REQUEST;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.ERROR_INFORMATION;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.LOCAL_QUOTE_RESPONSE;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.PARTY_LOOKUP_FSP_ID;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.QUOTE_FAILED;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.QUOTE_ID;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.QUOTE_SWITCH_REQUEST;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.QUOTE_SWITCH_REQUEST_AMOUNT;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.TENANT_ID;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.TRANSACTION_ID;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.*;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.*;
 
 @Component
 public class QuoteRoutes extends ErrorHandlerRouteBuilder {
@@ -91,14 +81,16 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
     @Override
     public void configure() {
         from("rest:POST:/switch/quotes")
-                .log(LoggingLevel.INFO, "######## SWITCH -> PAYEE - forward quote request - STEP 2")
+                .log(LoggingLevel.DEBUG, "######## SWITCH -> PAYEE - forward quote request - STEP 2")
                 .setProperty(QUOTE_SWITCH_REQUEST, bodyAs(String.class))
                 .choice() // @formatter:off
                     .when(e -> mojaPerfMode)
                         .wireTap("direct:send-delayed-quote-dummy-response")
                     .endChoice()
                 .otherwise()
-                    .unmarshal().json(JsonLibrary.Jackson, QuoteSwitchRequestDTO.class)
+                    //.unmarshal().json(JsonLibrary.Jackson, QuoteSwitchRequestDTO.class)
+                    .setProperty(CLASS_TYPE, constant(QuoteSwitchRequestDTO.class))
+                    .to("direct:body-unmarshling")
                     .process(exchange -> { // @formatter:on
                                 QuoteSwitchRequestDTO request = exchange.getIn().getBody(QuoteSwitchRequestDTO.class);
                                 PartyIdInfo payee = request.getPayee().getPartyIdInfo();
@@ -130,8 +122,8 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                                             variables.put(TENANT_ID, tenantId);
 
                                             ZeebeProcessStarter.camelHeadersToZeebeVariables(exchange, variables,
-                                                    "Date",
-                                                    "traceparent"
+                                                    HEADER_DATE,
+                                                    HEADER_TRACEPARENT
                                             );
                                         });
                             }
@@ -158,17 +150,20 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
 
 
         from("rest:PUT:/switch/quotes/{" + QUOTE_ID + "}")
-                .unmarshal().json(JsonLibrary.Jackson, QuoteSwitchResponseDTO.class)
+                .setProperty(CLASS_TYPE, constant(QuoteCallbackDTO.class))
+                .to("direct:body-unmarshling")
+                .process(exchange -> logger.debug("Received callback: {}", objectMapper.writeValueAsString(exchange.getIn().getBody(QuoteCallbackDTO.class))))
                 .to("direct:quotes-step4");
 
         from("direct:quotes-step4")
-                .log(LoggingLevel.INFO, "######## SWITCH -> PAYER - response for quote request - STEP 4")
+                .log(LoggingLevel.DEBUG, "######## SWITCH -> PAYER - response for quote request - STEP 4")
                 .process(quoteResponseProcessor)
                 .setBody(constant(null))
                 .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(200));
 
         from("rest:PUT:/switch/quotes/{" + QUOTE_ID + "}/error")
                 .log(LoggingLevel.ERROR, "######## SWITCH -> PAYER - quote error")
+                .log(LoggingLevel.DEBUG,"Body: ${body}")
                 .setProperty(QUOTE_FAILED, constant(true))
                 .process(quoteResponseProcessor)
                 .setBody(constant(null))
@@ -176,7 +171,9 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
 
         from("direct:send-quote-error-to-switch")
                 .id("send-quote-error-to-switch")
-                .unmarshal().json(JsonLibrary.Jackson, QuoteSwitchRequestDTO.class)
+                //.unmarshal().json(JsonLibrary.Jackson, QuoteSwitchRequestDTO.class)
+                .setProperty(CLASS_TYPE, constant(QuoteSwitchRequestDTO.class))
+                .to("direct:body-unmarshling")
                 .process(e -> {
                     QuoteSwitchRequestDTO request = e.getIn().getBody(QuoteSwitchRequestDTO.class);
                     mojaloopUtil.setQuoteHeadersResponse(e, request);
@@ -187,8 +184,10 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
 
         from("direct:send-quote-to-switch")
                 .id("send-quote-to-switch")
-                .log(LoggingLevel.INFO, "######## PAYEE -> SWITCH - response for quote request - STEP 3")
-                .unmarshal().json(JsonLibrary.Jackson, QuoteSwitchRequestDTO.class)
+                .log(LoggingLevel.DEBUG, "######## PAYEE -> SWITCH - response for quote request - STEP 3")
+                //.unmarshal().json(JsonLibrary.Jackson, QuoteSwitchRequestDTO.class)
+                .setProperty(CLASS_TYPE, constant(QuoteSwitchRequestDTO.class))
+                .to("direct:body-unmarshling")
                 .process(exchange -> {
                     QuoteSwitchRequestDTO request = exchange.getIn().getBody(QuoteSwitchRequestDTO.class);
                     MoneyData requestAmount = request.getAmount();
@@ -198,12 +197,15 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                             request.getQuoteId(),
                             requestAmount.getAmountDecimal(),
                             requestAmount.getCurrency(),
-                            request.getPayer(),
-                            request.getPayee(),
+                            objectMapper.readValue(objectMapper.writeValueAsString(request.getPayer()),
+                                    org.mifos.connector.mojaloop.ilp.Party.class),
+                            objectMapper.readValue(objectMapper.writeValueAsString(request.getPayee()),
+                                    org.mifos.connector.mojaloop.ilp.Party.class),
                             requestAmount.getAmountDecimal());
 
                     String localQuoteResponseString = exchange.getIn().getHeader(LOCAL_QUOTE_RESPONSE, String.class);
-                    logger.info("## parsing local quote response string: {}", localQuoteResponseString);
+                    logger.debug("## parsing local quote response string: {}", localQuoteResponseString);
+                    logger.debug("ILP object: {}", objectMapper.writeValueAsString(ilp));
                     QuoteFspResponseDTO localQuoteResponse = objectMapper.readValue(localQuoteResponseString, QuoteFspResponseDTO.class);
                     FspMoneyData fspFee = localQuoteResponse.getFspFee();
                     FspMoneyData fspCommission = localQuoteResponse.getFspCommission();
@@ -232,15 +234,18 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                     mojaloopUtil.setQuoteHeadersResponse(exchange, request);
                 })
                 .process(pojoToString)
-                .log(LoggingLevel.INFO, "Quote response from payee: ${body}")
-                .toD("rest:PUT:/quotes/${exchangeProperty." + QUOTE_ID + "}?host={{switch.quotes-host}}");
+                .log(LoggingLevel.DEBUG, "Quote response from payee: ${body}")
+                .setHeader(Exchange.HTTP_METHOD, constant("PUT"))
+                .setProperty(HOST, simple("{{switch.quotes-host}}"))
+                .setProperty(ENDPOINT, simple("/quotes/${exchangeProperty." + QUOTE_ID + "}"))
+                .to("direct:external-api-call");
 
         from("direct:send-quote")
                 .id("send-quote")
-                .log(LoggingLevel.INFO, "######## PAYER -> SWITCH - quote request - STEP 1")
+                .log(LoggingLevel.DEBUG, "######## PAYER -> SWITCH - quote request - STEP 1")
                 .process(exchange -> {
                     TransactionChannelRequestDTO channelRequest = objectMapper.readValue(exchange.getProperty(CHANNEL_REQUEST, String.class), TransactionChannelRequestDTO.class);
-
+                    logger.debug("Channel request: {}", channelRequest);
                     TransactionType transactionType = new TransactionType();
                     transactionType.setInitiator(channelRequest.getTransactionType().getInitiator());
                     transactionType.setInitiatorType(channelRequest.getTransactionType().getInitiatorType());
@@ -268,6 +273,7 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                             null);
 
                     MoneyData requestAmount = channelRequest.getAmount();
+                    logger.debug("Amount decimal: {}", channelRequest.getAmount().getAmountDecimal());
                     stripAmount(requestAmount);
                     QuoteSwitchRequestDTO quoteRequest = new QuoteSwitchRequestDTO(
                             exchange.getProperty(TRANSACTION_ID, String.class),
@@ -291,7 +297,10 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                 })
                 .process(pojoToString)
                 .process(addTraceHeaderProcessor)
-                .toD("rest:POST:/quotes?host={{switch.quotes-host}}");
+                .setHeader(Exchange.HTTP_METHOD, constant("POST"))
+                .setProperty(HOST, simple("{{switch.quotes-host}}"))
+                .setProperty(ENDPOINT, constant("/quotes"))
+                .to("direct:external-api-call");
     }
 
     private void stripAmount(MoneyData requestAmount) {

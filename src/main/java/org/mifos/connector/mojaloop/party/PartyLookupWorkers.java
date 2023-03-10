@@ -1,7 +1,7 @@
 package org.mifos.connector.mojaloop.party;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.zeebe.client.ZeebeClient;
+import io.camunda.zeebe.client.ZeebeClient;
 import org.apache.camel.CamelContext;
 import org.apache.camel.Exchange;
 import org.apache.camel.ProducerTemplate;
@@ -16,14 +16,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
-
 import javax.annotation.PostConstruct;
 import java.util.List;
 import java.util.Map;
-
 import static org.mifos.connector.common.mojaloop.type.IdentifierType.MSISDN;
 import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.CACHED_TRANSACTION_ID;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.*;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeProcessStarter.zeebeVariablesToCamelHeaders;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.ACCOUNT_CURRENCY;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.CHANNEL_REQUEST;
@@ -131,20 +129,22 @@ public class PartyLookupWorkers {
                         if (errorInformation != null) {
                             zeebeVariablesToCamelHeaders(existingVariables, exchange,
                                     FSPIOP_SOURCE.headerName(),
-                                    "traceparent",
-                                    "Date"
+                                    HEADER_TRACEPARENT,
+                                    HEADER_DATE
                             );
 
                             exchange.setProperty(ERROR_INFORMATION, errorInformation);
                             exchange.setProperty(PARTY_ID_TYPE, existingVariables.get(PARTY_ID_TYPE));
                             exchange.setProperty(PARTY_ID, existingVariables.get(PARTY_ID));
 
+                            logger.debug("Error info: {}", objectMapper.writeValueAsString(errorInformation));
+                            logger.debug("Zeebe variables: {}", existingVariables);
                             producerTemplate.send("direct:send-parties-error-response", exchange);
                         } else {
                             zeebeVariablesToCamelHeaders(existingVariables, exchange,
                                     FSPIOP_SOURCE.headerName(),
-                                    "traceparent",
-                                    "Date"
+                                    HEADER_TRACEPARENT,
+                                    HEADER_DATE
                             );
 
                             exchange.setProperty(PAYEE_PARTY_RESPONSE, existingVariables.get(PAYEE_PARTY_RESPONSE));
@@ -177,6 +177,8 @@ public class PartyLookupWorkers {
                         client.newCompleteCommand(job.getKey())
                                 .send()
                         ;
+
+                        logger.info("Job '{}' completed from process '{}' with key {}", job.getType(), job.getBpmnProcessId(), job.getKey());
                     })
                     .name(WORKER_PARTY_REGISTRATION_ORACLE + dfspId)
                     .maxJobsActive(workerMaxJobs)

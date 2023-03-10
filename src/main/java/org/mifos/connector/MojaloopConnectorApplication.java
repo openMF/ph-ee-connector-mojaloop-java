@@ -1,11 +1,13 @@
 package org.mifos.connector;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.apache.camel.Processor;
+import org.mifos.connector.mojaloop.camel.config.CustomHeaderFilterStrategy;
 import org.mifos.connector.mojaloop.properties.PartyProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,8 +16,8 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
-
 import javax.annotation.PostConstruct;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.CUSTOM_HEADER_FILTER_STRATEGY;
 
 @SpringBootApplication
 @EnableConfigurationProperties(PartyProperties.class)
@@ -42,6 +44,12 @@ public class MojaloopConnectorApplication {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
         objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+        objectMapper.setVisibilityChecker(
+                objectMapper.getSerializationConfig()
+                        .getDefaultVisibilityChecker()
+                        .withFieldVisibility(JsonAutoDetect.Visibility.ANY)
+                        .withGetterVisibility(JsonAutoDetect.Visibility.NONE)
+        );
         return objectMapper
                 .setSerializationInclusion(JsonInclude.Include.NON_NULL)
                 .configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true)
@@ -51,5 +59,10 @@ public class MojaloopConnectorApplication {
     @Bean
     public Processor pojoToString(ObjectMapper objectMapper) {
         return exchange -> exchange.getIn().setBody(objectMapper.writeValueAsString(exchange.getIn().getBody()));
+    }
+
+    @Bean(CUSTOM_HEADER_FILTER_STRATEGY)
+    public CustomHeaderFilterStrategy headerFilterStrategy() {
+        return new CustomHeaderFilterStrategy();
     }
 }

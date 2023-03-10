@@ -1,5 +1,6 @@
 package org.mifos.connector.mojaloop.party;
 
+import org.apache.camel.Exchange;
 import org.apache.camel.LoggingLevel;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -9,7 +10,7 @@ import org.mifos.connector.mojaloop.properties.PartyProperties;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.PARTY_EXISTS;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.*;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.ACCOUNT_CURRENCY;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.PARTY_ID;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.PARTY_ID_TYPE;
@@ -29,7 +30,7 @@ public class OracleRoutes extends ErrorHandlerRouteBuilder {
     public void configure() {
         // @formatter:off
         from("direct:register-party-identifier-in-oracle")
-                .log(LoggingLevel.INFO, "######## registering party identifier ${exchangeProperty." + PARTY_ID + "} with type ${exchangeProperty." + PARTY_ID_TYPE + "} in oracle")
+                .log(LoggingLevel.DEBUG, "######## registering party identifier ${exchangeProperty." + PARTY_ID + "} with type ${exchangeProperty." + PARTY_ID_TYPE + "} in oracle")
                 .id("register-party-identifier-in-oracle")
                 .to("direct:get-dfsp-from-oracle")
                 .choice()
@@ -46,7 +47,12 @@ public class OracleRoutes extends ErrorHandlerRouteBuilder {
         from("direct:get-dfsp-from-oracle")
                 .id("get-dfsp-from-oracle")
                 .removeHeaders("*")
-                .toD("rest:GET:/oracle/participants/${exchangeProperty." + PARTY_ID_TYPE + "}/${exchangeProperty." + PARTY_ID + "}?host={{switch.oracle-host}}")
+                .setHeader(Exchange.HTTP_METHOD, constant("GET"))
+                .setProperty(HOST, simple("{{switch.oracle-host}}"))
+                .setProperty(ENDPOINT, constant("oracle/participants/${exchangeProperty." +
+                        PARTY_ID_TYPE + "}/${exchangeProperty." + PARTY_ID + "}"))
+                .to("direct:external-api-call")
+                .log(LoggingLevel.DEBUG, "get-dfsp-from-oracle response ${body}")
                 .process(e -> {
                     try {
                         e.setProperty(PARTY_EXISTS, !new JSONArray(e.getIn().getBody(String.class)).isEmpty());
@@ -64,14 +70,24 @@ public class OracleRoutes extends ErrorHandlerRouteBuilder {
                     request.put("fspId", fspId);
                     request.put("currency", e.getProperty(ACCOUNT_CURRENCY, String.class));
                     e.getIn().setBody(request.toString());
-                    e.getIn().setHeader("Content-Type", "application/json");
-                    e.getIn().setHeader("Accept", "application/json");
+                    e.getIn().setHeader(HEADER_CONTENT_TYPE, HEADER_VALUE_TYPE_JSON);
+                    e.getIn().setHeader(HEADER_ACCEPT, HEADER_VALUE_TYPE_JSON);
                 })
-                .toD("rest:POST:/oracle/participants/${exchangeProperty." + PARTY_ID_TYPE + "}/${exchangeProperty." + PARTY_ID + "}?host={{switch.oracle-host}}");
+                .setHeader(Exchange.HTTP_METHOD, constant("POST"))
+                .setProperty(HOST, simple("{{switch.oracle-host}}"))
+                .setProperty(ENDPOINT, constant("oracle/participants/${exchangeProperty." + PARTY_ID_TYPE
+                        + "}/${exchangeProperty." + PARTY_ID + "}"))
+                .to("direct:external-api-call")
+                .log(LoggingLevel.DEBUG, "add-party-identifier-to-dfsp-in-oracle response ${body}");
 
         from("direct:remove-party-identifier-from-dfsp-in-oracle")
                 .id("remove-party-to-dfsp-in-oracle")
                 .removeHeaders("*")
-                .toD("rest:DELETE:/oracle/participants/${exchangeProperty." + PARTY_ID_TYPE + "}/${exchangeProperty." + PARTY_ID + "}?host={{switch.oracle-host}}");
+                .setHeader(Exchange.HTTP_METHOD, constant("DELETE"))
+                .setProperty(HOST, simple("{{switch.oracle-host}}"))
+                .setProperty(ENDPOINT, constant("oracle/participants/${exchangeProperty." +
+                        PARTY_ID_TYPE + "}/${exchangeProperty." + PARTY_ID + "}"))
+                .to("direct:external-api-call")
+                .log(LoggingLevel.DEBUG, "remove-party-identifier-from-dfsp-in-oracle response ${body}");
     }
 }

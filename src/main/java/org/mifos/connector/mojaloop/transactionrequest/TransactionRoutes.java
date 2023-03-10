@@ -30,7 +30,7 @@ import org.springframework.stereotype.Component;
 
 import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_DESTINATION;
 import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.AUTH_TYPE;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.*;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.CHANNEL_REQUEST;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.INITIATOR_FSP_ID;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.PARTY_LOOKUP_FSP_ID;
@@ -82,7 +82,7 @@ public class TransactionRoutes extends ErrorHandlerRouteBuilder {
         from("rest:POST:/switch/transactionRequests")
                 .setProperty(TRANSACTION_REQUEST, bodyAs(String.class))
                 .unmarshal().json(JsonLibrary.Jackson, TransactionRequestSwitchRequestDTO.class)
-                .log(LoggingLevel.INFO, "######## SWITCH -> PAYER - incoming transactionRequest ${body.transactionRequestId} - STEP 2")
+                .log(LoggingLevel.DEBUG, "######## SWITCH -> PAYER - incoming transactionRequest ${body.transactionRequestId} - STEP 2")
                 .process(exchange -> {
                     TransactionRequestSwitchRequestDTO transactionRequest = exchange.getIn().getBody(TransactionRequestSwitchRequestDTO.class);
                             PartyIdInfo payer = transactionRequest.getPayer();
@@ -110,8 +110,8 @@ public class TransactionRoutes extends ErrorHandlerRouteBuilder {
                                             variables.put(TRANSACTION_STATE, TransactionRequestState.RECEIVED.name());
 
                                             ZeebeProcessStarter.camelHeadersToZeebeVariables(exchange, variables,
-                                                    "Date",
-                                                    "traceparent"
+                                                    HEADER_DATE,
+                                                    HEADER_TRACEPARENT
                                             );
                                         } catch (Exception e) {
                                             logger.error("Error when creating channelRequest for payer local quote!", e);
@@ -123,14 +123,14 @@ public class TransactionRoutes extends ErrorHandlerRouteBuilder {
                 .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(202));
 
         from("rest:PUT:/switch/transactionRequests/{" + TRANSACTION_ID + "}")
-                .log(LoggingLevel.INFO, "######## SWITCH -> PAYEE - response for transactionRequest ${header." + TRANSACTION_ID + "} - STEP 4")
+                .log(LoggingLevel.DEBUG, "######## SWITCH -> PAYEE - response for transactionRequest ${header." + TRANSACTION_ID + "} - STEP 4")
                 .unmarshal().json(JsonLibrary.Jackson, TransactionRequestSwitchResponseDTO.class)
                 .process(transactionResponseProcessor)
                 .setBody(constant(null))
                 .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(200));
 
         from("rest:PUT:/switch/transactionRequests/{" + TRANSACTION_ID + "}/error")
-                .log(LoggingLevel.INFO, "######## SWITCH error with transactionRequest ${header." + TRANSACTION_ID + "}")
+                .log(LoggingLevel.DEBUG, "######## SWITCH error with transactionRequest ${header." + TRANSACTION_ID + "}")
                 .setProperty(TRANSACTION_REQUEST_FAILED, constant(true))
                 .process(transactionResponseProcessor)
                 .setBody(constant(null))
@@ -138,7 +138,7 @@ public class TransactionRoutes extends ErrorHandlerRouteBuilder {
 
         from("direct:send-transaction-request")
                 .id("send-transaction-request")
-                .log(LoggingLevel.INFO, "######## PAYEE -> SWITCH - transactionRequest request ${exchangeProperty." + TRANSACTION_ID + "} - STEP 1")
+                .log(LoggingLevel.DEBUG, "######## PAYEE -> SWITCH - transactionRequest request ${exchangeProperty." + TRANSACTION_ID + "} - STEP 1")
                 .process(e -> {
                     TransactionChannelRequestDTO channelRequest = objectMapper.readValue(e.getProperty(CHANNEL_REQUEST, String.class), TransactionChannelRequestDTO.class);
                     PartyIdInfo payeeParty = channelRequest.getPayee().getPartyIdInfo();
@@ -168,12 +168,12 @@ public class TransactionRoutes extends ErrorHandlerRouteBuilder {
                     mojaloopUtil.setTransactionRequestHeadersRequest(e);
                 })
                 .process(pojoToString)
-                .log(LoggingLevel.INFO, "Transaction request from payee: ${body}")
+                .log(LoggingLevel.DEBUG, "Transaction request from payee: ${body}")
                 .process(addTraceHeaderProcessor)
                 .toD("rest:POST:/transactionRequests?host={{switch.transactions-host}}");
 
         from("direct:send-transaction-state")
-                .log(LoggingLevel.INFO, "######## PAYER -> SWITCH - transactionState response ${exchangeProperty." + TRANSACTION_ID + "} - STEP 3")
+                .log(LoggingLevel.DEBUG, "######## PAYER -> SWITCH - transactionState response ${exchangeProperty." + TRANSACTION_ID + "} - STEP 3")
                 .process(e -> {
                     TransactionRequestSwitchResponseDTO response = new TransactionRequestSwitchResponseDTO();
                     response.setTransactionId(e.getProperty(TRANSACTION_ID, String.class));
@@ -183,36 +183,36 @@ public class TransactionRoutes extends ErrorHandlerRouteBuilder {
                     mojaloopUtil.setTransactionRequestHeadersResponse(e);
                 })
                 .process(pojoToString)
-                .log(LoggingLevel.INFO, "Transaction request response from payer: ${body}")
+                .log(LoggingLevel.DEBUG, "Transaction request response from payer: ${body}")
                 .toD("rest:PUT:/transactionRequests/${exchangeProperty." + TRANSACTION_ID + "}?host={{switch.transactions-host}}");
 
         //  --- Authorizations endpoints ---
         from("direct:send-payer-authorisation")
-                .log(LoggingLevel.INFO, "######## PAYER -> SWITCH - authorizations request - STEP 1")
+                .log(LoggingLevel.DEBUG, "######## PAYER -> SWITCH - authorizations request - STEP 1")
                 .process(e -> {
                 })
                 .toD("rest:GET:/authorizations/${exchangeProperty." + TRANSACTION_ID + "}?host={{switch.transactions-host}}");
 
         from("rest:GET:/switch/authorizations/{" + TRANSACTION_ID + "}")
-                .log(LoggingLevel.INFO, "######## SWITCH -> PAYEE - authorizations request - STEP 2")
+                .log(LoggingLevel.DEBUG, "######## SWITCH -> PAYEE - authorizations request - STEP 2")
                 .process(e -> {
                 });
 
         from("direct:send-payee-authorisation-response")
-                .log(LoggingLevel.INFO, "######## PAYEE -> SWITCH - authorizations request - STEP 3")
+                .log(LoggingLevel.DEBUG, "######## PAYEE -> SWITCH - authorizations request - STEP 3")
                 .process(e -> {
                 })
                 .toD("rest:PUT:/authorizations/${exchangeProperty." + TRANSACTION_ID + "}?host={{switch.transactions-host}}");
 
         from("rest:PUT:/switch/authorizations/{" + TRANSACTION_ID + "}")
-                .log(LoggingLevel.INFO, "######## SWITCH -> PAYER - response for authorizations - STEP 4")
+                .log(LoggingLevel.DEBUG, "######## SWITCH -> PAYER - response for authorizations - STEP 4")
                 .process(e -> {
                 })
                 .setBody(constant(null))
                 .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(200));
 
         from("rest:PUT:/switch/authorizations/{" + TRANSACTION_ID + "}/error")
-                .log(LoggingLevel.INFO, "######## SWITCH error with authorizations")
+                .log(LoggingLevel.DEBUG, "######## SWITCH error with authorizations")
                 .process(e -> {
                 })
                 .setBody(constant(null))

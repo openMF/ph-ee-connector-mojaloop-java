@@ -1,7 +1,7 @@
 package org.mifos.connector.mojaloop.transactionrequest;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.zeebe.client.ZeebeClient;
+import io.camunda.zeebe.client.ZeebeClient;
 import org.apache.camel.CamelContext;
 import org.apache.camel.Exchange;
 import org.apache.camel.ProducerTemplate;
@@ -21,7 +21,7 @@ import java.util.Map;
 
 import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_DESTINATION;
 import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.AUTH_TYPE;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.*;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.CHANNEL_REQUEST;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.ORIGIN_DATE;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.PARTY_LOOKUP_FSP_ID;
@@ -146,8 +146,8 @@ public class TransactionWorkers {
                         exchange.setProperty(FSPIOP_DESTINATION.headerName(), channelRequest.getPayee().getPartyIdInfo().getFspId());
 
                         ZeebeProcessStarter.zeebeVariablesToCamelHeaders(existingVariables, exchange,
-                                "Date",
-                                "traceparent"
+                                HEADER_DATE,
+                                HEADER_TRACEPARENT
                         );
 
                         producerTemplate.send("direct:send-transaction-state", exchange);
