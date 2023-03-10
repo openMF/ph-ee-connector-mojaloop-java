@@ -35,7 +35,8 @@ configurations.all {
 }
 
 dependencies {
-    //implementation 'org.mifos:ph-ee-connector-common:1.2.2-SNAPSHOT'
+    implementation 'org.mifos:ph-ee-connector-common:1.2.2-SNAPSHOT'
+    implementation 'org.mifos:interop-ilp-conditions:1.7-SNAPSHOT'
     implementation "org.apache.camel.springboot:camel-spring-boot-starter:$camelVersion"
     implementation "org.apache.camel:camel-undertow:$camelVersion"
     implementation 'org.apache.camel.springboot:camel-jackson-starter:3.16.0'
@@ -48,7 +49,6 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.0'
     testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.9.0'
     implementation 'org.json:json:20210307'
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
     compileOnly 'org.projectlombok:lombok:1.18.24'
     annotationProcessor 'org.projectlombok:lombok:1.18.24'
 }
