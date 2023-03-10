@@ -81,7 +81,7 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
     @Override
     public void configure() {
         from("rest:POST:/switch/quotes")
-                .log(LoggingLevel.INFO, "######## SWITCH -> PAYEE - forward quote request - STEP 2")
+                .log(LoggingLevel.DEBUG, "######## SWITCH -> PAYEE - forward quote request - STEP 2")
                 .setProperty(QUOTE_SWITCH_REQUEST, bodyAs(String.class))
                 .choice() // @formatter:off
                     .when(e -> mojaPerfMode)
@@ -122,8 +122,8 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                                             variables.put(TENANT_ID, tenantId);
 
                                             ZeebeProcessStarter.camelHeadersToZeebeVariables(exchange, variables,
-                                                    "Date",
-                                                    "traceparent"
+                                                    HEADER_DATE,
+                                                    HEADER_TRACEPARENT
                                             );
                                         });
                             }
@@ -152,18 +152,18 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
         from("rest:PUT:/switch/quotes/{" + QUOTE_ID + "}")
                 .setProperty(CLASS_TYPE, constant(QuoteCallbackDTO.class))
                 .to("direct:body-unmarshling")
-                .process(exchange -> logger.info("Received callback: {}", objectMapper.writeValueAsString(exchange.getIn().getBody(QuoteCallbackDTO.class))))
+                .process(exchange -> logger.debug("Received callback: {}", objectMapper.writeValueAsString(exchange.getIn().getBody(QuoteCallbackDTO.class))))
                 .to("direct:quotes-step4");
 
         from("direct:quotes-step4")
-                .log(LoggingLevel.INFO, "######## SWITCH -> PAYER - response for quote request - STEP 4")
+                .log(LoggingLevel.DEBUG, "######## SWITCH -> PAYER - response for quote request - STEP 4")
                 .process(quoteResponseProcessor)
                 .setBody(constant(null))
                 .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(200));
 
         from("rest:PUT:/switch/quotes/{" + QUOTE_ID + "}/error")
                 .log(LoggingLevel.ERROR, "######## SWITCH -> PAYER - quote error")
-                .log("Body: ${body}")
+                .log(LoggingLevel.DEBUG,"Body: ${body}")
                 .setProperty(QUOTE_FAILED, constant(true))
                 .process(quoteResponseProcessor)
                 .setBody(constant(null))
@@ -184,7 +184,7 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
 
         from("direct:send-quote-to-switch")
                 .id("send-quote-to-switch")
-                .log(LoggingLevel.INFO, "######## PAYEE -> SWITCH - response for quote request - STEP 3")
+                .log(LoggingLevel.DEBUG, "######## PAYEE -> SWITCH - response for quote request - STEP 3")
                 //.unmarshal().json(JsonLibrary.Jackson, QuoteSwitchRequestDTO.class)
                 .setProperty(CLASS_TYPE, constant(QuoteSwitchRequestDTO.class))
                 .to("direct:body-unmarshling")
@@ -204,8 +204,8 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                             requestAmount.getAmountDecimal());
 
                     String localQuoteResponseString = exchange.getIn().getHeader(LOCAL_QUOTE_RESPONSE, String.class);
-                    logger.info("## parsing local quote response string: {}", localQuoteResponseString);
-                    logger.info("ILP object: {}", objectMapper.writeValueAsString(ilp));
+                    logger.debug("## parsing local quote response string: {}", localQuoteResponseString);
+                    logger.debug("ILP object: {}", objectMapper.writeValueAsString(ilp));
                     QuoteFspResponseDTO localQuoteResponse = objectMapper.readValue(localQuoteResponseString, QuoteFspResponseDTO.class);
                     FspMoneyData fspFee = localQuoteResponse.getFspFee();
                     FspMoneyData fspCommission = localQuoteResponse.getFspCommission();
@@ -234,7 +234,7 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                     mojaloopUtil.setQuoteHeadersResponse(exchange, request);
                 })
                 .process(pojoToString)
-                .log(LoggingLevel.INFO, "Quote response from payee: ${body}")
+                .log(LoggingLevel.DEBUG, "Quote response from payee: ${body}")
                 .setHeader(Exchange.HTTP_METHOD, constant("PUT"))
                 .setProperty(HOST, simple("{{switch.quotes-host}}"))
                 .setProperty(ENDPOINT, simple("/quotes/${exchangeProperty." + QUOTE_ID + "}"))
@@ -242,10 +242,10 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
 
         from("direct:send-quote")
                 .id("send-quote")
-                .log(LoggingLevel.INFO, "######## PAYER -> SWITCH - quote request - STEP 1")
+                .log(LoggingLevel.DEBUG, "######## PAYER -> SWITCH - quote request - STEP 1")
                 .process(exchange -> {
                     TransactionChannelRequestDTO channelRequest = objectMapper.readValue(exchange.getProperty(CHANNEL_REQUEST, String.class), TransactionChannelRequestDTO.class);
-                    logger.info("Channel request: {}", channelRequest);
+                    logger.debug("Channel request: {}", channelRequest);
                     TransactionType transactionType = new TransactionType();
                     transactionType.setInitiator(channelRequest.getTransactionType().getInitiator());
                     transactionType.setInitiatorType(channelRequest.getTransactionType().getInitiatorType());
@@ -273,7 +273,7 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                             null);
 
                     MoneyData requestAmount = channelRequest.getAmount();
-                    logger.info("Amount decimal: {}", channelRequest.getAmount().getAmountDecimal());
+                    logger.debug("Amount decimal: {}", channelRequest.getAmount().getAmountDecimal());
                     stripAmount(requestAmount);
                     QuoteSwitchRequestDTO quoteRequest = new QuoteSwitchRequestDTO(
                             exchange.getProperty(TRANSACTION_ID, String.class),

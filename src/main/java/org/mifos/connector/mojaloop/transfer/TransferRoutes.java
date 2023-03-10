@@ -91,8 +91,8 @@ public class TransferRoutes extends ErrorHandlerRouteBuilder {
                             variables.put(TRANSACTION_ID, transactionId);
                             variables.put(FSPIOP_SOURCE.headerName(), request.getPayeeFsp());
                             variables.put(FSPIOP_DESTINATION.headerName(), request.getPayerFsp());
-                            variables.put("Date", exchange.getIn().getHeader("Date"));
-                            variables.put("traceparent", exchange.getIn().getHeader("traceparent"));
+                            variables.put(HEADER_DATE, exchange.getIn().getHeader(HEADER_DATE));
+                            variables.put(HEADER_TRACEPARENT, exchange.getIn().getHeader(HEADER_TRACEPARENT));
 
                             zeebeClient.newPublishMessageCommand()
                                     .messageName(TRANSFER_MESSAGE)
@@ -103,7 +103,7 @@ public class TransferRoutes extends ErrorHandlerRouteBuilder {
                         })
                     .endChoice()
                 .end()
-                .log(LoggingLevel.INFO, "######## SWITCH -> PAYEE - forward transfer request ${exchangeProperty."+TRANSACTION_ID+"} - STEP 2")
+                .log(LoggingLevel.DEBUG, "######## SWITCH -> PAYEE - forward transfer request ${exchangeProperty."+TRANSACTION_ID+"} - STEP 2")
                 .setBody(constant(null))
                 .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(202));
         //@formatter:on
@@ -115,7 +115,7 @@ public class TransferRoutes extends ErrorHandlerRouteBuilder {
                 .to("direct:transfers-step4");
 
         from("direct:transfers-step4")
-                .log(LoggingLevel.INFO, "######## SWITCH -> PAYER - response for transfer request ${header."+TRANSACTION_ID+"} - STEP 4")
+                .log(LoggingLevel.DEBUG, "######## SWITCH -> PAYER - response for transfer request ${header."+TRANSACTION_ID+"} - STEP 4")
                 .process(transferResponseProcessor)
                 .setBody(constant(null))
                 .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(200));
@@ -153,7 +153,7 @@ public class TransferRoutes extends ErrorHandlerRouteBuilder {
                 .to("direct:send-transfer-to-switch");
 
         from("direct:send-transfer-to-switch")
-                .log(LoggingLevel.INFO, "######## PAYEE -> SWITCH - transfer response ${exchangeProperty."+TRANSACTION_ID+"} - STEP 3")
+                .log(LoggingLevel.DEBUG, "######## PAYEE -> SWITCH - transfer response ${exchangeProperty."+TRANSACTION_ID+"} - STEP 3")
                 .setProperty(CLASS_TYPE, constant(TransferSwitchRequestDTO.class))
                 .to("direct:body-unmarshling")
                 .process(exchange -> {
@@ -162,7 +162,7 @@ public class TransferRoutes extends ErrorHandlerRouteBuilder {
 
                     TransferSwitchResponseDTO response = new TransferSwitchResponseDTO(
                             ilp.getFulfilment(),
-                            ContextUtil.parseMojaDate(exchange.getIn().getHeader("Date", String.class)), // there is a validation at fulfiltransfer: completedTimestamp.getTime() > now.getTime() + maxCallbackTimeLagDilation(200ms by default)
+                            ContextUtil.parseMojaDate(exchange.getIn().getHeader(HEADER_DATE, String.class)), // there is a validation at fulfiltransfer: completedTimestamp.getTime() > now.getTime() + maxCallbackTimeLagDilation(200ms by default)
                             TransferState.COMMITTED,
                             null);
 
@@ -170,7 +170,7 @@ public class TransferRoutes extends ErrorHandlerRouteBuilder {
                     mojaloopUtil.setTransferHeadersResponse(exchange, ilp.getTransaction());
                 })
                 .process(pojoToString)
-                .log(LoggingLevel.INFO, "Transfer response from payee: ${body}")
+                .log(LoggingLevel.DEBUG, "Transfer response from payee: ${body}")
                 .setHeader(Exchange.HTTP_METHOD, constant("PUT"))
                 .setProperty(HOST, simple("{{switch.transfers-host}}"))
                 .setProperty(ENDPOINT, simple("transfers/${exchangeProperty." + TRANSACTION_ID + "}"))
@@ -178,7 +178,7 @@ public class TransferRoutes extends ErrorHandlerRouteBuilder {
 
         from("direct:send-transfer")
                 .id("send-transfer")
-                .log(LoggingLevel.INFO, "######## PAYER -> SWITCH - transfer request ${exchangeProperty."+TRANSACTION_ID+"} - STEP 1")
+                .log(LoggingLevel.DEBUG, "######## PAYER -> SWITCH - transfer request ${exchangeProperty."+TRANSACTION_ID+"} - STEP 1")
                 .setProperty(CLASS_TYPE, constant(QuoteSwitchResponseDTO.class))
                 .to("direct:body-unmarshling")
                 .process(exchange -> {
@@ -201,7 +201,7 @@ public class TransferRoutes extends ErrorHandlerRouteBuilder {
                 })
                 .process(pojoToString)
                 .process(addTraceHeaderProcessor)
-                .log(LoggingLevel.INFO, "Transfer body: ${body}")
+                .log(LoggingLevel.DEBUG, "Transfer body: ${body}")
                 .setHeader(Exchange.HTTP_METHOD, constant("POST"))
                 .setProperty(HOST, simple("{{switch.transfers-host}}"))
                 .setProperty(ENDPOINT, constant("/transfers"))

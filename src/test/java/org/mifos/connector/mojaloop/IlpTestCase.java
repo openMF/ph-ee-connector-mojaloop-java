@@ -88,7 +88,7 @@ public class IlpTestCase {
     // generate ILP
     @Test
     public void checkIfIlpPacketIsNotNull() {
-        logger.info("ILP Packet: {}", this.ilpPacket);
+        logger.debug("ILP Packet: {}", this.ilpPacket);
         assert !ilpPacket.isEmpty();
     }
 
@@ -96,7 +96,7 @@ public class IlpTestCase {
     @Test
     public void secretNotNull() {
         assert ilpSecret != null;
-        logger.info("Secret: {}", ilpSecret);
+        logger.debug("Secret: {}", ilpSecret);
     }
 
     // get condition from ILP packet
@@ -104,7 +104,7 @@ public class IlpTestCase {
     public void getConditionFromIlpPacket() throws IOException {
         String condition = ilpConditionHandler.generateCondition(
                 this.ilpPacket, ilpSecret.getBytes());
-        logger.info("Condition is {}", condition);
+        logger.debug("Condition is {}", condition);
         this.condition = condition;
         assert !condition.isEmpty();
     }
@@ -114,7 +114,7 @@ public class IlpTestCase {
     public void getFulfillmentFromIlpPacket() throws IOException {
         String fulfillment = ilpConditionHandler.generateFulfillment(
                 this.ilpPacket, ilpSecret.getBytes());
-        logger.info("Fulfillment is {}", condition);
+        logger.debug("Fulfillment is {}", condition);
         this.fulfillment = fulfillment;
         assert !this.fulfillment.isEmpty();
     }
@@ -122,10 +122,10 @@ public class IlpTestCase {
     // extract transaction from ilpPacket
     @Test
     public void extractTxnFromIlpPacket() throws IOException {
-        logger.info("Using ilppacket: {}", this.ilpPacket);
+        logger.debug("Using ilppacket: {}", this.ilpPacket);
         Transaction transaction = ilpConditionHandler.getTransactionFromIlpPacket(this.ilpPacket);
         assert transaction != null;
-        logger.info("Transaction extracted: {}", objectMapper.writeValueAsString(transaction));
+        logger.debug("Transaction extracted: {}", objectMapper.writeValueAsString(transaction));
     }
 
 

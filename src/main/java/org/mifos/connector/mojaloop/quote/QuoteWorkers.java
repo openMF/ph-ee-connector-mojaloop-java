@@ -23,6 +23,8 @@ import java.util.Map;
 import java.util.UUID;
 import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_DESTINATION;
 import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.HEADER_DATE;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.HEADER_TRACEPARENT;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.CHANNEL_REQUEST;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.ERROR_INFORMATION;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.LOCAL_QUOTE_RESPONSE;
@@ -128,8 +130,8 @@ public class QuoteWorkers {
                             ZeebeProcessStarter.zeebeVariablesToCamelHeaders(existingVariables, exchange,
                                     FSPIOP_SOURCE.headerName(),
                                     FSPIOP_DESTINATION.headerName(),
-                                    "Date",
-                                    "traceparent"
+                                    HEADER_DATE,
+                                    HEADER_TRACEPARENT
                             );
 
                             exchange.setProperty(ERROR_INFORMATION, errorInformation);
@@ -138,8 +140,8 @@ public class QuoteWorkers {
                             ZeebeProcessStarter.zeebeVariablesToCamelHeaders(existingVariables, exchange,
                                     FSPIOP_SOURCE.headerName(),
                                     FSPIOP_DESTINATION.headerName(),
-                                    "Date",
-                                    "traceparent",
+                                    HEADER_DATE,
+                                    HEADER_TRACEPARENT,
                                     LOCAL_QUOTE_RESPONSE
                             );
 

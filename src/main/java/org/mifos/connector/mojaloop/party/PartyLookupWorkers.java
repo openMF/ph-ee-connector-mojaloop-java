@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 import static org.mifos.connector.common.mojaloop.type.IdentifierType.MSISDN;
 import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
-import static org.mifos.connector.mojaloop.camel.config.CamelProperties.CACHED_TRANSACTION_ID;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.*;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeProcessStarter.zeebeVariablesToCamelHeaders;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.ACCOUNT_CURRENCY;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.CHANNEL_REQUEST;
@@ -129,22 +129,22 @@ public class PartyLookupWorkers {
                         if (errorInformation != null) {
                             zeebeVariablesToCamelHeaders(existingVariables, exchange,
                                     FSPIOP_SOURCE.headerName(),
-                                    "traceparent",
-                                    "Date"
+                                    HEADER_TRACEPARENT,
+                                    HEADER_DATE
                             );
 
                             exchange.setProperty(ERROR_INFORMATION, errorInformation);
                             exchange.setProperty(PARTY_ID_TYPE, existingVariables.get(PARTY_ID_TYPE));
                             exchange.setProperty(PARTY_ID, existingVariables.get(PARTY_ID));
 
-                            logger.info("Error info: {}", objectMapper.writeValueAsString(errorInformation));
-                            logger.info("Zeebe variables: {}", existingVariables);
+                            logger.debug("Error info: {}", objectMapper.writeValueAsString(errorInformation));
+                            logger.debug("Zeebe variables: {}", existingVariables);
                             producerTemplate.send("direct:send-parties-error-response", exchange);
                         } else {
                             zeebeVariablesToCamelHeaders(existingVariables, exchange,
                                     FSPIOP_SOURCE.headerName(),
-                                    "traceparent",
-                                    "Date"
+                                    HEADER_TRACEPARENT,
+                                    HEADER_DATE
                             );
 
                             exchange.setProperty(PAYEE_PARTY_RESPONSE, existingVariables.get(PAYEE_PARTY_RESPONSE));

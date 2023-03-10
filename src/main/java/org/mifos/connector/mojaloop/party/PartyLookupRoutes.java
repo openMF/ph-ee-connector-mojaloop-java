@@ -77,18 +77,18 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                     .otherwise()
                         .process(e -> {
                             String host = e.getIn().getHeader("Host", String.class).split(":")[0];
-                            log.info("HOST: {}", host);
+                            log.debug("HOST: {}", host);
                             String tenantId = partyProperties.getPartyByDomain(host).getTenantId();
-                            log.info("TENANT ID: {}", tenantId);
-                            log.info("Headers: {}", e.getIn().getHeaders());
+                            log.debug("TENANT ID: {}", tenantId);
+                            log.debug("Headers: {}", e.getIn().getHeaders());
                             String payeeFsp = e.getIn().getHeader(FSPIOP_DESTINATION.headerName(), String.class);
-                            log.info("Payeefsp: {}", payeeFsp);
-                            log.info("PARTIES: {}", objectMapper.writeValueAsString(partyProperties.getParties()));
-                            log.info("PAYEE TENANT: {}", partyProperties.getPartyByDfsp(payeeFsp).getTenantId());
+                            log.debug("Payeefsp: {}", payeeFsp);
+                            log.debug("PARTIES: {}", objectMapper.writeValueAsString(partyProperties.getParties()));
+                            log.debug("PAYEE TENANT: {}", partyProperties.getPartyByDfsp(payeeFsp).getTenantId());
                                     zeebeProcessStarter.startZeebeWorkflow(partyLookupFlow.replace("{tenant}", tenantId),
                                             variables -> {
-                                                variables.put("Date", e.getIn().getHeader("Date"));
-                                                variables.put("traceparent", e.getIn().getHeader("traceparent"));
+                                                variables.put(HEADER_DATE, e.getIn().getHeader(HEADER_DATE));
+                                                variables.put(HEADER_TRACEPARENT, e.getIn().getHeader(HEADER_TRACEPARENT));
                                                 variables.put(FSPIOP_SOURCE.headerName(), e.getIn().getHeader(FSPIOP_SOURCE.headerName()));
                                                 variables.put(PAYEE_TENANT_ID, partyProperties.getPartyByDfsp(payeeFsp).getTenantId());
                                                 variables.put(PARTY_ID_TYPE, e.getIn().getHeader(PARTY_ID_TYPE));
@@ -152,7 +152,7 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                     mojaloopUtil.setPartyHeadersResponse(exchange);
                 })
                 .process(pojoToString)
-                .log(LoggingLevel.INFO, "Party response from payee: ${body}")
+                .log(LoggingLevel.DEBUG, "Party response from payee: ${body}")
                 .setHeader(Exchange.HTTP_METHOD, constant("PUT"))
                 .setProperty(HOST, simple("{{switch.als-host}}"))
                 .setProperty(ENDPOINT, simple("/parties/${exchangeProperty." + PARTY_ID_TYPE + "}/${exchangeProperty." + PARTY_ID + "}"))
@@ -188,6 +188,6 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                 .setProperty(HOST, simple("{{switch.als-host}}"))
                 .setProperty(ENDPOINT, simple("/parties/${exchangeProperty." + PARTY_ID_TYPE + "}/${exchangeProperty." + PARTY_ID + "}"))
                 .to("direct:external-api-call")
-                .log("Response body: ${body}");
+                .log(LoggingLevel.DEBUG,"Response body: ${body}");
     }
 }

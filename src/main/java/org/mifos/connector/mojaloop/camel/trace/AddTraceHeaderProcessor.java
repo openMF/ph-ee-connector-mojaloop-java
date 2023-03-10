@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Base64;
 
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.*;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.ORIGIN_DATE;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.TRANSACTION_ID;
 
@@ -29,9 +30,9 @@ public class AddTraceHeaderProcessor implements Processor {
         String transactionIdKey = transactionIdTrimed.substring(0, 16);
         String traceParent = String.join("-", "00", transactionIdTrimed, transactionIdKey, "01");
 
-        exchange.getIn().setHeader("traceparent", traceParent);
-        exchange.getIn().setHeader("tracestate", "ph=" + Base64.getEncoder().encodeToString(transactionIdKey.getBytes()));
-        exchange.getIn().setHeader("Date",
+        exchange.getIn().setHeader(HEADER_TRACEPARENT, traceParent);
+        exchange.getIn().setHeader(HEADER_TRACESTATE, "ph=" + Base64.getEncoder().encodeToString(transactionIdKey.getBytes()));
+        exchange.getIn().setHeader(HEADER_DATE,
                 ContextUtil.formatToDateHeader(exchange.getProperty(ORIGIN_DATE, Long.class)));
     }
 }
