@@ -56,7 +56,7 @@ dependencies {
 group = 'org.mifos'
 version = '1.0.0-SNAPSHOT'
 description = 'ph-ee-connector-mojaloop-java'
-java.sourceCompatibility = JavaVersion.VERSION_1_8
+java.sourceCompatibility = "17"
 
 publishing {
     publications {
