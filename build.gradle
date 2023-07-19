@@ -18,7 +18,7 @@ repositories {
         url = uri('https://repo.maven.apache.org/maven2/')
     }
     maven {
-        url = uri('https://fynarfin.jfrog.io/artifactory/fyn-libs-snapshot/')
+        url = uri('https://jfrog.sandbox.fynarfin.io/artifactory/fyn-libs-snapshot')
     }
     mavenCentral()
 }
@@ -36,7 +36,7 @@ configurations.all {
 
 dependencies {
     implementation 'org.mifos:ph-ee-connector-common:1.2.2-SNAPSHOT'
-    implementation 'org.mifos:interop-ilp-conditions:1.7-SNAPSHOT'
+    implementation 'org.mifos:interop-ilp-conditions:1.7.1-SNAPSHOT'
     implementation "org.apache.camel.springboot:camel-spring-boot-starter:$camelVersion"
     implementation "org.apache.camel:camel-undertow:$camelVersion"
     implementation 'org.apache.camel.springboot:camel-jackson-starter:3.16.0'
