@@ -54,6 +54,7 @@ jobs:
       - run:
           name: Build Docker image
           command: |
+            IMAGE_TAG=$CIRCLE_TAG
             ./gradlew bootJar
             docker build -t openmf/ph-ee-connector-mojaloop:latest .
 
@@ -74,10 +75,9 @@ workflows:
       - build_and_push_tag_image:
           filters:
             tags:
-              only: /^v\d+\.\d+\.\d+$/ # This regex will match tags in the format 'vX.X.X', e.g., v1.2.3
+              only: /^v\d+\.\d+\.\d+$/  # Match tags in the format v1.2.3
           context:
-            - DOCKER
-
+              - DOCKER
       - build_and_push_latest_image:
           context:
             - DOCKER
