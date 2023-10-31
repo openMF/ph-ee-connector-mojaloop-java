@@ -1,5 +1,5 @@
 camel:
-  server-port: 5000
+  server-port: 5050
   springboot:
     main-run-controller: true
   dataformat:
@@ -31,18 +31,27 @@ mojaloop:
   perf-resp-delay: 100
 
 switch:
-  quotes-host: http://40.114.81.46
-  quote-service: quoting-service.local
-  als-host: http://40.114.81.46
-  account-lookup-service: account-lookup-service.local
-  transfers-host: http://40.114.81.46
-  transfer-service: ml-api-adapter.local
-  transactions-host: http://40.114.81.46
-  transaction-request-service: transaction-request-service.local
-  oracle-host: http://account-oracle.mifos.io:4100
+  quotes-host: "http://quoting-service.sandbox.fynarfin.io"
+  quote-service: "quoting-service.sandbox.fynarfin.io"
+  als-host: "http://account-lookup-service.sandbox.fynarfin.io"
+  account-lookup-service: "account-lookup-service.local"
+  transfers-host: "http://api-adapter.sandbox.fynarfin.io"
+  transfer-service: "api-adapter.sandbox.fynarfin.io"
+  transactions-host: "http://ml-api-adapter.sandbox.fynarfin.io"
+  transaction-request-service: "ml-api-adapter.sandbox.fynarfin.io"
+  oracle-host: "http://moja-simulator.sandbox.fynarfin.io"
 
-dfspids: "DFSPID"
+
+dfspids: "gorilla,rhino"
 
 logging:
   level:
-    root: ERROR
+    root: INFO
+
+parties:
+  - tenantId: rhino
+    fspId: payeefsp
+    domain: fynams.sandbox.fynarfin.io
+  - tenantId: gorilla
+    fspId: payerfsp
+    domain: ph-ee-connector-mojaloop-java.paymenthub.svc.cluster.local
