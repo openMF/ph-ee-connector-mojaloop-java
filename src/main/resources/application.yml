@@ -1,5 +1,5 @@
 camel:
-  server-port: 5000
+  server-port: 5001
   springboot:
     main-run-controller: true
   dataformat:
@@ -20,7 +20,7 @@ zeebe:
 #    number-of-workers: 15
 #    evenly-allocated-max-jobs: "#{${zeebe.client.max-execution-threads} / ${zeebe.client.number-of-workers}}"
   broker:
-    contactpoint: "ph-ee-zeebe:26500"
+    contactpoint: "localhost:26500"
 
 connector:
   ilp-secret: h4on38bsDjKiat2783gnklgafikmeuu5123kpobb7jm99
@@ -31,18 +31,26 @@ mojaloop:
   perf-resp-delay: 100
 
 switch:
-  quotes-host: http://40.114.81.46
-  quote-service: quoting-service.local
-  als-host: http://40.114.81.46
-  account-lookup-service: account-lookup-service.local
-  transfers-host: http://40.114.81.46
-  transfer-service: ml-api-adapter.local
-  transactions-host: http://40.114.81.46
-  transaction-request-service: transaction-request-service.local
-  oracle-host: http://account-oracle.mifos.io:4100
+  quotes-host: "http://quoting-service.sandbox.fynarfin.io"
+  quote-service: "quoting-service.sandbox.fynarfin.io"
+  als-host: "http://account-lookup-service.sandbox.fynarfin.io"
+  account-lookup-service: "account-lookup-service.sandbox.fynarfin.io"
+  transfers-host: "http://ml-api-adapter.sandbox.fynarfin.io"
+  transfer-service: "api-adapter.sandbox.fynarfin.io"
+  transactions-host: "http://ml-api-adapter.sandbox.fynarfin.io"
+  transaction-request-service: "ml-api-adapter.sandbox.fynarfin.io"
+  oracle-host: "http://moja-simulator.sandbox.fynarfin.io"
 
-dfspids: "DFSPID"
+dfspids: "gorilla,rhino,lion"
 
 logging:
   level:
-    root: ERROR
+    root: info
+
+parties:
+  - tenantId: gorilla
+    fspId: payerfsp
+    domain: https://fynams.sandbox.fynarfin.io/
+  - tenantId: lion
+    fspId: payeefsp
+    domain: mojaloop.sandbox.fynarfin.io
