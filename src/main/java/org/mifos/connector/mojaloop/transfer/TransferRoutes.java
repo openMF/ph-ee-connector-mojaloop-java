@@ -40,6 +40,9 @@ public class TransferRoutes extends ErrorHandlerRouteBuilder {
     @Value("${mojaloop.perf-resp-delay}")
     private int mojaPerfRespDelay;
 
+    @Value("${switch.transfers-host}")
+    private String transferHost;
+
     @Autowired
     private IlpBuilder ilpBuilder;
 
@@ -93,6 +96,12 @@ public class TransferRoutes extends ErrorHandlerRouteBuilder {
                             variables.put(FSPIOP_DESTINATION.headerName(), request.getPayerFsp());
                             variables.put(HEADER_DATE, exchange.getIn().getHeader(HEADER_DATE));
                             variables.put(HEADER_TRACEPARENT, exchange.getIn().getHeader(HEADER_TRACEPARENT));
+                            if(exchange.getIn().getHeader("X-Transfer-Callback-Url")!=null) {
+                                variables.put("X-Transfer-Callback-Url", exchange.getIn().getHeader("X-Transfer-Callback-Url"));
+                            }
+                            else {
+                                variables.put("X-Transfer-Callback-Url", transferHost);
+                            }
 
                             zeebeClient.newPublishMessageCommand()
                                     .messageName(TRANSFER_MESSAGE)
@@ -172,7 +181,6 @@ public class TransferRoutes extends ErrorHandlerRouteBuilder {
                 .process(pojoToString)
                 .log(LoggingLevel.DEBUG, "Transfer response from payee: ${body}")
                 .setHeader(Exchange.HTTP_METHOD, constant("PUT"))
-                .setProperty(HOST, simple("{{switch.transfers-host}}"))
                 .setProperty(ENDPOINT, simple("transfers/${exchangeProperty." + TRANSACTION_ID + "}"))
                 .to("direct:external-api-call");
 

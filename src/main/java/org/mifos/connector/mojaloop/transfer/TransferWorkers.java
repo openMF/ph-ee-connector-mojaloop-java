@@ -81,6 +81,7 @@ public class TransferWorkers {
                             );
 
                             exchange.setProperty(TRANSACTION_ID, existingVariables.get(TRANSACTION_ID));
+                            exchange.setProperty(HOST, existingVariables.get("X-Transfer-Callback-Url"));
                             producerTemplate.send("direct:send-transfer-to-switch", exchange);
                         }
                         client.newCompleteCommand(job.getKey())
