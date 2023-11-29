@@ -163,7 +163,6 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                 .process(pojoToString)
                 .log(LoggingLevel.DEBUG, "Party response from payee: ${body}")
                 .setHeader(Exchange.HTTP_METHOD, constant("PUT"))
-//                .setProperty(HOST, simple("{{switch.als-host}}"))
                 .setProperty(ENDPOINT, simple("/parties/${exchangeProperty." + PARTY_ID_TYPE + "}/${exchangeProperty." + PARTY_ID + "}"))
                 .to("direct:external-api-call");
 

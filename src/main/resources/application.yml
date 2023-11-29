@@ -31,26 +31,18 @@ mojaloop:
   perf-resp-delay: 100
 
 switch:
-  quotes-host: "http://quoting-service.sandbox.fynarfin.io"
-  quote-service: "quoting-service.sandbox.fynarfin.io"
-  als-host: "http://account-lookup-service.sandbox.fynarfin.io"
-  account-lookup-service: "account-lookup-service.sandbox.fynarfin.io"
-  transfers-host: "http://ml-api-adapter.sandbox.fynarfin.io"
-  transfer-service: "api-adapter.sandbox.fynarfin.io"
-  transactions-host: "http://ml-api-adapter.sandbox.fynarfin.io"
-  transaction-request-service: "ml-api-adapter.sandbox.fynarfin.io"
-  oracle-host: "http://moja-simulator.sandbox.fynarfin.io"
+  quotes-host: ""
+  quote-service: quoting-service.local
+  als-host: ""
+  account-lookup-service: account-lookup-service.local
+  transfers-host: ""
+  transfer-service: ml-api-adapter.local
+  transactions-host: ""
+  transaction-request-service: transaction-request-service.local
+  oracle-host: ""
 
-dfspids: "gorilla,rhino,lion"
+dfspids: "DFSPID"
 
 logging:
   level:
-    root: info
-
-parties:
-  - tenantId: gorilla
-    fspId: payerfsp
-    domain: https://fynams.sandbox.fynarfin.io/
-  - tenantId: lion
-    fspId: payeefsp
-    domain: mojaloop.sandbox.fynarfin.io
+    root: ERROR

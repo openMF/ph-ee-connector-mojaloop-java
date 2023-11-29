@@ -1,7 +1,7 @@
 parties:
   - tenantId: gorilla
     fspId: payerfsp
-    domain: https://fynams.sandbox.fynarfin.io/
+    domain: ""
   - tenantId: lion
     fspId: payeefsp
-    domain: mojaloop.sandbox.fynarfin.io
+    domain: ""
