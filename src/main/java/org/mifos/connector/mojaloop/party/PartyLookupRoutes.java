@@ -37,6 +37,9 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
     @Value("${mojaloop.perf-resp-delay}")
     private int mojaPerfRespDelay;
 
+    @Value("${switch.als-host}")
+    private String alsHost;
+
     @Autowired
     private Processor pojoToString;
 
@@ -94,6 +97,12 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                                                 variables.put(PARTY_ID_TYPE, e.getIn().getHeader(PARTY_ID_TYPE));
                                                 variables.put(PARTY_ID, e.getIn().getHeader(PARTY_ID));
                                                 variables.put(TENANT_ID, tenantId);
+                                                if(e.getIn().getHeader("X-Lookup-Callback-Url")!=null) {
+                                                    variables.put("X-Lookup-Callback-Url", e.getIn().getHeader("X-Lookup-Callback-Url"));
+                                                }
+                                                else {
+                                                    variables.put("X-Lookup-Callback-Url", alsHost);
+                                                }
                                             });
                                 }
                         )
@@ -154,7 +163,6 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                 .process(pojoToString)
                 .log(LoggingLevel.DEBUG, "Party response from payee: ${body}")
                 .setHeader(Exchange.HTTP_METHOD, constant("PUT"))
-                .setProperty(HOST, simple("{{switch.als-host}}"))
                 .setProperty(ENDPOINT, simple("/parties/${exchangeProperty." + PARTY_ID_TYPE + "}/${exchangeProperty." + PARTY_ID + "}"))
                 .to("direct:external-api-call");
 

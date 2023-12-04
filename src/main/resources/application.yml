@@ -31,15 +31,15 @@ mojaloop:
   perf-resp-delay: 100
 
 switch:
-  quotes-host: http://40.114.81.46
+  quotes-host: ""
   quote-service: quoting-service.local
-  als-host: http://40.114.81.46
+  als-host: ""
   account-lookup-service: account-lookup-service.local
-  transfers-host: http://40.114.81.46
+  transfers-host: ""
   transfer-service: ml-api-adapter.local
-  transactions-host: http://40.114.81.46
+  transactions-host: ""
   transaction-request-service: transaction-request-service.local
-  oracle-host: http://account-oracle.mifos.io:4100
+  oracle-host: ""
 
 dfspids: "DFSPID"
 

@@ -50,6 +50,9 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
     @Value("${bpmn.flows.quote}")
     private String quoteFlow;
 
+    @Value("${switch.quotes-host}")
+    private String quoteHost;
+
     @Autowired
     private IlpBuilder ilpBuilder;
 
@@ -120,6 +123,12 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                                             variables.put(QUOTE_SWITCH_REQUEST, exchange.getProperty(QUOTE_SWITCH_REQUEST));
                                             variables.put(QUOTE_SWITCH_REQUEST_AMOUNT, request.getAmount());
                                             variables.put(TENANT_ID, tenantId);
+                                            if(exchange.getIn().getHeader("X-Quote-Callback-Url")!=null) {
+                                                variables.put("X-Quote-Callback-Url", exchange.getIn().getHeader("X-Quote-Callback-Url"));
+                                            }
+                                            else {
+                                                variables.put("X-Quote-Callback-Url", quoteHost);
+                                            }
 
                                             ZeebeProcessStarter.camelHeadersToZeebeVariables(exchange, variables,
                                                     HEADER_DATE,
@@ -236,7 +245,6 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                 .process(pojoToString)
                 .log(LoggingLevel.DEBUG, "Quote response from payee: ${body}")
                 .setHeader(Exchange.HTTP_METHOD, constant("PUT"))
-                .setProperty(HOST, simple("{{switch.quotes-host}}"))
                 .setProperty(ENDPOINT, simple("/quotes/${exchangeProperty." + QUOTE_ID + "}"))
                 .to("direct:external-api-call");
 

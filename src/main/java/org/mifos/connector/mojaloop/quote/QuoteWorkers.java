@@ -25,6 +25,7 @@ import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_DE
 import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.HEADER_DATE;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.HEADER_TRACEPARENT;
+import static org.mifos.connector.mojaloop.camel.config.CamelProperties.HOST;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.CHANNEL_REQUEST;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.ERROR_INFORMATION;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.LOCAL_QUOTE_RESPONSE;
@@ -144,6 +145,7 @@ public class QuoteWorkers {
                                     HEADER_TRACEPARENT,
                                     LOCAL_QUOTE_RESPONSE
                             );
+                            exchange.setProperty(HOST, existingVariables.get("X-Quote-Callback-Url"));
 
                             producerTemplate.send("direct:send-quote-to-switch", exchange);
                         }

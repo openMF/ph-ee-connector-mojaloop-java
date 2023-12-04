@@ -126,12 +126,14 @@ public class PartyLookupWorkers {
 
                         Exchange exchange = new DefaultExchange(camelContext);
                         Object errorInformation = existingVariables.get(ERROR_INFORMATION);
+
+                        zeebeVariablesToCamelHeaders(existingVariables, exchange,
+                                FSPIOP_SOURCE.headerName(),
+                                HEADER_TRACEPARENT,
+                                HEADER_DATE
+                        );
+
                         if (errorInformation != null) {
-                            zeebeVariablesToCamelHeaders(existingVariables, exchange,
-                                    FSPIOP_SOURCE.headerName(),
-                                    HEADER_TRACEPARENT,
-                                    HEADER_DATE
-                            );
 
                             exchange.setProperty(ERROR_INFORMATION, errorInformation);
                             exchange.setProperty(PARTY_ID_TYPE, existingVariables.get(PARTY_ID_TYPE));
@@ -141,13 +143,9 @@ public class PartyLookupWorkers {
                             logger.debug("Zeebe variables: {}", existingVariables);
                             producerTemplate.send("direct:send-parties-error-response", exchange);
                         } else {
-                            zeebeVariablesToCamelHeaders(existingVariables, exchange,
-                                    FSPIOP_SOURCE.headerName(),
-                                    HEADER_TRACEPARENT,
-                                    HEADER_DATE
-                            );
 
                             exchange.setProperty(PAYEE_PARTY_RESPONSE, existingVariables.get(PAYEE_PARTY_RESPONSE));
+                            exchange.setProperty(HOST, existingVariables.get("X-Lookup-Callback-Url"));
 
                             producerTemplate.send("direct:send-parties-response", exchange);
                         }
