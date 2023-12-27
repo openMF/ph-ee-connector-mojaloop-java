@@ -26,6 +26,7 @@ repositories {
 ext {
     camelVersion = '3.18.1'
     zeebClientVersion = '8.1.1'
+    springBootVersion = '2.7.3'
 }
 
 configurations.all {
@@ -51,6 +52,9 @@ dependencies {
     implementation 'org.json:json:20210307'
     compileOnly 'org.projectlombok:lombok:1.18.24'
     annotationProcessor 'org.projectlombok:lombok:1.18.24'
+    implementation "org.springframework.boot:spring-boot-starter:$springBootVersion"
+    implementation "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
+    implementation "org.springframework.boot:spring-boot-starter-actuator:$springBootVersion"
 }
 
 group = 'org.mifos'
