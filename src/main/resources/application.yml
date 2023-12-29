@@ -56,3 +56,4 @@ management:
         enabled: true
       readiness:
         enabled: true
+      show-details: always
