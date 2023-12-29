@@ -1,5 +1,5 @@
 camel:
-  server-port: 5000
+  server-port: 5003
   springboot:
     main-run-controller: true
   dataformat:
@@ -20,10 +20,11 @@ zeebe:
 #    number-of-workers: 15
 #    evenly-allocated-max-jobs: "#{${zeebe.client.max-execution-threads} / ${zeebe.client.number-of-workers}}"
   broker:
-    contactpoint: "ph-ee-zeebe:26500"
+    contactpoint: "localhost:26500"
 
 connector:
   ilp-secret: h4on38bsDjKiat2783gnklgafikmeuu5123kpobb7jm99
+
 
 mojaloop:
   enabled: true
@@ -47,9 +48,9 @@ logging:
   level:
     root: ERROR
 
+server:
+  port: 8080
 management:
-  server:
-    port: 8080
   endpoint:
     health:
       probes:
@@ -58,4 +59,5 @@ management:
         enabled: true
       readiness:
         enabled: true
-      show-details: always
+#      show-details: always
+
