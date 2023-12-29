@@ -48,6 +48,8 @@ logging:
     root: ERROR
 
 management:
+  server:
+    port: 80
   endpoint:
     health:
       probes:
