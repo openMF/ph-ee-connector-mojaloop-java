@@ -25,6 +25,7 @@ zeebe:
 connector:
   ilp-secret: h4on38bsDjKiat2783gnklgafikmeuu5123kpobb7jm99
 
+
 mojaloop:
   enabled: true
   perf-mode: false
@@ -46,3 +47,17 @@ dfspids: "DFSPID"
 logging:
   level:
     root: ERROR
+
+server:
+  port: 8080
+management:
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      liveness:
+        enabled: true
+      readiness:
+        enabled: true
+#      show-details: always
+
