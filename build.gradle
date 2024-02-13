@@ -25,7 +25,7 @@ repositories {
 
 ext {
     camelVersion = '3.18.1'
-    zeebClientVersion = '8.1.1'
+    zeebClientVersion = '8.1.23'
     springBootVersion = '2.7.3'
 }
 
