@@ -14,7 +14,7 @@ bpmn:
 
 zeebe:
   client:
-    max-execution-threads: 1000
+    max-execution-threads: 50
     evenly-allocated-max-jobs: 1000
 #    max-execution-threads: 100
 #    number-of-workers: 15
