@@ -54,6 +54,7 @@ server:
 management:
   endpoint:
     health:
+      enabled: true
       probes:
         enabled: true
       liveness:

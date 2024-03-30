@@ -39,6 +39,7 @@ dependencies {
     implementation 'org.mifos:ph-ee-connector-common:1.2.2-SNAPSHOT'
     implementation 'org.mifos:interop-ilp-conditions:1.7.1-SNAPSHOT'
     implementation "org.apache.camel.springboot:camel-spring-boot-starter:$camelVersion"
+    implementation "org.springframework.boot:spring-boot-starter-actuator:$springBootVersion"
     implementation "org.apache.camel:camel-undertow:$camelVersion"
     implementation 'org.apache.camel.springboot:camel-jackson-starter:3.16.0'
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.7.9'
