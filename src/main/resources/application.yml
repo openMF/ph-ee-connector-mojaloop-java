@@ -54,11 +54,11 @@ server:
 management:
   endpoint:
     health:
+      enabled: true
       probes:
         enabled: true
       liveness:
         enabled: true
       readiness:
         enabled: true
-#      show-details: always
 
