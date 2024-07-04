@@ -80,7 +80,7 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                     .otherwise()
                         .process(e -> {
                             String host = e.getIn().getHeader("Host", String.class).split(":")[0];
-                            log.debug("HOST: {}", host);
+                            log.info("HOST: {}", host);
                             String tenantId = partyProperties.getPartyByDomain(host).getTenantId();
                             log.info("Tenant ID: {}", tenantId);
                             log.info("TENANT ID: {}", tenantId);

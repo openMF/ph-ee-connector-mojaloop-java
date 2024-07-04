@@ -107,7 +107,7 @@ public class TransferWorkers {
                             exchange.setProperty(ORIGIN_DATE, variables.get(ORIGIN_DATE));
                             exchange.setProperty(CHANNEL_REQUEST, variables.get(CHANNEL_REQUEST));
                             exchange.getIn().setBody(variables.get(PAYEE_QUOTE_RESPONSE));
-                            logger.debug("PAYEE QUOTE RESPONSE ZEEBE VARIABLE: {}", variables.get(PAYEE_QUOTE_RESPONSE));
+                            logger.info("PAYEE QUOTE RESPONSE ZEEBE VARIABLE: {}", variables.get(PAYEE_QUOTE_RESPONSE));
                             producerTemplate.send("direct:send-transfer", exchange);
                         } else {
                             TransferSwitchResponseDTO response = new TransferSwitchResponseDTO();

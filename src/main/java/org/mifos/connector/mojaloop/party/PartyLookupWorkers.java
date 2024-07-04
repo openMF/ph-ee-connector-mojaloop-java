@@ -139,8 +139,8 @@ public class PartyLookupWorkers {
                             exchange.setProperty(PARTY_ID_TYPE, existingVariables.get(PARTY_ID_TYPE));
                             exchange.setProperty(PARTY_ID, existingVariables.get(PARTY_ID));
 
-                            logger.debug("Error info: {}", objectMapper.writeValueAsString(errorInformation));
-                            logger.debug("Zeebe variables: {}", existingVariables);
+                            logger.info("Error info: {}", objectMapper.writeValueAsString(errorInformation));
+                            logger.info("Zeebe variables: {}", existingVariables);
                             producerTemplate.send("direct:send-parties-error-response", exchange);
                         } else {
 

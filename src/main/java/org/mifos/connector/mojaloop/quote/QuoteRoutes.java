@@ -161,7 +161,7 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
         from("rest:PUT:/switch/quotes/{" + QUOTE_ID + "}")
                 .setProperty(CLASS_TYPE, constant(QuoteCallbackDTO.class))
                 .to("direct:body-unmarshling")
-                .process(exchange -> logger.debug("Received callback: {}", objectMapper.writeValueAsString(exchange.getIn().getBody(QuoteCallbackDTO.class))))
+                .process(exchange -> logger.info("Received callback: {}", objectMapper.writeValueAsString(exchange.getIn().getBody(QuoteCallbackDTO.class))))
                 .to("direct:quotes-step4");
 
         from("direct:quotes-step4")
@@ -213,8 +213,8 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                             requestAmount.getAmountDecimal());
 
                     String localQuoteResponseString = exchange.getIn().getHeader(LOCAL_QUOTE_RESPONSE, String.class);
-                    logger.debug("## parsing local quote response string: {}", localQuoteResponseString);
-                    logger.debug("ILP object: {}", objectMapper.writeValueAsString(ilp));
+                    logger.info("## parsing local quote response string: {}", localQuoteResponseString);
+                    logger.info("ILP object: {}", objectMapper.writeValueAsString(ilp));
                     QuoteFspResponseDTO localQuoteResponse = objectMapper.readValue(localQuoteResponseString, QuoteFspResponseDTO.class);
                     FspMoneyData fspFee = localQuoteResponse.getFspFee();
                     FspMoneyData fspCommission = localQuoteResponse.getFspCommission();
@@ -253,7 +253,7 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                 .log(LoggingLevel.DEBUG, "######## PAYER -> SWITCH - quote request - STEP 1")
                 .process(exchange -> {
                     TransactionChannelRequestDTO channelRequest = objectMapper.readValue(exchange.getProperty(CHANNEL_REQUEST, String.class), TransactionChannelRequestDTO.class);
-                    logger.debug("Channel request: {}", channelRequest);
+                    logger.info("Channel request: {}", channelRequest);
                     TransactionType transactionType = new TransactionType();
                     transactionType.setInitiator(channelRequest.getTransactionType().getInitiator());
                     transactionType.setInitiatorType(channelRequest.getTransactionType().getInitiatorType());
@@ -281,7 +281,7 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                             null);
 
                     MoneyData requestAmount = channelRequest.getAmount();
-                    logger.debug("Amount decimal: {}", channelRequest.getAmount().getAmountDecimal());
+                    logger.info("Amount decimal: {}", channelRequest.getAmount().getAmountDecimal());
                     stripAmount(requestAmount);
                     QuoteSwitchRequestDTO quoteRequest = new QuoteSwitchRequestDTO(
                             exchange.getProperty(TRANSACTION_ID, String.class),

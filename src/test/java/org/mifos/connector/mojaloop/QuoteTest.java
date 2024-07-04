@@ -23,7 +23,7 @@ public class QuoteTest {
         String localQuoteResponseString = "{\"transactionCode\":\"cf1f9731-d248-4cc9-be4c-7937f2ed6c18\",\"quoteCode\":\"4c94ba50-3c6e-46b6-b1ae-1b89baa2b126\",\"state\":\"ACCEPTED\",\"fspFee\":{\"amount\":0,\"currency\":\"USD\"}}";
         QuoteFspResponseDTO localQuoteResponse = objectMapper.readValue(localQuoteResponseString, QuoteFspResponseDTO.class);
 
-        logger.debug("local quote dto: {}", objectMapper.writeValueAsString(localQuoteResponse));
+        logger.info("local quote dto: {}", objectMapper.writeValueAsString(localQuoteResponse));
     }
 
     @Test
@@ -31,6 +31,6 @@ public class QuoteTest {
         String json = "{}";
         QuoteFspResponseDTO testDto = objectMapper.readValue(json, QuoteFspResponseDTO.class);
 
-        logger.debug("Test dto: {}", testDto);
+        logger.info("Test dto: {}", testDto);
     }
 }
