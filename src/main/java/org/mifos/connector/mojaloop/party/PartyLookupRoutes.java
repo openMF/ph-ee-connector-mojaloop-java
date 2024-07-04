@@ -82,18 +82,21 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                             String host = e.getIn().getHeader("Host", String.class).split(":")[0];
                             log.debug("HOST: {}", host);
                             String tenantId = partyProperties.getPartyByDomain(host).getTenantId();
-                            log.debug("TENANT ID: {}", tenantId);
-                            log.debug("Headers: {}", e.getIn().getHeaders());
+                            log.info("Tenant ID: {}", tenantId);
+                            log.info("TENANT ID: {}", tenantId);
+                            log.info("Headers: {}", e.getIn().getHeaders());
                             String payeeFsp = e.getIn().getHeader(FSPIOP_DESTINATION.headerName(), String.class);
-                            log.debug("Payeefsp: {}", payeeFsp);
-                            log.debug("PARTIES: {}", objectMapper.writeValueAsString(partyProperties.getParties()));
-                            log.debug("PAYEE TENANT: {}", partyProperties.getPartyByDfsp(payeeFsp).getTenantId());
+                            log.info("Payeefsp: {}", payeeFsp);
+                            log.info("PARTIES: {}", objectMapper.writeValueAsString(partyProperties.getParties()));
+                            log.info("PAYEE TENANT: {}", partyProperties.getPartyByDfsp(payeeFsp).getTenantId());
                                     zeebeProcessStarter.startZeebeWorkflow(partyLookupFlow.replace("{tenant}", tenantId),
                                             variables -> {
                                                 variables.put(HEADER_DATE, e.getIn().getHeader(HEADER_DATE));
                                                 variables.put(HEADER_TRACEPARENT, e.getIn().getHeader(HEADER_TRACEPARENT));
                                                 variables.put(FSPIOP_SOURCE.headerName(), e.getIn().getHeader(FSPIOP_SOURCE.headerName()));
+                                                log.info("FSPIOP_SOURCE.headerName() {}", variables.get(FSPIOP_SOURCE.headerName()));
                                                 variables.put(PAYEE_TENANT_ID, partyProperties.getPartyByDfsp(payeeFsp).getTenantId());
+                                                log.info("PAYEE_TENANT_ID {}", partyProperties.getPartyByDfsp(payeeFsp).getTenantId());
                                                 variables.put(PARTY_ID_TYPE, e.getIn().getHeader(PARTY_ID_TYPE));
                                                 variables.put(PARTY_ID, e.getIn().getHeader(PARTY_ID));
                                                 variables.put(TENANT_ID, tenantId);

@@ -5,3 +5,16 @@ parties:
   - tenantId: lion
     fspId: payeefsp
     domain: ""
+
+parties_0_domain : https://fynams.sandbox.fynarfin.io/
+parties_0_fspId : payerfsp
+parties_0_tenantId : wakanda
+parties_1_domain : mojaloop.sandbox.fynarfin.io
+parties_1_fspId : payeefsp
+parties_1_tenantId : jupiter
+parties_2_domain : mojaloop.sandbox.fynarfin.io
+parties_2_fspId : payeefsp2
+parties_2_tenantId : pluto
+parties_3_domain : mojaloop.sandbox.fynarfin.io
+parties_3_fspId : payeefsp3
+parties_3_tenantId : venus
