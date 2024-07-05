@@ -48,7 +48,7 @@ public class MojaloopUtil {
     public void setPartyHeadersRequest(Exchange exchange) {
         Map<String, Object> headers = new HashMap<>();
         headers.put(FSPIOP_SOURCE.headerName(), exchange.getIn().getHeader(FSPIOP_SOURCE.headerName()));
-        headers.put(FSPIOP_DESTINATION.headerName(), exchange.getIn().getHeader(FSPIOP_SOURCE.headerName()));
+        headers.put(FSPIOP_DESTINATION.headerName(), exchange.getIn().getHeader(FSPIOP_DESTINATION.headerName()));
         headers.put(HEADER_CONTENT_TYPE, PARTIES_CONTENT_TYPE.headerValue());
         headers.put(HEADER_ACCEPT, PARTIES_ACCEPT_TYPE.headerValue());
         headers.put(HEADER_HOST, accountLookupService);

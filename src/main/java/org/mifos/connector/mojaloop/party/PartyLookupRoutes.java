@@ -190,8 +190,11 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                     PartyIdInfo requestedParty = e.getProperty(IS_RTP_REQUEST, Boolean.class) ? channelRequest.getPayer().getPartyIdInfo() : channelRequest.getPayee().getPartyIdInfo();
                     e.setProperty(PARTY_ID_TYPE, requestedParty.getPartyIdType());
                     e.setProperty(PARTY_ID, requestedParty.getPartyIdentifier());
-                    e.setProperty(PAYEE_DFSP_ID, e.getProperty(PAYEE_PARTY_RESPONSE, String.class));
-                    log.info("PAYEE_DFSP_ID {}", e.getProperty(PAYEE_PARTY_RESPONSE, String.class));
+                    e.setProperty(PAYEE_DFSP_ID, e.getProperty(PAYEE_DFSP_ID, String.class));
+                    log.info("PAYEE_DFSP_ID {}", e.getProperty(PAYEE_DFSP_ID, String.class));
+                    if(e.getProperty(PAYEE_DFSP_ID, String.class) != null) {
+                        e.getIn().setHeader(FSPIOP_DESTINATION.headerName(), e.getProperty(PAYEE_DFSP_ID, String.class));
+                    }
                     e.getIn().setHeader(FSPIOP_SOURCE.headerName(), partyProperties.getPartyByTenant(e.getProperty(TENANT_ID, String.class)).getFspId());
                     mojaloopUtil.setPartyHeadersRequest(e);
                 })

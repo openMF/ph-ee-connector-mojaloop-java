@@ -72,6 +72,7 @@ public class PartyLookupWorkers {
                         boolean isTransactionRequest = (boolean) existingVariables.get(IS_RTP_REQUEST);
                         String tenantId = (String) existingVariables.get(TENANT_ID);
                         String payeeFspId = (String) existingVariables.get(PAYEE_DFSP_ID);
+                        logger.info("Payee fsp id is {}", payeeFspId);
                         Object channelRequest = existingVariables.get(CHANNEL_REQUEST);
                         // only saved for operations to identify workflow
                         if (existingVariables.get(INITIATOR_FSP_ID) == null) {
