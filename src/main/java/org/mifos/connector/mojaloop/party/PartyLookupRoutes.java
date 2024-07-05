@@ -81,11 +81,13 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                         .process(e -> {
                             String host = e.getIn().getHeader("Host", String.class).split(":")[0];
                             log.info("HOST: {}", host);
-                            String tenantId = partyProperties.getPartyByDomain(host).getTenantId();
-                            log.info("Tenant ID: {}", tenantId);
-                            log.info("TENANT ID: {}", tenantId);
-                            log.info("Headers: {}", e.getIn().getHeaders());
                             String payeeFsp = e.getIn().getHeader(FSPIOP_DESTINATION.headerName(), String.class);
+                            log.info("FSPIOP DESTINATION: {}", payeeFsp);
+                            String tenantId = partyProperties.getPartyByDomain(host, payeeFsp).getTenantId();
+                            //Need to pass fspID
+//                            String tenantId = partyProperties.getPartyByDfsp(payee.getFspId()).getTenantId();
+                            log.info("Tenant ID: {}", tenantId);
+                            log.info("Headers: {}", e.getIn().getHeaders());
                             log.info("Payeefsp: {}", payeeFsp);
                             log.info("PARTIES: {}", objectMapper.writeValueAsString(partyProperties.getParties()));
                             log.info("PAYEE TENANT: {}", partyProperties.getPartyByDfsp(payeeFsp).getTenantId());
