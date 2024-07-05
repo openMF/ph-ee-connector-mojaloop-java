@@ -146,7 +146,7 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                             new PartyIdInfo(IdentifierType.valueOf(e.getIn().getHeader(PARTY_ID_TYPE, String.class)),
                                     e.getIn().getHeader(PARTY_ID, String.class),
                                     null,
-                                    partyProperties.getPartyByDomain(host).getFspId()),
+                                    partyProperties.getPartyByDomain(host, null).getFspId()),
                             null,
                             null,
                             null);
