@@ -96,9 +96,10 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                     .to("direct:body-unmarshling")
                     .process(exchange -> { // @formatter:on
                                 QuoteSwitchRequestDTO request = exchange.getIn().getBody(QuoteSwitchRequestDTO.class);
+                                log.info("Received quote switch request: {}", request);
                                 PartyIdInfo payee = request.getPayee().getPartyIdInfo();
+                                log.info("Payee: {}", payee);
                                 String tenantId = partyProperties.getPartyByDfsp(payee.getFspId()).getTenantId();
-
                                 zeebeProcessStarter.startZeebeWorkflow(quoteFlow.replace("{tenant}", tenantId),
                                         variables -> {
                                             variables.put("initiator", request.getTransactionType().getInitiator());
@@ -119,6 +120,7 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                                             variables.put(QUOTE_ID, request.getQuoteId());
                                             variables.put(FSPIOP_SOURCE.headerName(), payee.getFspId());
                                             variables.put(FSPIOP_DESTINATION.headerName(), request.getPayer().getPartyIdInfo().getFspId());
+                                            log.info("FSPIOP_DESTINATION {} {}",FSPIOP_DESTINATION.headerName(), request.getPayer().getPartyIdInfo().getFspId());
                                             variables.put(TRANSACTION_ID, request.getTransactionId());
                                             variables.put(QUOTE_SWITCH_REQUEST, exchange.getProperty(QUOTE_SWITCH_REQUEST));
                                             variables.put(QUOTE_SWITCH_REQUEST_AMOUNT, request.getAmount());
