@@ -84,8 +84,7 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                             String payeeFsp = e.getIn().getHeader(FSPIOP_DESTINATION.headerName(), String.class);
                             log.info("FSPIOP DESTINATION: {}", payeeFsp);
                             String tenantId = partyProperties.getPartyByDomain(host, payeeFsp).getTenantId();
-                            //Need to pass fspID
-//                            String tenantId = partyProperties.getPartyByDfsp(payee.getFspId()).getTenantId();
+
                             log.info("Tenant ID: {}", tenantId);
                             log.info("Headers: {}", e.getIn().getHeaders());
                             log.info("Payeefsp: {}", payeeFsp);
@@ -191,13 +190,14 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                     PartyIdInfo requestedParty = e.getProperty(IS_RTP_REQUEST, Boolean.class) ? channelRequest.getPayer().getPartyIdInfo() : channelRequest.getPayee().getPartyIdInfo();
                     e.setProperty(PARTY_ID_TYPE, requestedParty.getPartyIdType());
                     e.setProperty(PARTY_ID, requestedParty.getPartyIdentifier());
+                    e.setProperty(PAYEE_DFSP_ID, e.getProperty(PAYEE_PARTY_RESPONSE, String.class));
+                    log.info("PAYEE_DFSP_ID {}", e.getProperty(PAYEE_PARTY_RESPONSE, String.class));
                     e.getIn().setHeader(FSPIOP_SOURCE.headerName(), partyProperties.getPartyByTenant(e.getProperty(TENANT_ID, String.class)).getFspId());
-
                     mojaloopUtil.setPartyHeadersRequest(e);
                 })
                 .process(addTraceHeaderProcessor)
                 .setHeader(Exchange.HTTP_METHOD, constant("GET"))
-                .process(e -> log.info("Mojaloop headers : {}", e.getIn().getHeaders()))
+                .process(e -> log.info("Mojaloop send-party-lookup headers : {}", e.getIn().getHeaders()))
                 .setProperty(HOST, simple("{{switch.als-host}}"))
                 .setProperty(ENDPOINT, simple("/parties/${exchangeProperty." + PARTY_ID_TYPE + "}/${exchangeProperty." + PARTY_ID + "}"))
                 .to("direct:external-api-call")

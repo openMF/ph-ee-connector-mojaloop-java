@@ -23,18 +23,7 @@ import static org.mifos.connector.common.mojaloop.type.IdentifierType.MSISDN;
 import static org.mifos.connector.common.mojaloop.type.MojaloopHeaders.FSPIOP_SOURCE;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.*;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeProcessStarter.zeebeVariablesToCamelHeaders;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.ACCOUNT_CURRENCY;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.CHANNEL_REQUEST;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.ERROR_INFORMATION;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.INITIATOR_FSP_ID;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.IS_RTP_REQUEST;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.ORIGIN_DATE;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.PARTY_ID;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.PARTY_ID_TYPE;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.PARTY_LOOKUP_RETRY_COUNT;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.PAYEE_PARTY_RESPONSE;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.TENANT_ID;
-import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.TRANSACTION_ID;
+import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.*;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeeWorkers.WORKER_PARTY_LOOKUP_LOCAL_RESPONSE;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeeWorkers.WORKER_PARTY_LOOKUP_REQUEST;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeeWorkers.WORKER_PARTY_REGISTRATION_ORACLE;
@@ -82,6 +71,7 @@ public class PartyLookupWorkers {
 
                         boolean isTransactionRequest = (boolean) existingVariables.get(IS_RTP_REQUEST);
                         String tenantId = (String) existingVariables.get(TENANT_ID);
+                        String payeeFspId = (String) existingVariables.get(PAYEE_DFSP_ID);
                         Object channelRequest = existingVariables.get(CHANNEL_REQUEST);
                         // only saved for operations to identify workflow
                         if (existingVariables.get(INITIATOR_FSP_ID) == null) {
@@ -98,6 +88,7 @@ public class PartyLookupWorkers {
                             exchange.setProperty(ORIGIN_DATE, existingVariables.get(ORIGIN_DATE));
                             exchange.setProperty(IS_RTP_REQUEST, isTransactionRequest);
                             exchange.setProperty(TENANT_ID, tenantId);
+                            exchange.setProperty(PAYEE_DFSP_ID, payeeFspId);
                             producerTemplate.send("direct:send-party-lookup", exchange);
                         } else {
                             PartyIdInfo partyIdInfo = new PartyIdInfo(MSISDN, "27710305999", null, "in03tn05");

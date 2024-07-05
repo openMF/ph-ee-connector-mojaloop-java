@@ -100,6 +100,9 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                                 PartyIdInfo payee = request.getPayee().getPartyIdInfo();
                                 log.info("Payee: {}", payee);
                                 String tenantId = partyProperties.getPartyByDfsp(payee.getFspId()).getTenantId();
+                                log.info("Tenant ID: {}", tenantId);
+                                log.info("exchange.getIn().getBody(): {}", exchange.getIn().getBody());
+                                log.info("exchange.getIn().getHeaders(): {}", exchange.getIn().getHeaders());
                                 zeebeProcessStarter.startZeebeWorkflow(quoteFlow.replace("{tenant}", tenantId),
                                         variables -> {
                                             variables.put("initiator", request.getTransactionType().getInitiator());
@@ -107,7 +110,7 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                                             variables.put("scenario", request.getTransactionType().getScenario());
                                             variables.put("amount", new FspMoneyData(request.getAmount().getAmountDecimal(), request.getAmount().getCurrency()));
                                             variables.put("transactionId", request.getTransactionId());
-                                            variables.put("transferCode", request.getTransactionRequestId());    // TODO is that right?
+                                            variables.put("transferCode", request.getTransactionRequestId());
 
                                             ExtensionList extensionList = request.getExtensionList();
                                             String note = extensionList == null ? "" : extensionList.getExtension().stream()
