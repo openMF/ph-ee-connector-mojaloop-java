@@ -96,9 +96,13 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                     .to("direct:body-unmarshling")
                     .process(exchange -> { // @formatter:on
                                 QuoteSwitchRequestDTO request = exchange.getIn().getBody(QuoteSwitchRequestDTO.class);
+                                log.info("Received quote switch request: {}", request);
                                 PartyIdInfo payee = request.getPayee().getPartyIdInfo();
+                                log.info("Payee: {}", payee);
                                 String tenantId = partyProperties.getPartyByDfsp(payee.getFspId()).getTenantId();
-
+                                log.info("Tenant ID: {}", tenantId);
+                                log.info("exchange.getIn().getBody(): {}", exchange.getIn().getBody());
+                                log.info("exchange.getIn().getHeaders(): {}", exchange.getIn().getHeaders());
                                 zeebeProcessStarter.startZeebeWorkflow(quoteFlow.replace("{tenant}", tenantId),
                                         variables -> {
                                             variables.put("initiator", request.getTransactionType().getInitiator());
@@ -106,7 +110,7 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                                             variables.put("scenario", request.getTransactionType().getScenario());
                                             variables.put("amount", new FspMoneyData(request.getAmount().getAmountDecimal(), request.getAmount().getCurrency()));
                                             variables.put("transactionId", request.getTransactionId());
-                                            variables.put("transferCode", request.getTransactionRequestId());    // TODO is that right?
+                                            variables.put("transferCode", request.getTransactionRequestId());
 
                                             ExtensionList extensionList = request.getExtensionList();
                                             String note = extensionList == null ? "" : extensionList.getExtension().stream()
@@ -119,6 +123,7 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                                             variables.put(QUOTE_ID, request.getQuoteId());
                                             variables.put(FSPIOP_SOURCE.headerName(), payee.getFspId());
                                             variables.put(FSPIOP_DESTINATION.headerName(), request.getPayer().getPartyIdInfo().getFspId());
+                                            log.info("FSPIOP_DESTINATION {} {}",FSPIOP_DESTINATION.headerName(), request.getPayer().getPartyIdInfo().getFspId());
                                             variables.put(TRANSACTION_ID, request.getTransactionId());
                                             variables.put(QUOTE_SWITCH_REQUEST, exchange.getProperty(QUOTE_SWITCH_REQUEST));
                                             variables.put(QUOTE_SWITCH_REQUEST_AMOUNT, request.getAmount());
@@ -161,7 +166,7 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
         from("rest:PUT:/switch/quotes/{" + QUOTE_ID + "}")
                 .setProperty(CLASS_TYPE, constant(QuoteCallbackDTO.class))
                 .to("direct:body-unmarshling")
-                .process(exchange -> logger.debug("Received callback: {}", objectMapper.writeValueAsString(exchange.getIn().getBody(QuoteCallbackDTO.class))))
+                .process(exchange -> logger.info("Received callback: {}", objectMapper.writeValueAsString(exchange.getIn().getBody(QuoteCallbackDTO.class))))
                 .to("direct:quotes-step4");
 
         from("direct:quotes-step4")
@@ -213,8 +218,8 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                             requestAmount.getAmountDecimal());
 
                     String localQuoteResponseString = exchange.getIn().getHeader(LOCAL_QUOTE_RESPONSE, String.class);
-                    logger.debug("## parsing local quote response string: {}", localQuoteResponseString);
-                    logger.debug("ILP object: {}", objectMapper.writeValueAsString(ilp));
+                    logger.info("## parsing local quote response string: {}", localQuoteResponseString);
+                    logger.info("ILP object: {}", objectMapper.writeValueAsString(ilp));
                     QuoteFspResponseDTO localQuoteResponse = objectMapper.readValue(localQuoteResponseString, QuoteFspResponseDTO.class);
                     FspMoneyData fspFee = localQuoteResponse.getFspFee();
                     FspMoneyData fspCommission = localQuoteResponse.getFspCommission();
@@ -253,7 +258,7 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                 .log(LoggingLevel.DEBUG, "######## PAYER -> SWITCH - quote request - STEP 1")
                 .process(exchange -> {
                     TransactionChannelRequestDTO channelRequest = objectMapper.readValue(exchange.getProperty(CHANNEL_REQUEST, String.class), TransactionChannelRequestDTO.class);
-                    logger.debug("Channel request: {}", channelRequest);
+                    logger.info("Channel request: {}", channelRequest);
                     TransactionType transactionType = new TransactionType();
                     transactionType.setInitiator(channelRequest.getTransactionType().getInitiator());
                     transactionType.setInitiatorType(channelRequest.getTransactionType().getInitiatorType());
@@ -281,7 +286,7 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                             null);
 
                     MoneyData requestAmount = channelRequest.getAmount();
-                    logger.debug("Amount decimal: {}", channelRequest.getAmount().getAmountDecimal());
+                    logger.info("Amount decimal: {}", channelRequest.getAmount().getAmountDecimal());
                     stripAmount(requestAmount);
                     QuoteSwitchRequestDTO quoteRequest = new QuoteSwitchRequestDTO(
                             exchange.getProperty(TRANSACTION_ID, String.class),

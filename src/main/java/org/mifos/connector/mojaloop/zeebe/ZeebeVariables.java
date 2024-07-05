@@ -20,6 +20,7 @@ public class ZeebeVariables {
     public static final String PARTY_LOOKUP_FSP_ID = "partyLookupFspId";
     public static final String PARTY_LOOKUP_RETRY_COUNT = "partyLookupRetryCount";
     public static final String PAYEE_PARTY_RESPONSE = "payeePartyResponse";
+    public static final String PAYEE_DFSP_ID = "X-PayeeDFSP-ID";
     public static final String PAYEE_QUOTE_RESPONSE = "payeeQuoteResponse";
     public static final String PAYER_AUTHORISATION_RETRY_COUNT = "payerAuthorisationRetryCount";
     public static final String PAYER_CONFIRMATION_RETRY_COUNT = "payerConfirmationRetryCount";
