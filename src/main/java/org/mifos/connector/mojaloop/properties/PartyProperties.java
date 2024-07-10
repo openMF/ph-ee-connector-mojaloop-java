@@ -37,10 +37,19 @@ public class PartyProperties {
                 .orElseThrow(() -> new RuntimeException("Party with tenant: " + tenant + ", not configured!"));
     }
 
-    public Party getPartyByDomain(String domain) {
-        return getParties().stream()
+    public Party getPartyByDomainAndFspId(String domain, String fspId) {
+        List<Party> filteredParties = getParties().stream()
                 .filter(t -> t.getDomain().equals(domain))
+                .toList();
+        if (fspId == null || fspId.isEmpty() || filteredParties.size() == 1) {
+            return filteredParties.stream()
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("Party with domain: " + domain + ", not configured!"));
+        }
+
+        return filteredParties.stream()
+                .filter(t -> t.getFspId().equals(fspId))
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("Party with domain: " + domain + ", not configured!"));
+                .orElseThrow(() -> new RuntimeException("Party with domain: " + domain + " and payeeFsp: " + fspId + ", not configured!"));
     }
 }

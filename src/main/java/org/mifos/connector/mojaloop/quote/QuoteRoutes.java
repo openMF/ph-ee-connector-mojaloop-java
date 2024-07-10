@@ -261,6 +261,8 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
 
                     PartyIdInfo payerParty = channelRequest.getPayer().getPartyIdInfo();
                     String payerFspId = partyProperties.getPartyByTenant(exchange.getProperty(TENANT_ID, String.class)).getFspId();
+                    PartyIdInfo requestPayeePartyIdInfo = channelRequest.getPayee().getPartyIdInfo();
+                    String payeeFspId = partyProperties.getPartyByTenant(requestPayeePartyIdInfo.getFspId()).getFspId();
                     Party payer = new Party(
                             new PartyIdInfo(payerParty.getPartyIdType(),
                                     payerParty.getPartyIdentifier(),
@@ -270,12 +272,12 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                             null,
                             null);
 
-                    PartyIdInfo requestPayeePartyIdInfo = channelRequest.getPayee().getPartyIdInfo();
+
                     Party payee = new Party(
                             new PartyIdInfo(requestPayeePartyIdInfo.getPartyIdType(),
                                     requestPayeePartyIdInfo.getPartyIdentifier(),
                                     null,
-                                    exchange.getProperty(PARTY_LOOKUP_FSP_ID, String.class)),
+                                    payeeFspId),
                             null,
                             null,
                             null);

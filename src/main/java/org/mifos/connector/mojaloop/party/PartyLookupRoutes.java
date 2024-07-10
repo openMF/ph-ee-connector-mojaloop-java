@@ -81,13 +81,12 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                         .process(e -> {
                             String host = e.getIn().getHeader("Host", String.class).split(":")[0];
                             log.debug("HOST: {}", host);
-                            String tenantId = partyProperties.getPartyByDomain(host).getTenantId();
-                            log.debug("TENANT ID: {}", tenantId);
                             log.debug("Headers: {}", e.getIn().getHeaders());
                             String payeeFsp = e.getIn().getHeader(FSPIOP_DESTINATION.headerName(), String.class);
                             log.debug("Payeefsp: {}", payeeFsp);
                             log.debug("PARTIES: {}", objectMapper.writeValueAsString(partyProperties.getParties()));
-                            log.debug("PAYEE TENANT: {}", partyProperties.getPartyByDfsp(payeeFsp).getTenantId());
+                            String tenantId = partyProperties.getPartyByDomainAndFspId(host, payeeFsp).getTenantId();
+                            log.debug("PAYEE TENANT: {}", tenantId);
                                     zeebeProcessStarter.startZeebeWorkflow(partyLookupFlow.replace("{tenant}", tenantId),
                                             variables -> {
                                                 variables.put(HEADER_DATE, e.getIn().getHeader(HEADER_DATE));
@@ -141,7 +140,7 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                             new PartyIdInfo(IdentifierType.valueOf(e.getIn().getHeader(PARTY_ID_TYPE, String.class)),
                                     e.getIn().getHeader(PARTY_ID, String.class),
                                     null,
-                                    partyProperties.getPartyByDomain(host).getFspId()),
+                                    partyProperties.getPartyByDomainAndFspId(host, null).getFspId()),
                             null,
                             null,
                             null);
