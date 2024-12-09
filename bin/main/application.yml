@@ -1,0 +1,64 @@
+camel:
+  server-port: 5000
+  springboot:
+    main-run-controller: true
+  dataformat:
+    json-jackson:
+      auto-discover-object-mapper: true
+
+bpmn:
+  flows:
+    party-lookup: "PayeePartyLookup-{tenant}"
+    quote: "PayeeQuoteTransfer-{tenant}"
+    transaction-request: "PayerTransactionRequest-{tenant}"
+
+zeebe:
+  client:
+    max-execution-threads: 50
+    evenly-allocated-max-jobs: 1000
+    poll-interval: 10
+#    max-execution-threads: 100
+#    number-of-workers: 15
+#    evenly-allocated-max-jobs: "#{${zeebe.client.max-execution-threads} / ${zeebe.client.number-of-workers}}"
+  broker:
+    contactpoint: "ph-ee-zeebe:26500"
+
+connector:
+  ilp-secret: h4on38bsDjKiat2783gnklgafikmeuu5123kpobb7jm99
+
+
+mojaloop:
+  enabled: true
+  perf-mode: false
+  perf-resp-delay: 100
+
+switch:
+  quotes-host: ""
+  quote-service: quoting-service.local
+  als-host: ""
+  account-lookup-service: account-lookup-service.local
+  transfers-host: ""
+  transfer-service: ml-api-adapter.local
+  transactions-host: ""
+  transaction-request-service: transaction-request-service.local
+  oracle-host: ""
+
+dfspids: "DFSPID"
+
+logging:
+  level:
+    root: ERROR
+
+server:
+  port: 8080
+management:
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      liveness:
+        enabled: true
+      readiness:
+        enabled: true
+#      show-details: always
+

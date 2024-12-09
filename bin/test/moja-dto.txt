@@ -1,0 +1,22 @@
+QuoteSwitchResponseDTO
+{
+    "transferAmount": {
+        "amount": "1",
+        "currency": "TZS"
+    },
+    "payeeReceiveAmount": {
+        "amount": "1",
+        "currency": "TZS"
+    },
+    "payeeFspFee": {
+        "amount": "0",
+        "currency": "TZS"
+    },
+    "payeeFspCommission": {
+        "amount": "0",
+        "currency": "TZS"
+    },
+    "expiration": "2020-07-14T10:04:54.946Z",
+    "ilpPacket": "AQExIGcudHouaW4wM3RuMDYuTVNJU0ROLjI3NzEwMzA2OTk5ggHQZXlKMGNtRnVjMkZqZEdsdmJrbGtJam9pT1RObE5qUTFOR1V0T1dJNU15MDBOREV6TFRrek16VXRaRGRpT1dVNU1EaGhNalE1SWl3aWNYVnZkR1ZKWkNJNkltTmhNR05pWmpFeExXSTNZemN0TkRCbU15MWhOalJqTFdJM01XTmlaamM1WVRneU9TSXNJbkJoZVdWbElqcDdJbkJoY25SNVNXUkpibVp2SWpwN0luQmhjblI1U1dSVWVYQmxJam9pVFZOSlUwUk9JaXdpY0dGeWRIbEpaR1Z1ZEdsbWFXVnlJam9pTWpjM01UQXpNRFk1T1RraUxDSm1jM0JKWkNJNkltbHVNRE4wYmpBMkluMTlMQ0p3WVhsbGNpSTZleUp3WVhKMGVVbGtTVzVtYnlJNmV5SndZWEowZVVsa1ZIbHdaU0k2SWsxVFNWTkVUaUlzSW5CaGNuUjVTV1JsYm5ScFptbGxjaUk2SWpJM056RXdNakF6T1RrNUlpd2labk53U1dRaU9pSnBiakF4ZEc0d01TSjlmU3dpWVcxdmRXNTBJanA3SW1OMWNuSmxibU41SWpvaVZGcFRJaXdpWVcxdmRXNTBJam9pTVNKOWZRPT0=",
+    "condition": "wgPeIZ5mZi4og_NsGO-hGskxburNXD4LbszRs3BxDIg"
+}

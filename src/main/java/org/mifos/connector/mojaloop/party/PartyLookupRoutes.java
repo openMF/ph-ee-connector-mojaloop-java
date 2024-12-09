@@ -73,11 +73,6 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
         //@formatter:off
         from("rest:GET:/switch/parties/{" + PARTY_ID_TYPE + "}/{" + PARTY_ID + "}")
                 .log(LoggingLevel.DEBUG, "## SWITCH -> PAYER/PAYEE inbound GET parties - STEP 2")
-                .choice()
-                    .when(e -> mojaPerfMode)
-                        .wireTap("direct:send-delayed-party-dummy-response")
-                    .endChoice()
-                    .otherwise()
                         .process(e -> {
                             String host = e.getIn().getHeader("Host", String.class).split(":")[0];
                             log.debug("HOST: {}", host);
