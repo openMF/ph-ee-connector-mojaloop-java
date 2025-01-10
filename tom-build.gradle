@@ -18,10 +18,7 @@ repositories {
         url = uri('https://repo.maven.apache.org/maven2/')
     }
     maven {
-        url = uri('https://mifos.jfrog.io/artifactory/phee-gradle-local')
-    }    
-    maven {
-        url = uri('https://mifos.jfrog.io/artifactory/mifosx-gradle-local')
+        url = uri('https://jfrog.sandbox.fynarfin.io/artifactory/fyn-libs-snapshot')
     }
     mavenCentral()
 }
@@ -39,8 +36,8 @@ configurations.all {
 }
 
 dependencies {
-    implementation 'org.mifos:ph-ee-connector-common:1.8.1-gazelle'
-    implementation 'org.mifos:interop-ilp-conditions:1.7.1'
+    implementation 'org.mifos:ph-ee-connector-common:1.2.2-SNAPSHOT'
+    implementation 'org.mifos:interop-ilp-conditions:1.7.1-SNAPSHOT'
     implementation "org.apache.camel.springboot:camel-spring-boot-starter:$camelVersion"
     implementation "org.apache.camel:camel-undertow:$camelVersion"
     implementation 'org.apache.camel.springboot:camel-jackson-starter:3.16.0'
@@ -79,8 +76,4 @@ tasks.withType(JavaCompile) {
 
 test {
     useJUnitPlatform()
-}
-
-bootRun {
-    systemProperty "logging.level.root", "ERROR"
 }
