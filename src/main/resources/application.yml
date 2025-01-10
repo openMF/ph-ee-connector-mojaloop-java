@@ -62,3 +62,8 @@ management:
       readiness:
         enabled: true
 
+security:
+  jws:
+    enable: false
+    response:
+      enable: false
