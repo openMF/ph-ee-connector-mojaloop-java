@@ -1,0 +1,7 @@
+parties:
+  - tenantId: gorilla
+    fspId: payerfsp
+    domain: ""
+  - tenantId: lion
+    fspId: payeefsp
+    domain: ""

@@ -1,0 +1,7 @@
+parties:
+  - tenantId: tn01
+    fspId: in01tn01
+    domain: in01tn01.mifos.io
+  - tenantId: tn02
+    fspId: in01tn02
+    domain: in01tn02.mifos.io

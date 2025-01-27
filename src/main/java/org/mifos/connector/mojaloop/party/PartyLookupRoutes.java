@@ -72,7 +72,7 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
     public void configure() {
         //@formatter:off
         from("rest:GET:/switch/parties/{" + PARTY_ID_TYPE + "}/{" + PARTY_ID + "}")
-                .log(LoggingLevel.DEBUG, "## SWITCH -> PAYER/PAYEE inbound GET parties - STEP 2")
+                .log(LoggingLevel.INFO, "## FRED1 SWITCH -> PAYER/PAYEE inbound GET parties - STEP 2")
                 .choice()
                     .when(e -> mojaPerfMode)
                         .wireTap("direct:send-delayed-party-dummy-response")
@@ -80,13 +80,15 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                     .otherwise()
                         .process(e -> {
                             String host = e.getIn().getHeader("Host", String.class).split(":")[0];
-                            log.debug("HOST: {}", host);
-                            log.debug("Headers: {}", e.getIn().getHeaders());
+                            log.info("FRED1:" );
+                            
+                            log.info("HOST: {}", host);
+                            log.info("Headers: {}", e.getIn().getHeaders());
                             String payeeFsp = e.getIn().getHeader(FSPIOP_DESTINATION.headerName(), String.class);
-                            log.debug("Payeefsp: {}", payeeFsp);
-                            log.debug("PARTIES: {}", objectMapper.writeValueAsString(partyProperties.getParties()));
+                            log.info("Payeefsp: {}", payeeFsp);
+                            log.info("PARTIES: {}", objectMapper.writeValueAsString(partyProperties.getParties()));
                             String tenantId = partyProperties.getPartyByDomainAndFspId(host, payeeFsp).getTenantId();
-                            log.debug("PAYEE TENANT: {}", tenantId);
+                            log.info("PAYEE TENANT: {}", tenantId);
                                     zeebeProcessStarter.startZeebeWorkflow(partyLookupFlow.replace("{tenant}", tenantId),
                                             variables -> {
                                                 variables.put(HEADER_DATE, e.getIn().getHeader(HEADER_DATE));

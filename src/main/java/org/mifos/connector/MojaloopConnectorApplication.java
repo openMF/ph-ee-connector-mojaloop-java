@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.web.servlet.ServletRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import javax.annotation.PostConstruct;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.CUSTOM_HEADER_FILTER_STRATEGY;
@@ -65,4 +66,5 @@ public class MojaloopConnectorApplication {
     public CustomHeaderFilterStrategy headerFilterStrategy() {
         return new CustomHeaderFilterStrategy();
     }
+
 }

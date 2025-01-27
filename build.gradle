@@ -83,4 +83,6 @@ test {
 
 bootRun {
     systemProperty "logging.level.root", "ERROR"
+    systemProperty "spring.profiles.active", "med"
+    
 }
