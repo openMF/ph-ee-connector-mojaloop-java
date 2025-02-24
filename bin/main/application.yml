@@ -37,14 +37,14 @@ switch:
   quotes-host: ""
   quote-service: quoting-service.local
   als-host: ""
-  account-lookup-service: account-lookup-service.local
+  account-lookup-service: fspiop.mifos.gazelle.test
   transfers-host: ""
   transfer-service: ml-api-adapter.local
   transactions-host: ""
   transaction-request-service: transaction-request-service.local
-  oracle-host: ""
+  oracle-host: "fred-oracle.mifos.gazelle.test/_interop"
 
-dfspids: "DFSPID"
+dfspids: "greenbank,bluebank"
 
 logging:
   level:

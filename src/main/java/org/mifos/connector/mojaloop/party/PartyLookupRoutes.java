@@ -109,7 +109,7 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                         )
                     .endChoice()
                 .end()
-                .setBody(constant(null))
+                .setBody(constant("Party lookup workflow started successfully"))
                 .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(202));
         //@formatter:on
 
@@ -151,28 +151,30 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                 .to("direct:send-parties-response");
 
         from("direct:send-parties-response")
-                .log(LoggingLevel.DEBUG, "######## PAYEE -> SWITCH - party lookup response - STEP 3")
+                .log(LoggingLevel.INFO, "######## PAYEE -> SWITCH - party lookup response - STEP 3")
                 .id("send-parties-response")
                 .process(exchange -> {
+                    log.info("FRED-send-parties step3"); 
                     Party party = objectMapper.readValue(exchange.getProperty(PAYEE_PARTY_RESPONSE, String.class), Party.class);
-
                     exchange.setProperty(PARTY_ID, party.getPartyIdInfo().getPartyIdentifier());
                     exchange.setProperty(PARTY_ID_TYPE, party.getPartyIdInfo().getPartyIdType().name());
                     exchange.getIn().setBody(new PartySwitchResponseDTO(party));
                     mojaloopUtil.setPartyHeadersResponse(exchange);
+                    log.info("FRED-send-parties step3a"); 
                 })
                 .process(pojoToString)
-                .log(LoggingLevel.DEBUG, "Party response from payee: ${body}")
-                .setHeader(Exchange.HTTP_METHOD, constant("PUT"))
+                .log(LoggingLevel.INFO, "Party response from payee: ${body}")
+                .setHeader(Exchange.HTTP_METHOD, constant("GET"))
                 .setProperty(ENDPOINT, simple("/parties/${exchangeProperty." + PARTY_ID_TYPE + "}/${exchangeProperty." + PARTY_ID + "}"))
                 .to("direct:external-api-call");
 
         from("direct:send-parties-error-response")
-                .log(LoggingLevel.DEBUG, "######## PAYEE -> SWITCH - party lookup error response - STEP 3")
+                .log(LoggingLevel.INFO, "######## PAYEE -> SWITCH - party lookup error response - STEP 3")
                 .id("send-parties-error-response")
                 .process(exchange -> {
                     exchange.getIn().setBody(exchange.getProperty(ERROR_INFORMATION));
                     mojaloopUtil.setPartyHeadersResponse(exchange);
+                    log.info("TDDEBUG15: error response path" ); 
                 })
                 .setHeader(Exchange.HTTP_METHOD, constant("PUT"))
                 .setProperty(HOST, simple("{{switch.als-host}}"))
@@ -181,15 +183,17 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
 
         from("direct:send-party-lookup")
                 .id("send-party-lookup")
-                .log(LoggingLevel.DEBUG, "######## PAYER -> SWITCH - party lookup request - STEP 1")
+                .log(LoggingLevel.INFO, "######## PAYER -> SWITCH - party lookup request - STEP 1")
                 .process(e -> {
+
                     TransactionChannelRequestDTO channelRequest = objectMapper.readValue(e.getProperty(CHANNEL_REQUEST, String.class), TransactionChannelRequestDTO.class);
                     PartyIdInfo requestedParty = e.getProperty(IS_RTP_REQUEST, Boolean.class) ? channelRequest.getPayer().getPartyIdInfo() : channelRequest.getPayee().getPartyIdInfo();
                     e.setProperty(PARTY_ID_TYPE, requestedParty.getPartyIdType());
                     e.setProperty(PARTY_ID, requestedParty.getPartyIdentifier());
                     e.getIn().setHeader(FSPIOP_SOURCE.headerName(), partyProperties.getPartyByTenant(e.getProperty(TENANT_ID, String.class)).getFspId());
-
+                    log.info("TDDEBUG13: headers : {}", e.getIn().getHeaders()); 
                     mojaloopUtil.setPartyHeadersRequest(e);
+                    log.info("TDDEBUG14: after setting  headers in mojaloopUtils : {}", e.getIn().getHeaders()); 
                 })
                 .process(addTraceHeaderProcessor)
                 .setHeader(Exchange.HTTP_METHOD, constant("GET"))
@@ -197,6 +201,6 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                 .setProperty(HOST, simple("{{switch.als-host}}"))
                 .setProperty(ENDPOINT, simple("/parties/${exchangeProperty." + PARTY_ID_TYPE + "}/${exchangeProperty." + PARTY_ID + "}"))
                 .to("direct:external-api-call")
-                .log(LoggingLevel.DEBUG,"Response body: ${body}");
+                .log(LoggingLevel.INFO,"FRED-RESP Response body: ${body}");
     }
 }

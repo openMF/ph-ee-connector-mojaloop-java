@@ -39,6 +39,7 @@ public class MojaloopUtil {
         headers.put(FSPIOP_SOURCE.headerName(), exchange.getIn().getHeader(FSPIOP_SOURCE.headerName()));
         headers.put(FSPIOP_DESTINATION.headerName(), exchange.getIn().getHeader(FSPIOP_SOURCE.headerName()));
         headers.put(HEADER_CONTENT_TYPE, PARTIES_CONTENT_TYPE.headerValue());
+        System.out.println("TDDEBUG10 : PARTIES_CONTENT_TYPE.headerValue()" + PARTIES_CONTENT_TYPE.headerValue());
         headers.put(HEADER_ACCEPT, PARTIES_ACCEPT_TYPE.headerValue());
         headers.put(HEADER_HOST, accountLookupService);
         setResponseTraceHeaders(exchange, headers);
@@ -49,6 +50,7 @@ public class MojaloopUtil {
         Map<String, Object> headers = new HashMap<>();
         headers.put(FSPIOP_SOURCE.headerName(), exchange.getIn().getHeader(FSPIOP_SOURCE.headerName()));
         headers.put(HEADER_CONTENT_TYPE, PARTIES_CONTENT_TYPE.headerValue());
+        System.out.println("TDDEBUG11 : PARTIES_CONTENT_TYPE.headerValue()" + PARTIES_CONTENT_TYPE.headerValue());
         headers.put(HEADER_ACCEPT, PARTIES_ACCEPT_TYPE.headerValue());
         headers.put(HEADER_HOST, accountLookupService);
         finalizeHeaders(exchange, headers);

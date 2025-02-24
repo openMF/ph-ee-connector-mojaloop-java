@@ -35,16 +35,16 @@ mojaloop:
 
 switch:
   quotes-host: ""
-  quote-service: quoting-service.local
+  quote-service: quoting-service.fred
   als-host: ""
-  account-lookup-service: account-lookup-service.local
+  account-lookup-service: fspiop.mifos.gazelle.test
   transfers-host: ""
-  transfer-service: ml-api-adapter.local
+  transfer-service: ml-api-adapter.fred
   transactions-host: ""
-  transaction-request-service: transaction-request-service.local
+  transaction-request-service: transaction-request-service.fred
   oracle-host: ""
 
-dfspids: "DFSPID"
+dfspids: "greenbank,bluebank"
 
 logging:
   level:

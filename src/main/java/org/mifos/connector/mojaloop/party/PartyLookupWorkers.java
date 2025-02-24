@@ -122,8 +122,9 @@ public class PartyLookupWorkers {
                     .jobType(WORKER_PARTY_LOOKUP_LOCAL_RESPONSE + dfspId)
                     .handler((client, job) -> {
                         logger.info("Job '{}' started from process '{}' with key {}", job.getType(), job.getBpmnProcessId(), job.getKey());
+                        logger.info("TDDEBUG-ML1");
                         Map<String, Object> existingVariables = job.getVariablesAsMap();
-
+                        logger.info("TDDEBUG-ML2-VARS {} ", existingVariables);
                         Exchange exchange = new DefaultExchange(camelContext);
                         Object errorInformation = existingVariables.get(ERROR_INFORMATION);
 
@@ -132,27 +133,30 @@ public class PartyLookupWorkers {
                                 HEADER_TRACEPARENT,
                                 HEADER_DATE
                         );
-
+                        logger.info("TDDEBUG-ML3");
                         if (errorInformation != null) {
-
+                            logger.info("TDDEBUG-ML4");
                             exchange.setProperty(ERROR_INFORMATION, errorInformation);
                             exchange.setProperty(PARTY_ID_TYPE, existingVariables.get(PARTY_ID_TYPE));
                             exchange.setProperty(PARTY_ID, existingVariables.get(PARTY_ID));
 
-                            logger.debug("Error info: {}", objectMapper.writeValueAsString(errorInformation));
-                            logger.debug("Zeebe variables: {}", existingVariables);
+                            logger.info("Error info: {}", objectMapper.writeValueAsString(errorInformation));
+                            logger.info("TDDEBUG-ERROR - Zeebe variables: {}", existingVariables);
                             producerTemplate.send("direct:send-parties-error-response", exchange);
                         } else {
-
+                            logger.info("TDDEBUG-NO-ERROR - Zeebe variables: {}", existingVariables);
                             exchange.setProperty(PAYEE_PARTY_RESPONSE, existingVariables.get(PAYEE_PARTY_RESPONSE));
+
                             exchange.setProperty(HOST, existingVariables.get("X-Lookup-Callback-Url"));
-
+                            logger.info("TDDEBUG-NO-ERROR-2");
                             producerTemplate.send("direct:send-parties-response", exchange);
+                            logger.info("TDDEBUG-NO-ERROR-2a");
                         }
-
+                        logger.info("TDDEBUG-ML5a");
                         client.newCompleteCommand(job.getKey())
                                 .send()
                         ;
+                        logger.info("TDDEBUG-ML6a");
                     })
                     .name(WORKER_PARTY_LOOKUP_LOCAL_RESPONSE + dfspId)
                     .maxJobsActive(workerMaxJobs)
