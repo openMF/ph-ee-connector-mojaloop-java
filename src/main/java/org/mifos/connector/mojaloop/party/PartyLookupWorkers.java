@@ -76,7 +76,7 @@ public class PartyLookupWorkers {
             zeebeClient.newWorker()
                     .jobType(WORKER_PARTY_LOOKUP_REQUEST + dfspId)
                     .handler((client, job) -> {
-                        logger.info("Job '{}' started from process '{}' with key {}", job.getType(), job.getBpmnProcessId(), job.getKey());
+                        logger.info("TOMD Job '{}' started from process '{}' with key {}", job.getType(), job.getBpmnProcessId(), job.getKey());
                         Map<String, Object> existingVariables = job.getVariablesAsMap();
                         existingVariables.put(PARTY_LOOKUP_RETRY_COUNT, 1 + (Integer) existingVariables.getOrDefault(PARTY_LOOKUP_RETRY_COUNT, -1));
 
@@ -93,6 +93,7 @@ public class PartyLookupWorkers {
 
                         Exchange exchange = new DefaultExchange(camelContext);
                         if (isMojaloopEnabled) {
+                            logger.info("TOMD-MOJALOOP-IS_ENABLED");
                             exchange.setProperty(TRANSACTION_ID, existingVariables.get(TRANSACTION_ID));
                             exchange.setProperty(CHANNEL_REQUEST, channelRequest);
                             exchange.setProperty(ORIGIN_DATE, existingVariables.get(ORIGIN_DATE));
@@ -144,19 +145,17 @@ public class PartyLookupWorkers {
                             logger.info("TDDEBUG-ERROR - Zeebe variables: {}", existingVariables);
                             producerTemplate.send("direct:send-parties-error-response", exchange);
                         } else {
-                            logger.info("TDDEBUG-NO-ERROR - Zeebe variables: {}", existingVariables);
+                            logger.info("TDDEBUG-ERROR_INFO-ISNULL - Zeebe variables: {}", existingVariables);
                             exchange.setProperty(PAYEE_PARTY_RESPONSE, existingVariables.get(PAYEE_PARTY_RESPONSE));
 
                             exchange.setProperty(HOST, existingVariables.get("X-Lookup-Callback-Url"));
-                            logger.info("TDDEBUG-NO-ERROR-2");
                             producerTemplate.send("direct:send-parties-response", exchange);
-                            logger.info("TDDEBUG-NO-ERROR-2a");
                         }
-                        logger.info("TDDEBUG-ML5a");
+                        logger.info("TOMD-ABOUT_TO_COMPLETE-WF");
                         client.newCompleteCommand(job.getKey())
                                 .send()
                         ;
-                        logger.info("TDDEBUG-ML6a");
+                        logger.info("TOMD-COMPLETED-WF");
                     })
                     .name(WORKER_PARTY_LOOKUP_LOCAL_RESPONSE + dfspId)
                     .maxJobsActive(workerMaxJobs)

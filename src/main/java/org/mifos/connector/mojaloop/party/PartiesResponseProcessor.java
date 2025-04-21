@@ -39,6 +39,7 @@ public class PartiesResponseProcessor implements Processor {
             PartySwitchResponseDTO response = exchange.getIn().getBody(PartySwitchResponseDTO.class);
             variables.put(PARTY_LOOKUP_FSP_ID, response.getParty().getPartyIdInfo().getFspId());
             variables.put(PARTY_LOOKUP_FAILED, false);
+            logger.info("TOMD-RESP1 party lookup worked ok for fspId: {}", response.getParty().getPartyIdInfo().getFspId());
         }
 
         if(zeebeClient != null) {

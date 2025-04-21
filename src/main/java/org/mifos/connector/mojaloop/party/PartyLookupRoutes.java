@@ -72,7 +72,7 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
     public void configure() {
         //@formatter:off
         from("rest:GET:/switch/parties/{" + PARTY_ID_TYPE + "}/{" + PARTY_ID + "}")
-                .log(LoggingLevel.INFO, "## FRED1 SWITCH -> PAYER/PAYEE inbound GET parties - STEP 2")
+                .log(LoggingLevel.INFO, "## SWITCH -> PAYER/PAYEE inbound GET parties - STEP 2")
                 .choice()
                     .when(e -> mojaPerfMode)
                         .wireTap("direct:send-delayed-party-dummy-response")
@@ -80,13 +80,12 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                     .otherwise()
                         .process(e -> {
                             String host = e.getIn().getHeader("Host", String.class).split(":")[0];
-                            log.info("FRED1:" );
+                            log.info("TOMD1  Host: {} ", host  );
                             
-                            log.info("HOST: {}", host);
+                            //log.info("HOST: {}", host);
                             log.info("Headers: {}", e.getIn().getHeaders());
                             String payeeFsp = e.getIn().getHeader(FSPIOP_DESTINATION.headerName(), String.class);
                             log.info("Payeefsp: {}", payeeFsp);
-                            log.info("PARTIES: {}", objectMapper.writeValueAsString(partyProperties.getParties()));
                             String tenantId = partyProperties.getPartyByDomainAndFspId(host, payeeFsp).getTenantId();
                             log.info("PAYEE TENANT: {}", tenantId);
                                     zeebeProcessStarter.startZeebeWorkflow(partyLookupFlow.replace("{tenant}", tenantId),
@@ -117,11 +116,17 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                 .setProperty(CLASS_TYPE, constant(PartySwitchResponseDTO.class))
                 .to("direct:body-unmarshling")
                 .process(getCachedTransactionIdProcessor)
+                .process(e -> {
+                    log.info("TOMD-HOW_DID_WE_GET_HERE ");
+                })
                 .to("direct:parties-step4");
 
         from("direct:parties-step4")
                 .log(LoggingLevel.DEBUG, "######## SWITCH -> PAYER - response for parties request  - STEP 4")
                 .process(partiesResponseProcessor)
+                .process(e -> {
+                    log.info("TOMD-parties-step4 ");
+                })
                 .setBody(constant(null))
                 .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(200));
 
@@ -154,16 +159,20 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                 .log(LoggingLevel.INFO, "######## PAYEE -> SWITCH - party lookup response - STEP 3")
                 .id("send-parties-response")
                 .process(exchange -> {
-                    log.info("FRED-send-parties step3"); 
+                    log.info("TOMD-send-parties-start  step3 "); 
                     Party party = objectMapper.readValue(exchange.getProperty(PAYEE_PARTY_RESPONSE, String.class), Party.class);
                     exchange.setProperty(PARTY_ID, party.getPartyIdInfo().getPartyIdentifier());
                     exchange.setProperty(PARTY_ID_TYPE, party.getPartyIdInfo().getPartyIdType().name());
                     exchange.getIn().setBody(new PartySwitchResponseDTO(party));
+                    log.info("TOMD: step3 host  {}", exchange.getProperty(HOST));
+                    log.info("TOMD: step3 request {}", exchange.getIn().getHeaders() );
+                    log.info("TOMD: step3 body {}", exchange.getIn().getBody() ) ;
+                    
                     mojaloopUtil.setPartyHeadersResponse(exchange);
-                    log.info("FRED-send-parties step3a"); 
+                    log.info("TOMD-send-parties-end step3a"); 
                 })
                 .process(pojoToString)
-                .log(LoggingLevel.INFO, "Party response from payee: ${body}")
+                .log(LoggingLevel.INFO, "TOMD-Party response from payee: ${body}")
                 .setHeader(Exchange.HTTP_METHOD, constant("GET"))
                 .setProperty(ENDPOINT, simple("/parties/${exchangeProperty." + PARTY_ID_TYPE + "}/${exchangeProperty." + PARTY_ID + "}"))
                 .to("direct:external-api-call");
@@ -191,9 +200,9 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                     e.setProperty(PARTY_ID_TYPE, requestedParty.getPartyIdType());
                     e.setProperty(PARTY_ID, requestedParty.getPartyIdentifier());
                     e.getIn().setHeader(FSPIOP_SOURCE.headerName(), partyProperties.getPartyByTenant(e.getProperty(TENANT_ID, String.class)).getFspId());
-                    log.info("TDDEBUG13: headers : {}", e.getIn().getHeaders()); 
+                    log.info("TOMD-SEND_PARTY_LOOKUP: headers : {}", e.getIn().getHeaders()); 
                     mojaloopUtil.setPartyHeadersRequest(e);
-                    log.info("TDDEBUG14: after setting  headers in mojaloopUtils : {}", e.getIn().getHeaders()); 
+                    log.info("TOMD-SEND_PARTY_LOOKUP: after setting  headers in mojaloopUtils : {}", e.getIn().getHeaders()); 
                 })
                 .process(addTraceHeaderProcessor)
                 .setHeader(Exchange.HTTP_METHOD, constant("GET"))

@@ -36,8 +36,8 @@ mojaloop:
 switch:
   quotes-host: ""
   quote-service: quoting-service.fred
-  als-host: ""
-  account-lookup-service: fspiop.mifos.gazelle.test
+  als-host: http://vnextadmin.mifos.gazelle.test/_interop
+  account-lookup-service: http://vnextadmin.mifos.gazelle.test/_interop
   transfers-host: ""
   transfer-service: ml-api-adapter.fred
   transactions-host: ""
@@ -46,9 +46,14 @@ switch:
 
 dfspids: "greenbank,bluebank"
 
-logging:
-  level:
-    root: DEBUG
+# logging:
+#   level:
+#     root: DEBUG
+#     org:
+#       apache:
+#         camel: DEBUG
+
+
 
 server:
   port: 8080
