@@ -1,5 +1,13 @@
+# parties:
+#   - tenantId: greenbank
+#     fspId: greenbank
+#     domain: ph-ee-connector-mojaloop-java.paymenthub.svc.cluster.local
+#   - tenantId: bluebank
+#     fspId: bluebank
+#     domain: ph-ee-connector-mojaloop-java.paymenthub.svc.cluster.local
+
 camel:
-  server-port: 5001
+  server-port: 5000
   springboot:
     main-run-controller: true
   dataformat:
@@ -9,8 +17,10 @@ camel:
 bpmn:
   flows:
     party-lookup: "PayeePartyLookup-{tenant}"
+    #party-lookup: "PartyLookup-{tenant}" #party-lookup-DFSPID.bpmn
+    #party-lookup: "PayerFundTransfer-{dfspid}"
     quote: "PayeeQuoteTransfer-{tenant}"
-    transaction-request: "PayerTransactionRequest-{tenant}"
+    transaction-request: "PayerTransactionRequest-{tenant}" #payer-transaction-request-DFSPID.bpmn
 
 zeebe:
   client:
@@ -34,13 +44,13 @@ mojaloop:
   perf-resp-delay: 100
 
 switch:
-  quotes-host: ""
-  quote-service: quoting-service.fred
-  als-host: http://vnextadmin.mifos.gazelle.test/_interop
-  account-lookup-service: http://vnextadmin.mifos.gazelle.test/_interop
+  quotes-host: "http://fspiop-api-svc:4000"
+  quote-service:  http://fspiop-api-svc:4000/quotes
+  als-host: http://fspiop-api-svc:4000
+  account-lookup-service: http://fspiop-api-svc:4000
   transfers-host: ""
   transfer-service: ml-api-adapter.fred
-  transactions-host: ""
+  transactions-host: http://fspiop-api-svc:4000
   transaction-request-service: transaction-request-service.fred
   oracle-host: ""
 
@@ -59,6 +69,9 @@ server:
   port: 8080
 management:
   endpoint:
+    web:
+      exposure:
+        include: health,info,camelroutes
     health:
       enabled: true
       probes:

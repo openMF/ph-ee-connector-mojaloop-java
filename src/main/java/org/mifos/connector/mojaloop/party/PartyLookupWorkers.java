@@ -71,15 +71,20 @@ public class PartyLookupWorkers {
 
     @PostConstruct
     public void setupWorkers() {
+        logger.info("Logging all dfspids:");
+        dfspids.forEach(dfspId -> logger.info("TOMD dfspid: {}", dfspId));
         for (String dfspId : dfspids) {
             logger.info("## generating " + WORKER_PARTY_LOOKUP_REQUEST + "{} zeebe worker", dfspId);
             zeebeClient.newWorker()
                     .jobType(WORKER_PARTY_LOOKUP_REQUEST + dfspId)
                     .handler((client, job) -> {
-                        logger.info("TOMD Job '{}' started from process '{}' with key {}", job.getType(), job.getBpmnProcessId(), job.getKey());
+                        logger.info("TOMD Job '{}' started from process '{}' ProcessKey {} with Jobkey {}", job.getType(), job.getBpmnProcessId(), job.getProcessInstanceKey(), job.getKey());
+                        logger.info("TOMD WORKER-PARTY-LOOKUP-REQUEST"); 
                         Map<String, Object> existingVariables = job.getVariablesAsMap();
+                        
                         existingVariables.put(PARTY_LOOKUP_RETRY_COUNT, 1 + (Integer) existingVariables.getOrDefault(PARTY_LOOKUP_RETRY_COUNT, -1));
-
+                        logger.info("Logging existing variables:");
+                        existingVariables.forEach((key, value) -> logger.info("TOMD LOOKUP WORKER VARS {}: {}", key, value));
                         boolean isTransactionRequest = (boolean) existingVariables.get(IS_RTP_REQUEST);
                         String tenantId = (String) existingVariables.get(TENANT_ID);
                         Object channelRequest = existingVariables.get(CHANNEL_REQUEST);
@@ -99,6 +104,7 @@ public class PartyLookupWorkers {
                             exchange.setProperty(ORIGIN_DATE, existingVariables.get(ORIGIN_DATE));
                             exchange.setProperty(IS_RTP_REQUEST, isTransactionRequest);
                             exchange.setProperty(TENANT_ID, tenantId);
+                            logger.info("TOMD6-send-party-lookup props {} ", exchange.getProperties());
                             producerTemplate.send("direct:send-party-lookup", exchange);
                         } else {
                             PartyIdInfo partyIdInfo = new PartyIdInfo(MSISDN, "27710305999", null, "in03tn05");

@@ -98,6 +98,7 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                                 QuoteSwitchRequestDTO request = exchange.getIn().getBody(QuoteSwitchRequestDTO.class);
                                 PartyIdInfo payee = request.getPayee().getPartyIdInfo();
                                 String tenantId = partyProperties.getPartyByDfsp(payee.getFspId()).getTenantId();
+                                logger.info("TOMD-post-/switchquotes"); 
 
                                 zeebeProcessStarter.startZeebeWorkflow(quoteFlow.replace("{tenant}", tenantId),
                                         variables -> {
@@ -159,19 +160,20 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
 
 
         from("rest:PUT:/switch/quotes/{" + QUOTE_ID + "}")
+                .log(LoggingLevel.INFO, "TOMD ######## put /switch/quotes/${header.QUOTE_ID} - quote callback")
                 .setProperty(CLASS_TYPE, constant(QuoteCallbackDTO.class))
                 .to("direct:body-unmarshling")
                 .process(exchange -> logger.debug("Received callback: {}", objectMapper.writeValueAsString(exchange.getIn().getBody(QuoteCallbackDTO.class))))
                 .to("direct:quotes-step4");
 
         from("direct:quotes-step4")
-                .log(LoggingLevel.DEBUG, "######## SWITCH -> PAYER - response for quote request - STEP 4")
+                .log(LoggingLevel.INFO, "TOMD ######## SWITCH -> PAYER - response for quote request - STEP 4")
                 .process(quoteResponseProcessor)
                 .setBody(constant(null))
                 .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(200));
 
         from("rest:PUT:/switch/quotes/{" + QUOTE_ID + "}/error")
-                .log(LoggingLevel.ERROR, "######## SWITCH -> PAYER - quote error")
+                .log(LoggingLevel.INFO, "######## SWITCH -> PAYER - quote error")
                 .log(LoggingLevel.DEBUG,"Body: ${body}")
                 .setProperty(QUOTE_FAILED, constant(true))
                 .process(quoteResponseProcessor)
@@ -193,11 +195,12 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
 
         from("direct:send-quote-to-switch")
                 .id("send-quote-to-switch")
-                .log(LoggingLevel.DEBUG, "######## PAYEE -> SWITCH - response for quote request - STEP 3")
+                .log(LoggingLevel.INFO, "######## PAYEE -> SWITCH - response for quote request - STEP 3")
                 //.unmarshal().json(JsonLibrary.Jackson, QuoteSwitchRequestDTO.class)
                 .setProperty(CLASS_TYPE, constant(QuoteSwitchRequestDTO.class))
                 .to("direct:body-unmarshling")
                 .process(exchange -> {
+                    logger.info("TOMD ######## PAYEE -> SWITCH - response for quote request - STEP 3");
                     QuoteSwitchRequestDTO request = exchange.getIn().getBody(QuoteSwitchRequestDTO.class);
                     MoneyData requestAmount = request.getAmount();
                     stripAmount(requestAmount);
@@ -243,23 +246,28 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                     mojaloopUtil.setQuoteHeadersResponse(exchange, request);
                 })
                 .process(pojoToString)
-                .log(LoggingLevel.DEBUG, "Quote response from payee: ${body}")
+                .log(LoggingLevel.INFO, "Quote response from payee: ${body}")
                 .setHeader(Exchange.HTTP_METHOD, constant("PUT"))
                 .setProperty(ENDPOINT, simple("/quotes/${exchangeProperty." + QUOTE_ID + "}"))
                 .to("direct:external-api-call");
 
         from("direct:send-quote")
                 .id("send-quote")
-                .log(LoggingLevel.DEBUG, "######## PAYER -> SWITCH - quote request - STEP 1")
+                .log(LoggingLevel.INFO, "######## PAYER -> SWITCH - quote request - STEP 1")
                 .process(exchange -> {
                     TransactionChannelRequestDTO channelRequest = objectMapper.readValue(exchange.getProperty(CHANNEL_REQUEST, String.class), TransactionChannelRequestDTO.class);
-                    logger.debug("Channel request: {}", channelRequest);
+                    logger.info("TOMD Channel request: {}", channelRequest);
                     TransactionType transactionType = new TransactionType();
                     transactionType.setInitiator(channelRequest.getTransactionType().getInitiator());
                     transactionType.setInitiatorType(channelRequest.getTransactionType().getInitiatorType());
                     transactionType.setScenario(channelRequest.getTransactionType().getScenario());
 
                     PartyIdInfo payerParty = channelRequest.getPayer().getPartyIdInfo();
+                    // TOMD: The payer and payeeFSpId should come from the channelRequest object as they appear to be reliably sent 
+                    //       this issue is that this needs a change to the connector-common TransactionChannelRequestDTO object
+                    //       to support this.  Making this modifiucation would reduce the need for seperate party properties 
+                    //       config in the connector-mojaloop project.
+                    logger.info("TOMD Quote Payer party: {}", payerParty);
                     String payerFspId = partyProperties.getPartyByTenant(exchange.getProperty(TENANT_ID, String.class)).getFspId();
                     PartyIdInfo requestPayeePartyIdInfo = channelRequest.getPayee().getPartyIdInfo();
                     String payeeFspId = partyProperties.getPartyByTenant(requestPayeePartyIdInfo.getFspId()).getFspId();

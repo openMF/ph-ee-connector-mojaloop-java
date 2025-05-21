@@ -13,7 +13,8 @@ apply plugin: 'java'
 apply plugin: 'io.spring.dependency-management'
 
 repositories {
-    mavenLocal()
+    mavenCentral()
+    // mavenLocal()
     maven {
         url = uri('https://repo.maven.apache.org/maven2/')
     }
@@ -23,7 +24,6 @@ repositories {
     maven {
         url = uri('https://mifos.jfrog.io/artifactory/mifosx-gradle-local')
     }
-    mavenCentral()
 }
 
 ext {

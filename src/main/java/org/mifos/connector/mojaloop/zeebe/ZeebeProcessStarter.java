@@ -21,6 +21,7 @@ public class ZeebeProcessStarter {
     private ZeebeClient zeebeClient;
 
     public void startZeebeWorkflow(String workflowId, Consumer<Map<String, Object>> variablesLambda) {
+        logger.info("TOMD Starting zeebe workflow {}", workflowId);
         Map<String, Object> variables = new HashMap<>();
         variables.put(ZeebeVariables.ORIGIN_DATE, Instant.now().toEpochMilli());
         variablesLambda.accept(variables);

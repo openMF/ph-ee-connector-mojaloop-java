@@ -31,6 +31,7 @@ public class PartiesResponseProcessor implements Processor {
     public void process(Exchange exchange) {
         Map<String, Object> variables = new HashMap<>();
         Object isPayeePartyLookupFailed = exchange.getProperty(PARTY_LOOKUP_FAILED);
+        logger.info("TOMD-RESP1a isPayeePartyLookupFailed: {}", isPayeePartyLookupFailed);
         String error = exchange.getIn().getBody(String.class);
         if (isPayeePartyLookupFailed != null && (boolean) isPayeePartyLookupFailed) {
             variables.put(ERROR_INFORMATION, error);

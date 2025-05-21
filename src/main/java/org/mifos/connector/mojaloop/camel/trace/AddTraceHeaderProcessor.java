@@ -14,7 +14,7 @@ import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.TRANSACTION_ID;
 
 @Component
 public class AddTraceHeaderProcessor implements Processor {
-
+    public static String GAZELLE_GT = "";
     /**
      * Adds Date and traceparent headers for every outgoing request to mojaloop.
      * Date: https://tools.ietf.org/html/rfc7231#section-7.1.1.1
@@ -31,6 +31,9 @@ public class AddTraceHeaderProcessor implements Processor {
         String traceParent = String.join("-", "00", transactionIdTrimed, transactionIdKey, "01");
 
         exchange.getIn().setHeader(HEADER_TRACEPARENT, traceParent);
+        GAZELLE_GT = traceParent;
+
+
         exchange.getIn().setHeader(HEADER_TRACESTATE, "ph=" + Base64.getEncoder().encodeToString(transactionIdKey.getBytes()));
         exchange.getIn().setHeader(HEADER_DATE,
                 ContextUtil.formatToDateHeader(exchange.getProperty(ORIGIN_DATE, Long.class)));
