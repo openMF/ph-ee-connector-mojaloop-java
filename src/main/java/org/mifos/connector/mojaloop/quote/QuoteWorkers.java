@@ -100,8 +100,11 @@ public class QuoteWorkers {
                             TransactionChannelRequestDTO channelRequest = objectMapper.readValue((String) existingVariables.get(CHANNEL_REQUEST), TransactionChannelRequestDTO.class);
                             QuoteSwitchResponseDTO response = new QuoteSwitchResponseDTO();
                             response.setTransferAmount(channelRequest.getAmount());
-                            response.setPayeeFspFee(new FspMoneyData(BigDecimal.ZERO, channelRequest.getAmount().getCurrency()).toMoneyData());
-                            response.setPayeeFspCommission(new FspMoneyData(BigDecimal.ZERO, channelRequest.getAmount().getCurrency()).toMoneyData());
+                            //TOMD TODO: the quote response does not seem to like zero value for payeeFspFee (returns 400 for the PUT operation)
+                            //   this is likely a bug in vNext , but largely irrelevant for us in the future so we set it to non zero here
+                            //  Also TODO: where should this be set ideally ?? 
+                            response.setPayeeFspFee(new FspMoneyData(new BigDecimal("0.5"), channelRequest.getAmount().getCurrency()).toMoneyData());
+                            response.setPayeeFspCommission(new FspMoneyData(new BigDecimal("0.5"), channelRequest.getAmount().getCurrency()).toMoneyData());
                             response.setExpiration("never");
                             response.setIlpPacket("ilp");
                             response.setCondition("condition");
@@ -158,7 +161,8 @@ public class QuoteWorkers {
                                     LOCAL_QUOTE_RESPONSE
                             );
                             // exchange.setProperty(HOST, "http://" + existingVariables.get("X-Quote-Callback-Url"));
-                            exchange.setProperty(HOST, "http://vnextadmin.mifos.gazelle.test/_interop");
+                            // TOMD: TODO: remove hardcoded URL
+                            exchange.setProperty(HOST, "http://fspiop-api-svc.vnext.svc.cluster.local:4000");
                             logger.info("TOMD worker quote response {} ", exchange.getIn().getHeaders());
                             producerTemplate.send("direct:send-quote-to-switch", exchange);
                         }

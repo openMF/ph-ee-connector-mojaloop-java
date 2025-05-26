@@ -44,17 +44,17 @@ mojaloop:
   perf-resp-delay: 100
 
 switch:
-  quotes-host: "http://fspiop-api-svc:4000"
-  quote-service:  http://fspiop-api-svc:4000/quotes
+  quotes-host: http://fspiop-api-svc.vnext.svc.cluster.local:4000
+  quote-service:  http://fspiop-api-svc.vnext.svc.cluster.local:4000
   als-host: http://fspiop-api-svc:4000
   account-lookup-service: http://fspiop-api-svc:4000
-  transfers-host: ""
-  transfer-service: ml-api-adapter.fred
-  transactions-host: http://fspiop-api-svc:4000
-  transaction-request-service: transaction-request-service.fred
+  transfers-host: http://fspiop-api-svc.vnext.svc.cluster.local:4000
+  transfer-service:  http://fspiop-api-svc.vnext.svc.cluster.local:4000
+  transactions-host: http://fspiop-api-svc.vnext.svc.cluster.local:4000
+  transaction-request-service: http://fspiop-api-svc.vnext.svc.cluster.local:4000
   oracle-host: ""
 
-dfspids: "greenbank,bluebank"
+dfspids: greenbank, bluebank
 
 # logging:
 #   level:

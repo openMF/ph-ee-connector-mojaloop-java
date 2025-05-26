@@ -84,6 +84,7 @@ public class TransferRoutes extends ErrorHandlerRouteBuilder {
                     .endChoice()
                     .otherwise()
                         .process(exchange -> {
+                            
                             TransferSwitchRequestDTO request = exchange.getIn().getBody(TransferSwitchRequestDTO.class);
                             Ilp ilp = ilpBuilder.parse(request.getIlpPacket(), request.getCondition());
 
@@ -112,7 +113,7 @@ public class TransferRoutes extends ErrorHandlerRouteBuilder {
                         })
                     .endChoice()
                 .end()
-                .log(LoggingLevel.DEBUG, "######## SWITCH -> PAYEE - forward transfer request ${exchangeProperty."+TRANSACTION_ID+"} - STEP 2")
+                .log(LoggingLevel.INFO, "TOMD ######## SWITCH -> PAYEE - forward transfer request ${exchangeProperty."+TRANSACTION_ID+"} - XFER STEP 2")
                 .setBody(constant(null))
                 .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(202));
         //@formatter:on
@@ -124,7 +125,7 @@ public class TransferRoutes extends ErrorHandlerRouteBuilder {
                 .to("direct:transfers-step4");
 
         from("direct:transfers-step4")
-                .log(LoggingLevel.DEBUG, "######## SWITCH -> PAYER - response for transfer request ${header."+TRANSACTION_ID+"} - STEP 4")
+                .log(LoggingLevel.INFO, "######## SWITCH -> PAYER - response for transfer request ${header."+TRANSACTION_ID+"} - XFER STEP 4")
                 .process(transferResponseProcessor)
                 .setBody(constant(null))
                 .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(200));
@@ -162,7 +163,7 @@ public class TransferRoutes extends ErrorHandlerRouteBuilder {
                 .to("direct:send-transfer-to-switch");
 
         from("direct:send-transfer-to-switch")
-                .log(LoggingLevel.DEBUG, "######## PAYEE -> SWITCH - transfer response ${exchangeProperty."+TRANSACTION_ID+"} - STEP 3")
+                .log(LoggingLevel.INFO, "######## PAYEE -> SWITCH - transfer response ${exchangeProperty."+TRANSACTION_ID+"} - XFER STEP 3")
                 .setProperty(CLASS_TYPE, constant(TransferSwitchRequestDTO.class))
                 .to("direct:body-unmarshling")
                 .process(exchange -> {
@@ -186,7 +187,7 @@ public class TransferRoutes extends ErrorHandlerRouteBuilder {
 
         from("direct:send-transfer")
                 .id("send-transfer")
-                .log(LoggingLevel.DEBUG, "######## PAYER -> SWITCH - transfer request ${exchangeProperty."+TRANSACTION_ID+"} - STEP 1")
+                .log(LoggingLevel.INFO, "######## PAYER -> SWITCH - transfer request ${exchangeProperty."+TRANSACTION_ID+"} - XFER STEP 1")
                 .setProperty(CLASS_TYPE, constant(QuoteSwitchResponseDTO.class))
                 .to("direct:body-unmarshling")
                 .process(exchange -> {
@@ -209,9 +210,12 @@ public class TransferRoutes extends ErrorHandlerRouteBuilder {
                 })
                 .process(pojoToString)
                 .process(addTraceHeaderProcessor)
-                .log(LoggingLevel.DEBUG, "Transfer body: ${body}")
+                .log(LoggingLevel.INFO, "TOMD Transfer body: ${body}")
                 .setHeader(Exchange.HTTP_METHOD, constant("POST"))
-                .setProperty(HOST, simple("{{switch.transfers-host}}"))
+                // TOMDO TODO hardcoded for debug the HOST gere should be set in the properties 
+                //       or otherwise in the workflow
+                //.setProperty(HOST, simple("{{switch.transfers-host}}"))
+                .setProperty(HOST, constant("http://fspiop-api-svc.vnext.svc.cluster.local:4000"))
                 .setProperty(ENDPOINT, constant("/transfers"))
                 .to("direct:external-api-call");
     }

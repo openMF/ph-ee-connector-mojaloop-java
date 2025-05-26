@@ -37,6 +37,25 @@ public class IlpConditionHandlerImpl {
     @Autowired
     private ObjectMapper mapper;
 
+    // Claude suggested fix to the getILPPacket method
+    // public String getILPPacket(String ilpAddress, String amount, Transaction transaction) throws IOException {
+    //     InterledgerAddress address = InterledgerAddress.builder().value(ilpAddress).build();
+    //     InterledgerPayment.Builder paymentBuilder = InterledgerPayment.builder();
+    //     paymentBuilder.destinationAccount(address);
+    //     paymentBuilder.destinationAmount(Long.valueOf(amount));
+    //     mapper.setSerializationInclusion(Include.NON_NULL);
+    //     String notificationJson = mapper.writeValueAsString(transaction);
+        
+    //     // CHANGE: Use the JSON bytes directly instead of base64 encoding them
+    //     byte[] serializedTransaction = notificationJson.getBytes(); // Remove Base64.getUrlEncoder().encode()
+    //     paymentBuilder.data(serializedTransaction);
+        
+    //     CodecContext context = CodecContextFactory.interledger();
+    //     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+    //     context.write(InterledgerPayment.class, paymentBuilder.build(), outputStream);
+    //     return Base64.getUrlEncoder().encodeToString(outputStream.toByteArray());
+    // }
+
     public String getILPPacket(String ilpAddress, String amount, Transaction transaction) throws IOException {
         InterledgerAddress address = InterledgerAddress.builder().value(ilpAddress).build();
         InterledgerPayment.Builder paymentBuilder = InterledgerPayment.builder();
@@ -51,6 +70,22 @@ public class IlpConditionHandlerImpl {
         context.write(InterledgerPayment.class, paymentBuilder.build(), outputStream);
         return Base64.getUrlEncoder().encodeToString(outputStream.toByteArray());
     }
+
+    // Claude suggested fix to the getTransactionFromIlpPacket method
+    // public Transaction getTransactionFromIlpPacket(String ilpPacket) {
+    //     try {
+    //         ByteArrayInputStream inputStream = new ByteArrayInputStream(getUrlDecoder().decode(ilpPacket));
+    //         CodecContext context = CodecContextFactory.interledger();
+    //         InterledgerPayment ip = context.read(InterledgerPayment.class, inputStream);
+            
+    //         // CHANGE: Use the data bytes directly instead of base64 decoding them
+    //         byte[] transactionBytes = ip.getData(); // Remove getUrlDecoder().decode()
+    //         return mapper.readValue(transactionBytes, Transaction.class);
+    //     } catch (Exception ex) {
+    //         logger.error("Error when extract transaction from ilp packet!", ex);
+    //         return null;
+    //     }
+    // }
 
     public Transaction getTransactionFromIlpPacket(String ilpPacket) {
         try {

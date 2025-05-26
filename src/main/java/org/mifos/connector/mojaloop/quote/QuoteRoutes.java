@@ -84,7 +84,7 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
     @Override
     public void configure() {
         from("rest:POST:/switch/quotes")
-                .log(LoggingLevel.DEBUG, "######## SWITCH -> PAYEE - forward quote request - STEP 2")
+                .log(LoggingLevel.INFO, "######## SWITCH -> PAYEE - forward quote request - STEP 2")
                 .setProperty(QUOTE_SWITCH_REQUEST, bodyAs(String.class))
                 .choice() // @formatter:off
                     .when(e -> mojaPerfMode)
@@ -232,8 +232,12 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                             requestAmount,
                             new MoneyData(requestAmount.getAmountDecimal().subtract(fspFeeAmount).subtract(fspCommissionAmount).stripTrailingZeros().toPlainString(),
                                     requestAmount.getCurrency()),
-                            new MoneyData(fspFeeAmount.compareTo(ZERO) == 0 ? "0" : fspFeeAmount.toPlainString(), fspFeeCurrency),
-                            new MoneyData(fspCommissionAmount.compareTo(ZERO) == 0 ? "0" : fspCommissionAmount.toPlainString(), fspCommissionCurrency),
+                            // TOMD TODO : correct the maths here to get the correct amount but for now I just hardcode payeeFspFee else there are
+                            //      errors from vNext quotes i.e it returns 400 
+                            // new MoneyData(fspFeeAmount.compareTo(ZERO) == 0 ? "0" : fspFeeAmount.toPlainString(), fspFeeCurrency),
+                            new MoneyData(new BigDecimal("0.3"), fspFeeCurrency),
+                            //new MoneyData(fspCommissionAmount.compareTo(ZERO) == 0 ? "0" : fspCommissionAmount.toPlainString(), fspCommissionCurrency),
+                            new MoneyData(new BigDecimal("0.4"), fspCommissionCurrency),
                             LocalDateTime.now().plusHours(1),
                             null,
                             ilp.getPacket(),
@@ -267,10 +271,20 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                     //       this issue is that this needs a change to the connector-common TransactionChannelRequestDTO object
                     //       to support this.  Making this modifiucation would reduce the need for seperate party properties 
                     //       config in the connector-mojaloop project.
-                    logger.info("TOMD Quote Payer party: {}", payerParty);
+                //     logger.info("TOMD Quotes parties");
+                //     partyProperties.listAllParties().forEach(party -> {
+                //         log.info("Party / tenantId : {}", party.getTenantId());
+                //         log.info("Party / fspId : {}", party.getFspId());
+                //         log.info("Domain/ fspId : {}", party.getDomain());
+                //     });
+                //     logger.info("TOMD Quote Payer party: {}", payerParty);
                     String payerFspId = partyProperties.getPartyByTenant(exchange.getProperty(TENANT_ID, String.class)).getFspId();
+                    logger.info("TOMD Quote Payer party should be greenbank : {}", payerParty);
                     PartyIdInfo requestPayeePartyIdInfo = channelRequest.getPayee().getPartyIdInfo();
-                    String payeeFspId = partyProperties.getPartyByTenant(requestPayeePartyIdInfo.getFspId()).getFspId();
+                    // TOMD: TODO  the payeeFspID is null in the channel request object
+                    //       need to debug and remove this hardcoding   
+                    //String payeeFspId = partyProperties.getPartyByTenant(requestPayeePartyIdInfo.getFspId()).getFspId();
+                    String payeeFspId = "bluebank";
                     Party payer = new Party(
                             new PartyIdInfo(payerParty.getPartyIdType(),
                                     payerParty.getPartyIdentifier(),
@@ -291,7 +305,7 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                             null);
 
                     MoneyData requestAmount = channelRequest.getAmount();
-                    logger.debug("Amount decimal: {}", channelRequest.getAmount().getAmountDecimal());
+                    logger.info("TOMD in step 1 : Amount decimal: {}", channelRequest.getAmount().getAmountDecimal());
                     stripAmount(requestAmount);
                     QuoteSwitchRequestDTO quoteRequest = new QuoteSwitchRequestDTO(
                             exchange.getProperty(TRANSACTION_ID, String.class),
@@ -309,14 +323,25 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                             channelRequest.getExtensionList());
                     exchange.getIn().setBody(quoteRequest);
 
-                    exchange.setProperty(FSPIOP_SOURCE.headerName(), payerFspId);
-                    exchange.setProperty(FSPIOP_DESTINATION.headerName(), exchange.getProperty(PARTY_LOOKUP_FSP_ID));
+                    // TOMD TODO: this is a hack to get the quote request to work
+                    //exchange.setProperty(FSPIOP_SOURCE.headerName(), payerFspId);
+                    exchange.setProperty(FSPIOP_SOURCE.headerName(), "greenbank");
+                    exchange.setProperty(FSPIOP_DESTINATION.headerName(), "bluebank");
+                    //exchange.setProperty(FSPIOP_DESTINATION.headerName(), exchange.getProperty(PARTY_LOOKUP_FSP_ID));
                     mojaloopUtil.setQuoteHeadersRequest(exchange);
+                    if (simple("{{switch.quotes-host}}") == null ) {
+                        logger.info("TOMD Quote host is null ..exiting ");
+                        System.exit(HIGHEST);
+                    } else { 
+                        logger.info("TOMD Quote host is {} ", simple("{{switch.quotes-host}}"));
+                    }
+                
                 })
                 .process(pojoToString)
                 .process(addTraceHeaderProcessor)
                 .setHeader(Exchange.HTTP_METHOD, constant("POST"))
-                .setProperty(HOST, simple("{{switch.quotes-host}}"))
+                // TOMDO TODO : hardcoded for now needs to come from properties config 
+                .setProperty(HOST, constant("http://fspiop-api-svc.vnext.svc.cluster.local:4000"))
                 .setProperty(ENDPOINT, constant("/quotes"))
                 .to("direct:external-api-call");
     }

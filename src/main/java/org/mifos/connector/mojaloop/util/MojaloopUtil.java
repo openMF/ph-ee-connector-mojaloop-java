@@ -53,6 +53,11 @@ public class MojaloopUtil {
         System.out.println("TDDEBUG11 : PARTIES_CONTENT_TYPE.headerValue()" + PARTIES_CONTENT_TYPE.headerValue());
         headers.put(HEADER_ACCEPT, PARTIES_ACCEPT_TYPE.headerValue());
         headers.put(HEADER_HOST, accountLookupService);
+        // TOMD: TODO these are hardcoded here for testing , probably need to modify connector-common to fix this
+        headers.put("Accept", "application/vnd.interoperability.parties+json;version=1.1");
+        headers.put("Content-Type", "application/vnd.interoperability.parties+json;version=1.1");
+        //headers.put("Date", java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        headers.put("fspiop-date", java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         finalizeHeaders(exchange, headers);
     }
 
@@ -62,6 +67,10 @@ public class MojaloopUtil {
         headers.put(FSPIOP_DESTINATION.headerName(), request.getPayer().getPartyIdInfo().getFspId());
         headers.put(HEADER_CONTENT_TYPE, QUOTES_CONTENT_TYPE.headerValue());
         headers.put(HEADER_HOST, switchQuoteService);
+        //TOMD TODO: again this should likely be generalied to connector-common 
+        headers.put("Accept", "application/vnd.interoperability.quotes+json;version=1.1");
+        headers.put("Content-Type", "application/vnd.interoperability.quotes+json;version=1.1");
+        headers.put("fspiop-date", java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         setResponseTraceHeaders(e, headers);
         finalizeHeaders(e, headers);
     }
@@ -69,7 +78,9 @@ public class MojaloopUtil {
     public void setQuoteHeadersRequest(Exchange e) {
         Map<String, Object> headers = new HashMap<>();
         headers.put(FSPIOP_SOURCE.headerName(), e.getProperty(FSPIOP_SOURCE.headerName()));
-        headers.put(FSPIOP_DESTINATION.headerName(), e.getProperty(FSPIOP_DESTINATION.headerName()));
+        // TOMD: TODO: hardcoded FSPIOP_DESTINATION for testing fix this later 
+        //headers.put(FSPIOP_DESTINATION.headerName(), e.getProperty(FSPIOP_DESTINATION.headerName()));
+        headers.put(FSPIOP_DESTINATION.headerName(), "bluebank");
         headers.put(HEADER_CONTENT_TYPE, QUOTES_CONTENT_TYPE.headerValue());
         headers.put(HEADER_ACCEPT, QUOTES_ACCEPT_TYPE.headerValue());
         headers.put(HEADER_HOST, switchQuoteService);
@@ -80,8 +91,12 @@ public class MojaloopUtil {
         Map<String, Object> headers = new HashMap<>();
         headers.put(FSPIOP_SOURCE.headerName(), transaction.getPayee().getPartyIdInfo().getFspId());
         headers.put(FSPIOP_DESTINATION.headerName(), transaction.getPayer().getPartyIdInfo().getFspId());
-        headers.put(HEADER_CONTENT_TYPE, TRANSFERS_CONTENT_TYPE.headerValue());
-        headers.put(HEADER_ACCEPT, TRANSFERS_ACCEPT_TYPE.headerValue());
+        // headers.put(HEADER_CONTENT_TYPE, TRANSFERS_CONTENT_TYPE.headerValue());
+        // headers.put(HEADER_ACCEPT, TRANSFERS_ACCEPT_TYPE.headerValue());
+        //TOMD TODO: again this should likely be generalied to connector-common 
+        headers.put("Accept", "application/vnd.interoperability.transfers+json;version=1.1");
+        headers.put("Content-Type", "application/vnd.interoperability.transfers+json;version=1.1");
+        headers.put("fspiop-date", java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         headers.put(HEADER_HOST, transferService);
         setResponseTraceHeaders(e, headers);
         finalizeHeaders(e, headers);
@@ -91,8 +106,12 @@ public class MojaloopUtil {
         Map<String, Object> headers = new HashMap<>();
         headers.put(FSPIOP_SOURCE.headerName(), transaction.getPayer().getPartyIdInfo().getFspId());
         headers.put(FSPIOP_DESTINATION.headerName(), transaction.getPayee().getPartyIdInfo().getFspId());
-        headers.put(HEADER_CONTENT_TYPE, TRANSFERS_CONTENT_TYPE.headerValue());
-        headers.put(HEADER_ACCEPT, TRANSFERS_ACCEPT_TYPE.headerValue());
+        // headers.put(HEADER_CONTENT_TYPE, TRANSFERS_CONTENT_TYPE.headerValue());
+        // headers.put(HEADER_ACCEPT, TRANSFERS_ACCEPT_TYPE.headerValue());
+        //TOMD TODO: again this should likely be generalied to connector-common 
+        headers.put("Accept", "application/vnd.interoperability.transfers+json;version=1.1");
+        headers.put("Content-Type", "application/vnd.interoperability.transfers+json;version=1.1");
+        headers.put("fspiop-date", java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         headers.put(HEADER_HOST, transferService);
         finalizeHeaders(e, headers);
     }
