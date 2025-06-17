@@ -216,8 +216,8 @@ public class QuoteRoutes extends ErrorHandlerRouteBuilder {
                             requestAmount.getAmountDecimal());
 
                     String localQuoteResponseString = exchange.getIn().getHeader(LOCAL_QUOTE_RESPONSE, String.class);
-                    logger.debug("## parsing local quote response string: {}", localQuoteResponseString);
-                    logger.debug("ILP object: {}", objectMapper.writeValueAsString(ilp));
+                    logger.info("TOMD ## parsing local quote response string: {}", localQuoteResponseString);
+                    logger.info("TOMD-QUOTE1 ILP object: {}", objectMapper.writeValueAsString(ilp));
                     QuoteFspResponseDTO localQuoteResponse = objectMapper.readValue(localQuoteResponseString, QuoteFspResponseDTO.class);
                     FspMoneyData fspFee = localQuoteResponse.getFspFee();
                     FspMoneyData fspCommission = localQuoteResponse.getFspCommission();
