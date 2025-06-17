@@ -1,99 +1,150 @@
 version: 2.1
+orbs:
+  docker-buildx: devarsh/docker-buildx-orb@0.1.1
 executors:
   docker-executor:
     docker:
       - image: circleci/openjdk:17-buster-node-browsers-legacy
-
 jobs:
   build_and_push_tag_image:
     executor: docker-executor
     environment:
       JVM_OPTS: -Xmx512m
-      TERM: dumb  
-      GITHUB_TOKEN: ${GITHUB_TOKEN}  # Add the GitHub token as an environment variable
-
+      TERM: dumb
     steps:
       - checkout
       - setup_remote_docker:
           version: 20.10.24
       - run:
-          name: Build and Push Docker tag Image
+          name: Set Lowercase Docker Image Vars
+          # Using tr for POSIX compatibility, could use ${VAR,,} with Bash 4+
           command: |
-            # Set environment variables
+            echo "export DOCKER_ORG_LOWER=$(echo $CIRCLE_PROJECT_USERNAME | tr '[:upper:]' '[:lower:]')" >> $BASH_ENV
+            echo "export DOCKER_REPO_LOWER=$(echo $CIRCLE_PROJECT_REPONAME | tr '[:upper:]' '[:lower:]')" >> $BASH_ENV
+            echo "Using Docker Namespace: $DOCKER_ORG_LOWER"
+            echo "Using Docker Repository: $DOCKER_REPO_LOWER"
+      - docker-buildx/install
+      - run:
+          name: Check if Docker image tag exists
+          command: |
             IMAGE_TAG=$CIRCLE_TAG
-
-            # Check if the Docker image with the same tag already exists in Docker Hub
-            if curl -s -f -u "$DOCKERHUB_USERNAME":"$DOCKERHUB_PASSWORD" "https://hub.docker.com/v2/repositories/openmf/ph-ee-connector-mojaloop/tags/$IMAGE_TAG" > /dev/null; then
-              echo "Skipping the build and push as the tag $IMAGE_TAG already exists in Docker Hub."
-              exit 0
+            # Using lowercase variables defined above
+            IMAGE_NAME="$DOCKER_ORG_LOWER/$DOCKER_REPO_LOWER"
+            echo "Checking for Docker image: $IMAGE_NAME:$IMAGE_TAG"
+            # Ensure DOCKERHUB_USERNAME and DOCKERHUB_PASSWORD are set in your CircleCI Context or Project Environment Variables
+            if curl -s -f -u "$DOCKERHUB_USERNAME":"$DOCKERHUB_PASSWORD" "https://hub.docker.com/v2/repositories/$IMAGE_NAME/tags/$IMAGE_TAG" > /dev/null; then
+              echo "Skipping the build and push as the tag $IMAGE_TAG already exists in Docker Hub for image $IMAGE_NAME."
+              circleci-agent step halt
+            else
+              echo "Tag $IMAGE_TAG does not exist for image $IMAGE_NAME. Proceeding with build."
             fi
-
-            # Build and tag the Docker image
-            ./gradlew bootJar
-            docker build -t "openmf/ph-ee-connector-mojaloop:$IMAGE_TAG" .
-
-            # Push the Docker image to Docker Hub
-            docker login -u "$DOCKERHUB_USERNAME" -p "$DOCKERHUB_PASSWORD"
-            docker push "openmf/ph-ee-connector-mojaloop:$IMAGE_TAG"
-
-          # when: always  # The job will be executed even if there's no match for the tag filter
-  
+      - run:
+          name: Build Application
+          command: ./gradlew bootJar
+      - docker-buildx/build-and-push:
+          # Using lowercase variables defined above
+          image-name: "$DOCKER_ORG_LOWER/$DOCKER_REPO_LOWER"
+          tag: "$CIRCLE_TAG"
+          # Add dockerhub credentials if needed
+          # dockerhub-username: "$DOCKERHUB_USERNAME"
+          # dockerhub-password: "$DOCKERHUB_PASSWORD"
+  build_and_push_branch_image:
+    executor: docker-executor
+    environment:
+      JVM_OPTS: -Xmx512m
+      TERM: dumb
+    steps:
+      - checkout
+      - setup_remote_docker:
+          version: 20.10.24
+      - run:
+          name: Set Lowercase Docker Image Vars
+          command: |
+            echo "export DOCKER_ORG_LOWER=$(echo $CIRCLE_PROJECT_USERNAME | tr '[:upper:]' '[:lower:]')" >> $BASH_ENV
+            echo "export DOCKER_REPO_LOWER=$(echo $CIRCLE_PROJECT_REPONAME | tr '[:upper:]' '[:lower:]')" >> $BASH_ENV
+            echo "Using Docker Namespace: $DOCKER_ORG_LOWER"
+            echo "Using Docker Repository: $DOCKER_REPO_LOWER"
+      - docker-buildx/install
+      - run:
+          name: Build Application
+          command: |
+            # ./gradlew checkstyleMain
+            ./gradlew clean bootJar
+      - run:
+          name: Sanitize Branch Name
+          command: |
+            echo "export SANITIZED_BRANCH=$(echo $CIRCLE_BRANCH | sed 's/[^a-zA-Z0-9.-]/-/g' | tr '[:upper:]' '[:lower:]')" >> $BASH_ENV # Also ensure branch tag is lowercase
+      # First build and push with branch-latest tag
+      - docker-buildx/build-and-push:
+          image-name: "$DOCKER_ORG_LOWER/$DOCKER_REPO_LOWER"
+          tag: "${SANITIZED_BRANCH}-latest"
+      # Then build and push with branch-version tag
+      - docker-buildx/build-and-push:
+          image-name: "$DOCKER_ORG_LOWER/$DOCKER_REPO_LOWER"
+          tag: "${SANITIZED_BRANCH}"
+          # Add dockerhub credentials if needed
+          # dockerhub-username: "$DOCKERHUB_USERNAME"
+          # dockerhub-password: "$DOCKERHUB_PASSWORD"
   build_and_push_latest_image:
     executor: docker-executor
     environment:
       JVM_OPTS: -Xmx512m
       TERM: dumb
-
     steps:
       - checkout
-      # Install Docker to build and push the image
       - setup_remote_docker:
           version: 20.10.24
-
-      # Build the Docker image
       - run:
-          name: Build Docker image
+          name: Set Lowercase Docker Image Vars
           command: |
-            ./gradlew bootJar
-            docker build -t openmf/ph-ee-connector-mojaloop:latest .
-            if [ "$CIRCLE_BRANCH" != "master" ]; then
-              PR_NUMBER=$(basename $CIRCLE_PULL_REQUEST)
-              PR_TITLE=$(curl -sSL "https://api.github.com/repos/openmf/$CIRCLE_PR_REPONAME/pulls/$PR_NUMBER" | jq -r '.title')
-              JIRA_STORY=$(echo $PR_TITLE | cut -d "[" -f2 | cut -d "]" -f1 | tr '[A-Z]' '[a-z]')
-              if [ -z "$JIRA_STORY" ]; then echo "Invalid PR title" && exit 1; else echo "Ticket NO: $JIRA_STORY"; fi
-              docker image tag openmf/ph-ee-connector-mojaloop:latest openmf/ph-ee-connector-mojaloop:$JIRA_STORY
-            fi
-
-      # Log in to DockerHub using environment variables
+            echo "export DOCKER_ORG_LOWER=$(echo $CIRCLE_PROJECT_USERNAME | tr '[:upper:]' '[:lower:]')" >> $BASH_ENV
+            echo "export DOCKER_REPO_LOWER=$(echo $CIRCLE_PROJECT_REPONAME | tr '[:upper:]' '[:lower:]')" >> $BASH_ENV
+            echo "Using Docker Namespace: $DOCKER_ORG_LOWER"
+            echo "Using Docker Repository: $DOCKER_REPO_LOWER"
+      - docker-buildx/install
       - run:
-          name: Login to DockerHub
-          command: echo "${DOCKERHUB_PASSWORD}" | docker login -u "${DOCKERHUB_USERNAME}" --password-stdin
-
-      # Push the Docker image to DockerHub
-      - run:
-          name: Push Docker image to DockerHub
+          name: Build Application
           command: |
-            if [ "$CIRCLE_BRANCH" = "master" ]; then
-            docker push openmf/ph-ee-connector-mojaloop:latest
-            fi
-            if [ "$CIRCLE_BRANCH" != "master" ]; then
-            PR_NUMBER=$(basename $CIRCLE_PULL_REQUEST)
-            PR_TITLE=$(curl -sSL "https://api.github.com/repos/openmf/$CIRCLE_PR_REPONAME/pulls/$PR_NUMBER" | jq -r '.title')
-            JIRA_STORY=$(echo $PR_TITLE | cut -d "[" -f2 | cut -d "]" -f1 | tr '[A-Z]' '[a-z]')
-            docker push openmf/ph-ee-connector-mojaloop:${JIRA_STORY}
-            fi
-
+            # ./gradlew checkstyleMain
+            ./gradlew clean bootJar
+      - docker-buildx/build-and-push:
+          # Using lowercase variables defined above
+          image-name: "$DOCKER_ORG_LOWER/$DOCKER_REPO_LOWER"
+          tag: "latest"
+          # Add dockerhub credentials if needed
+          # dockerhub-username: "$DOCKERHUB_USERNAME"
+          # dockerhub-password: "$DOCKERHUB_PASSWORD"
 workflows:
   version: 2
-  build-and-push:
+  build-and-push-pipeline:
     jobs:
+      # Build tags matching vX.Y.Z format
       - build_and_push_tag_image:
           filters:
             tags:
-              only: /^v\d+\.\d+\.\d+$/  # Match tags in the format v1.2.3
+              only: /^v\d+\.\d+\.\d+$/
+            branches:
+              ignore: /.*/
           context:
-              - DOCKER
+            - DOCKER
+      # Build any branch commit (except tags)
+      - build_and_push_branch_image:
+          filters:
+            tags:
+              ignore: /.*/
+            branches:
+              only: /.*/
+          context:
+            - DOCKER
+      # Build 'latest' only when the branch image succeeds AND it's the main/master branch
       - build_and_push_latest_image:
+          requires:
+            - build_and_push_branch_image
+          filters:
+            tags:
+              ignore: /.*/
+            branches:
+              only:
+                - main # Or your primary branch name like 'master'
           context:
-              - DOCKER
-             
+            - DOCKER
