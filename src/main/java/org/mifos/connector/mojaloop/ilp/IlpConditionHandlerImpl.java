@@ -169,6 +169,77 @@ public class IlpConditionHandlerImpl {
         return Base64.getUrlEncoder().encodeToString(exactStream.toByteArray());
     }
 
+    public String grok_getILPPacketExactV2(String ilpAddress, String amount, Transaction transaction) throws IOException {
+        logger.info("TOMD-ILP grok_getILPPacketExactV2: ilpAddress: {}, amount: {}, transaction: {}", ilpAddress, amount, transaction);
+
+        // Validate ILP address format
+        if (ilpAddress == null || ilpAddress.trim().isEmpty() || !ilpAddress.matches("g\\.[a-zA-Z0-9.-]+\\.[a-zA-Z0-9.-]+\\.[a-zA-Z0-9.-]+")) {
+            logger.error("Invalid ILP address: {}", ilpAddress);
+            throw new IllegalArgumentException("Invalid ILP address format: " + ilpAddress);
+        }
+
+        // Build packet content first
+        ByteArrayOutputStream contentStream = new ByteArrayOutputStream();
+
+        // Destination address (with length prefix)
+        byte[] addressBytes = ilpAddress.getBytes(StandardCharsets.UTF_8);
+        logger.info("Address bytes: {}, length: {}", toHexString(addressBytes), addressBytes.length);
+        writeVarOctetString(contentStream, addressBytes);
+        logger.info("Content stream after address: {}", toHexString(contentStream.toByteArray()));
+
+        // Amount as 8 bytes
+        long amountValue;
+        try {
+            amountValue = Long.parseLong(amount);
+            logger.info("Parsed amount: {}", amountValue);
+        } catch (NumberFormatException e) {
+            logger.error("Invalid amount format: {}", amount, e);
+            throw new IOException("Invalid amount format: " + amount, e);
+        }
+        byte[] amountBytes = longToBytes(amountValue);
+        contentStream.write(amountBytes);
+        logger.info("Content stream after amount: {}", toHexString(contentStream.toByteArray()));
+
+        // Expiry (empty)
+        writeVarOctetString(contentStream, new byte[0]);
+        logger.info("Content stream after expiry: {}", toHexString(contentStream.toByteArray()));
+
+        // Data section
+        mapper.setSerializationInclusion(Include.NON_NULL);
+        String notificationJson = mapper.writeValueAsString(transaction);
+        logger.info("Notification JSON: {}", notificationJson);
+        byte[] serializedTransaction = Base64.getUrlEncoder().encode(notificationJson.getBytes(StandardCharsets.UTF_8));
+        logger.info("Serialized transaction length: {}", serializedTransaction.length);
+        writeVarOctetString(contentStream, serializedTransaction);
+        logger.info("Content stream after data: {}", toHexString(contentStream.toByteArray()));
+
+        // Get the packet content
+        byte[] packetContent = contentStream.toByteArray();
+        int contentLength = packetContent.length;
+        logger.info("Packet content length: {}", contentLength);
+
+        // Build complete packet with dynamic length prefix
+        ByteArrayOutputStream exactStream = new ByteArrayOutputStream();
+
+        // Fixed ILP header
+        byte[] header = new byte[] { 0x01, (byte) 0x82, 0x02, 0x6C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0C };
+        exactStream.write(header);
+        logger.info("Header bytes: {}", toHexString(header));
+
+        // Write dynamic length prefix (OER-style)
+        writeVarUInt(exactStream, contentLength);
+        logger.info("Stream after length prefix: {}", toHexString(exactStream.toByteArray()));
+
+        // Append packet content
+        exactStream.write(packetContent);
+
+        // Encode to Base64
+        byte[] rawBytes = exactStream.toByteArray();
+        logger.info("Final packet bytes (length: {}): {}", rawBytes.length, toHexString(rawBytes));
+        String encodedPacket = Base64.getUrlEncoder().encodeToString(rawBytes);
+        logger.info("Base64 packet: {}", encodedPacket);
+        return encodedPacket;
+    }
     // Alternative approach: Calculate length properly
     public String getILPPacketExactV2(String ilpAddress, String amount, Transaction transaction) throws IOException {
         logger.info("TOMD-ILP getILPPacketExactV2: ilpAddress: {}, amount: {}, transaction: {}", ilpAddress, amount, transaction);
@@ -361,34 +432,83 @@ public class IlpConditionHandlerImpl {
     }
 
     // Claude suggested fix to the getTransactionFromIlpPacket method
+    public Transaction getTransactionFromIlpPacket(String ilpPacket) {
+        try {
+            byte[] packetBytes = Base64.getUrlDecoder().decode(ilpPacket);
+            logger.info("Decoded packet bytes: {}, length: {}", toHexString(packetBytes), packetBytes.length);
+
+            // Verify header
+            if (packetBytes.length < 11 || packetBytes[0] != 0x01 || packetBytes[1] != (byte) 0x82 || packetBytes[2] != 0x02 || packetBytes[3] != 0x6C || packetBytes[10] != 0x0C) {
+                logger.error("Invalid ILP packet header");
+                throw new IOException("Invalid ILP packet header");
+            }
+
+            // Read length prefix (OER variable-length integer)
+            ByteArrayInputStream inputStream = new ByteArrayInputStream(packetBytes);
+            inputStream.skip(11); // Skip header (11 bytes: 0x01, 0x82, 0x02, 0x6C, 6 zeros, 0x0C)
+            long contentLength = readVarUInt(inputStream);
+            logger.info("Content length: {}", contentLength);
+
+            // Read address
+            long addressLength = readVarUInt(inputStream);
+            byte[] addressBytes = new byte[(int) addressLength];
+            inputStream.read(addressBytes);
+            String address = new String(addressBytes, StandardCharsets.UTF_8);
+            logger.info("Decoded address: {}", address);
+
+            // Skip amount (8 bytes)
+            inputStream.skip(8);
+
+            // Skip expiry (length prefix + empty data)
+            long expiryLength = readVarUInt(inputStream);
+            inputStream.skip(expiryLength);
+
+            // Read data
+            long dataLength = readVarUInt(inputStream);
+            byte[] dataBytes = new byte[(int) dataLength];
+            inputStream.read(dataBytes);
+            byte[] jsonBytes = Base64.getUrlDecoder().decode(dataBytes);
+            logger.info("Decoded JSON: {}", new String(jsonBytes, StandardCharsets.UTF_8));
+
+            Transaction transaction = mapper.readValue(jsonBytes, Transaction.class);
+            logger.info("Decoded transaction: {}", transaction);
+            return transaction;
+        } catch (Exception ex) {
+            logger.error("Error decoding ILP packet: {}", ilpPacket, ex);
+            return null;
+        }
+    }
+
+    // Helper method to read variable-length unsigned integer (OER format)
+    private long readVarUInt(ByteArrayInputStream stream) throws IOException {
+        int firstByte = stream.read();
+        if (firstByte < 0) throw new IOException("Unexpected end of stream");
+        if (firstByte < 128) return firstByte;
+        int result = firstByte & 0x7F;
+        int shift = 7;
+        while (true) {
+            int nextByte = stream.read();
+            if (nextByte < 0) throw new IOException("Unexpected end of stream");
+            result |= (nextByte & 0x7F) << shift;
+            if ((nextByte & 0x80) == 0) break;
+            shift += 7;
+        }
+        return result;
+    }
+
     // public Transaction getTransactionFromIlpPacket(String ilpPacket) {
     //     try {
     //         ByteArrayInputStream inputStream = new ByteArrayInputStream(getUrlDecoder().decode(ilpPacket));
     //         CodecContext context = CodecContextFactory.interledger();
     //         InterledgerPayment ip = context.read(InterledgerPayment.class, inputStream);
-            
-    //         // CHANGE: Use the data bytes directly instead of base64 decoding them
-    //         byte[] transactionBytes = ip.getData(); // Remove getUrlDecoder().decode()
-    //         return mapper.readValue(transactionBytes, Transaction.class);
+    //         byte[] decodedTxn = getUrlDecoder().decode(ip.getData());
+    //         //byte[] decodedTxn = ip.getData();
+    //         return mapper.readValue(decodedTxn, Transaction.class);
     //     } catch (Exception ex) {
     //         logger.error("Error when extract transaction from ilp packet!", ex);
     //         return null;
     //     }
     // }
-
-    public Transaction getTransactionFromIlpPacket(String ilpPacket) {
-        try {
-            ByteArrayInputStream inputStream = new ByteArrayInputStream(getUrlDecoder().decode(ilpPacket));
-            CodecContext context = CodecContextFactory.interledger();
-            InterledgerPayment ip = context.read(InterledgerPayment.class, inputStream);
-            byte[] decodedTxn = getUrlDecoder().decode(ip.getData());
-            //byte[] decodedTxn = ip.getData();
-            return mapper.readValue(decodedTxn, Transaction.class);
-        } catch (Exception ex) {
-            logger.error("Error when extract transaction from ilp packet!", ex);
-            return null;
-        }
-    }
 
     public String generateFulfillment(String ilpPacket, byte[] secret) {
         byte[] bFulfillment = this.getFulfillmentBytes(ilpPacket, secret);

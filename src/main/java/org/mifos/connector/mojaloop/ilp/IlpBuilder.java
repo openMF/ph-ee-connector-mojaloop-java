@@ -47,7 +47,8 @@ public class IlpBuilder {
     public Ilp build(Transaction transaction, BigDecimal amount) throws IOException {
         String ilpAddress = buildIlpAddress(transaction);
         logger.info("TOMD-ILPa1 Building ILP for transaction: {}, ilpAddress: {}", transaction, ilpAddress);
-        String ilpPacket = ilpConditionHandlerImpl.getILPPacketGrok(ilpAddress, ContextUtil.formatAmount(amount), transaction);
+        String ilpPacket = ilpConditionHandlerImpl.grok_getILPPacketExactV2(ilpAddress, ContextUtil.formatAmount(amount), transaction); 
+        //String ilpPacket = ilpConditionHandlerImpl.getILPPacketGrok(ilpAddress, ContextUtil.formatAmount(amount), transaction);
         //String ilpPacket = ilpConditionHandlerImpl.getILPPacketExactV2(ilpAddress, ContextUtil.formatAmount(amount), transaction);
         logger.info("TOMD-ILP2 Built ILP packet: {}", ilpPacket);
         String ilpCondition = ilpConditionHandlerImpl.generateCondition(ilpPacket, conectorIlpSecret.getBytes());

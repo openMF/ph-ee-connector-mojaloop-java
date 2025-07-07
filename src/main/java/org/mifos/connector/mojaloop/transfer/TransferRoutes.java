@@ -30,9 +30,12 @@ import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.ERROR_INFORMATIO
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.SWITCH_TRANSFER_REQUEST;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.TRANSACTION_ID;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.TRANSFER_FAILED;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Component
 public class TransferRoutes extends ErrorHandlerRouteBuilder {
+    private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Value("${mojaloop.perf-mode}")
     private boolean mojaPerfMode;
@@ -191,9 +194,10 @@ public class TransferRoutes extends ErrorHandlerRouteBuilder {
                 .setProperty(CLASS_TYPE, constant(QuoteSwitchResponseDTO.class))
                 .to("direct:body-unmarshling")
                 .process(exchange -> {
+                    logger.info("TOMD In send-transfer}");
                     QuoteSwitchResponseDTO quoteResponse = exchange.getIn().getBody(QuoteSwitchResponseDTO.class);
                     Ilp ilp = ilpBuilder.parse(quoteResponse.getIlpPacket(), quoteResponse.getCondition());
-
+                    logger.info("TOMD In send-transfer after ilpBuilder.parse");
                     Transaction transaction = ilp.getTransaction();
                     TransferSwitchRequestDTO request = new TransferSwitchRequestDTO(
                             transaction.getTransactionId(),
