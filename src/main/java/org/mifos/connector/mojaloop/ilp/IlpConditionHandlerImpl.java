@@ -53,6 +53,7 @@ public class IlpConditionHandlerImpl {
         paymentBuilder.destinationAmount(Long.valueOf(amount));
         mapper.setSerializationInclusion(Include.NON_NULL);
         String notificationJson = mapper.writeValueAsString(transaction);
+        logger.info("Notification JSON: {}", notificationJson);
         byte[] serializedTransaction = Base64.getUrlEncoder().encode(notificationJson.getBytes());
         paymentBuilder.data(serializedTransaction);
         CodecContext context = CodecContextFactory.interledger();

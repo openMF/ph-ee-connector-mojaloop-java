@@ -47,8 +47,6 @@ public class IlpConditionHandlerImplTest {
                         setPartyIdentifier("0449034997");
                     }});
                 }});
-        //new PartyIdInfo("MSISDN", "0449034997", "bluebank")));
-        //new PartyIdInfo("MSISDN", "0464189670", "greenbank")));
         Money money = new Money();
         money.setAmount("5000");
         money.setCurrency("USD");
