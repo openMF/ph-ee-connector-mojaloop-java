@@ -28,7 +28,7 @@ public class IlpConditionHandlerImplTest {
     private IlpConditionHandlerImpl ilpConditionHandler;
 
     @Test
-    public void testGrokGetILPPacketExactV2Transfer() throws IOException {
+    public void testGrokGetILPPacketTransfer() throws IOException {
         // Set up test data
         String ilpAddress = "g.bluebank.msisdn.0449034997";
         String amount = "5000";
@@ -58,7 +58,7 @@ public class IlpConditionHandlerImplTest {
         transaction.setTransactionType(type);
 
         // Generate ILP packet
-        String packet = ilpConditionHandler.grok_getILPPacketExactV2(ilpAddress, amount, transaction);
+        String packet = ilpConditionHandler.grok3_getILPPacket(ilpAddress, amount, transaction);
         assertNotNull(packet);
         logger.info("Generated transfer packet: {}", packet);
 
