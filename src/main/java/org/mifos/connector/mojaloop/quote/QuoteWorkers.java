@@ -76,7 +76,6 @@ public class QuoteWorkers {
                         logger.info("Job '{}' started from process '{}' with key {}", job.getType(), job.getBpmnProcessId(), job.getKey());
 
                         Map<String, Object> existingVariables = job.getVariablesAsMap();
-                        logger.info("TOMD Quotes existing variables {} ", existingVariables);
                         existingVariables.put(TIMEOUT_QUOTE_RETRY_COUNT, 1 + (Integer) existingVariables.getOrDefault(TIMEOUT_QUOTE_RETRY_COUNT, -1));
                         Object quoteId = existingVariables.get(QUOTE_ID);
                         String transactionId = (String) existingVariables.get(TRANSACTION_ID);
@@ -87,14 +86,12 @@ public class QuoteWorkers {
 
                         Exchange exchange = new DefaultExchange(camelContext);
                         if (isMojaloopEnabled) {
-                            logger.info("TOMD MOjaloop enabled");
                             exchange.setProperty(TRANSACTION_ID, transactionId);
                             exchange.setProperty(CHANNEL_REQUEST, existingVariables.get(CHANNEL_REQUEST));
                             exchange.setProperty(ORIGIN_DATE, existingVariables.get(ORIGIN_DATE));
                             exchange.setProperty(PARTY_LOOKUP_FSP_ID, existingVariables.get(PARTY_LOOKUP_FSP_ID));
                             exchange.setProperty(TENANT_ID, existingVariables.get(TENANT_ID));
                             exchange.setProperty(QUOTE_ID, quoteId);
-                            logger.info("TOMD-get-quote MOjaloop is enabled {}", exchange.getIn().getHeaders());
                             producerTemplate.send("direct:send-quote", exchange);
                         } else {
                             TransactionChannelRequestDTO channelRequest = objectMapper.readValue((String) existingVariables.get(CHANNEL_REQUEST), TransactionChannelRequestDTO.class);
@@ -128,13 +125,12 @@ public class QuoteWorkers {
             zeebeClient.newWorker()
                     .jobType(WORKER_PAYEE_QUOTE_RESPONSE + dfspId)
                     .handler((client, job) -> {
-                        logger.info("TOMD Job '{}' started from process '{}' with key {}", job.getType(), job.getBpmnProcessId(), job.getKey());
                         Map<String, Object> existingVariables = job.getVariablesAsMap();
-                        logger.info("TOMD Quotes response existing variables {} ", existingVariables);
 
                         Exchange exchange = new DefaultExchange(camelContext);
                         exchange.getIn().setBody(existingVariables.get(QUOTE_SWITCH_REQUEST));
                         Object quoteId = existingVariables.get(QUOTE_ID);
+                        //TOMD TODO : the quoteId is not being set in the zeebe variables, so we set it here
                         // if (quoteId == null) {
                         //     quoteId = UUID.randomUUID().toString();
                         //     existingVariables.put(QUOTE_ID, quoteId);
@@ -163,7 +159,6 @@ public class QuoteWorkers {
                             // exchange.setProperty(HOST, "http://" + existingVariables.get("X-Quote-Callback-Url"));
                             // TOMD: TODO: remove hardcoded URL
                             exchange.setProperty(HOST, "http://fspiop-api-svc.vnext.svc.cluster.local:4000");
-                            logger.info("TOMD worker quote response {} ", exchange.getIn().getHeaders());
                             producerTemplate.send("direct:send-quote-to-switch", exchange);
                         }
                         client.newCompleteCommand(job.getKey())

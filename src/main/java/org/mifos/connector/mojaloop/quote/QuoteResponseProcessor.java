@@ -50,7 +50,6 @@ public class QuoteResponseProcessor implements Processor {
             variables.put(ERROR_INFORMATION, error);
             variables.put(QUOTE_FAILED, true);
         } else {
-            logger.info("TOMD: Quote response received ok for fspId: {}", exchange.getIn().getHeader(QUOTE_ID));
             QuoteCallbackDTO response = exchange.getIn().getBody(QuoteCallbackDTO.class);
             logger.debug("ILP PACKET: {}", response.getIlpPacket());
             logger.debug("CONDITION: {}", response.getCondition());

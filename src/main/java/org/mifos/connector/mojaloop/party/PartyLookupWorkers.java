@@ -78,18 +78,18 @@ public class PartyLookupWorkers {
             zeebeClient.newWorker()
                     .jobType(WORKER_PARTY_LOOKUP_REQUEST + dfspId)
                     .handler((client, job) -> {
-                        logger.info("TOMD Job '{}' started from process '{}' ProcessKey {} with Jobkey {}", job.getType(), job.getBpmnProcessId(), job.getProcessInstanceKey(), job.getKey());
-                        logger.info("TOMD WORKER-PARTY-LOOKUP-REQUEST"); 
+                        //logger.info("DEBUG Job '{}' started from process '{}' ProcessKey {} with Jobkey {}", job.getType(), job.getBpmnProcessId(), job.getProcessInstanceKey(), job.getKey());
                         Map<String, Object> existingVariables = job.getVariablesAsMap();
                         
                         existingVariables.put(PARTY_LOOKUP_RETRY_COUNT, 1 + (Integer) existingVariables.getOrDefault(PARTY_LOOKUP_RETRY_COUNT, -1));
                         logger.info("Logging existing variables:");
-                        existingVariables.forEach((key, value) -> logger.info("TOMD LOOKUP WORKER VARS {}: {}", key, value));
+                        //existingVariables.forEach((key, value) -> logger.info("DEBUG LOOKUP WORKER VARS {}: {}", key, value));
                         boolean isTransactionRequest = (boolean) existingVariables.get(IS_RTP_REQUEST);
                         String tenantId = (String) existingVariables.get(TENANT_ID);
                         Object channelRequest = existingVariables.get(CHANNEL_REQUEST);
                         // only saved for operations to identify workflow
                         if (existingVariables.get(INITIATOR_FSP_ID) == null) {
+                            //TOMD TODO why this change to the initiatorFspId? Check against master branch and v1.5.0 tag 
 //                            TransactionChannelRequestDTO channelRequestObject = objectMapper.readValue((String) channelRequest, TransactionChannelRequestDTO.class);
 //                            PartyIdInfo initiatorParty = isTransactionRequest ? channelRequestObject.getPayee().getPartyIdInfo() : channelRequestObject.getPayer().getPartyIdInfo();
                             String initiatorFspId = partyProperties.getPartyByTenant(tenantId).getFspId();
@@ -98,13 +98,11 @@ public class PartyLookupWorkers {
 
                         Exchange exchange = new DefaultExchange(camelContext);
                         if (isMojaloopEnabled) {
-                            logger.info("TOMD-MOJALOOP-IS_ENABLED");
                             exchange.setProperty(TRANSACTION_ID, existingVariables.get(TRANSACTION_ID));
                             exchange.setProperty(CHANNEL_REQUEST, channelRequest);
                             exchange.setProperty(ORIGIN_DATE, existingVariables.get(ORIGIN_DATE));
                             exchange.setProperty(IS_RTP_REQUEST, isTransactionRequest);
                             exchange.setProperty(TENANT_ID, tenantId);
-                            logger.info("TOMD6-send-party-lookup props {} ", exchange.getProperties());
                             producerTemplate.send("direct:send-party-lookup", exchange);
                         } else {
                             PartyIdInfo partyIdInfo = new PartyIdInfo(MSISDN, "27710305999", null, "in03tn05");
@@ -129,9 +127,7 @@ public class PartyLookupWorkers {
                     .jobType(WORKER_PARTY_LOOKUP_LOCAL_RESPONSE + dfspId)
                     .handler((client, job) -> {
                         logger.info("Job '{}' started from process '{}' with key {}", job.getType(), job.getBpmnProcessId(), job.getKey());
-                        logger.info("TDDEBUG-ML1");
                         Map<String, Object> existingVariables = job.getVariablesAsMap();
-                        logger.info("TDDEBUG-ML2-VARS {} ", existingVariables);
                         Exchange exchange = new DefaultExchange(camelContext);
                         Object errorInformation = existingVariables.get(ERROR_INFORMATION);
 
@@ -140,28 +136,21 @@ public class PartyLookupWorkers {
                                 HEADER_TRACEPARENT,
                                 HEADER_DATE
                         );
-                        logger.info("TDDEBUG-ML3");
                         if (errorInformation != null) {
-                            logger.info("TDDEBUG-ML4");
                             exchange.setProperty(ERROR_INFORMATION, errorInformation);
                             exchange.setProperty(PARTY_ID_TYPE, existingVariables.get(PARTY_ID_TYPE));
                             exchange.setProperty(PARTY_ID, existingVariables.get(PARTY_ID));
 
                             logger.info("Error info: {}", objectMapper.writeValueAsString(errorInformation));
-                            logger.info("TDDEBUG-ERROR - Zeebe variables: {}", existingVariables);
                             producerTemplate.send("direct:send-parties-error-response", exchange);
                         } else {
-                            logger.info("TDDEBUG-ERROR_INFO-ISNULL - Zeebe variables: {}", existingVariables);
                             exchange.setProperty(PAYEE_PARTY_RESPONSE, existingVariables.get(PAYEE_PARTY_RESPONSE));
-
                             exchange.setProperty(HOST, existingVariables.get("X-Lookup-Callback-Url"));
                             producerTemplate.send("direct:send-parties-response", exchange);
                         }
-                        logger.info("TOMD-ABOUT_TO_COMPLETE-WF");
                         client.newCompleteCommand(job.getKey())
                                 .send()
                         ;
-                        logger.info("TOMD-COMPLETED-WF");
                     })
                     .name(WORKER_PARTY_LOOKUP_LOCAL_RESPONSE + dfspId)
                     .maxJobsActive(workerMaxJobs)

@@ -40,7 +40,7 @@ public class MojaloopConnectorApplication {
         if(mojaPerfMode) {
             logger.info("----- PERF mode is turned on, no AMS and ZEEBE is running! -----");
         } else {
-            logger.info("----- TOMD PERF mode is turned off, AMS and ZEEBE are running! -----");
+            logger.info("----- PERF mode is turned off, AMS and ZEEBE are running! -----");
         }
     }
 

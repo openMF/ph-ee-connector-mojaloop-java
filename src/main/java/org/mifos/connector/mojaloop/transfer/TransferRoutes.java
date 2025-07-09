@@ -116,7 +116,7 @@ public class TransferRoutes extends ErrorHandlerRouteBuilder {
                         })
                     .endChoice()
                 .end()
-                .log(LoggingLevel.INFO, "TOMD ######## SWITCH -> PAYEE - forward transfer request ${exchangeProperty."+TRANSACTION_ID+"} - XFER STEP 2")
+                .log(LoggingLevel.INFO, "######## SWITCH -> PAYEE - forward transfer request ${exchangeProperty."+TRANSACTION_ID+"} - XFER STEP 2")
                 .setBody(constant(null))
                 .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(202));
         //@formatter:on
@@ -124,7 +124,6 @@ public class TransferRoutes extends ErrorHandlerRouteBuilder {
         // TODO TOMD to check this with Pedro as it seems to be a difference with vNext 
         //           the old vNow seemed to use a put here as indicated by existing mojaloop connector code 
         from("rest:PATCH:/switch/transfers/{"+TRANSACTION_ID+"}")
-                .log(LoggingLevel.INFO, "TOMD PATCH start XFER STEP 4")
                 .setProperty(CLASS_TYPE, constant(TransferSwitchResponseDTO.class))
                 .to("direct:body-unmarshling")
                 .process(getCachedTransactionIdProcessor)
@@ -203,10 +202,8 @@ public class TransferRoutes extends ErrorHandlerRouteBuilder {
                 .setProperty(CLASS_TYPE, constant(QuoteSwitchResponseDTO.class))
                 .to("direct:body-unmarshling")
                 .process(exchange -> {
-                    logger.info("TOMD In send-transfer}");
                     QuoteSwitchResponseDTO quoteResponse = exchange.getIn().getBody(QuoteSwitchResponseDTO.class);
                     Ilp ilp = ilpBuilder.parse(quoteResponse.getIlpPacket(), quoteResponse.getCondition());
-                    logger.info("TOMD In send-transfer after ilpBuilder.parse");
                     Transaction transaction = ilp.getTransaction();
                     TransferSwitchRequestDTO request = new TransferSwitchRequestDTO(
                             transaction.getTransactionId(),
@@ -223,7 +220,6 @@ public class TransferRoutes extends ErrorHandlerRouteBuilder {
                 })
                 .process(pojoToString)
                 .process(addTraceHeaderProcessor)
-                .log(LoggingLevel.INFO, "TOMD Transfer body: ${body}")
                 .setHeader(Exchange.HTTP_METHOD, constant("POST"))
                 // TOMD  TODO hardcoded for debug the HOST should be set in the properties 
                 //       or otherwise in the workflow

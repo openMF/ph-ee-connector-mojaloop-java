@@ -50,27 +50,26 @@ public class IlpConditionHandlerImpl {
     @Autowired
     private ObjectMapper mapper;
 
-    // @Value("${ilp.secret}")
-    // private String conectorIlpSecret;
 
-    public String getILPPacket(String ilpAddress, String amount, Transaction transaction) throws IOException {
-        InterledgerAddress address = InterledgerAddress.builder().value(ilpAddress).build();
-        InterledgerPayment.Builder paymentBuilder = InterledgerPayment.builder();
-        paymentBuilder.destinationAccount(address);
-        paymentBuilder.destinationAmount(Long.valueOf(amount));
-        mapper.setSerializationInclusion(Include.NON_NULL);
-        String notificationJson = mapper.writeValueAsString(transaction);
-        logger.info("Notification JSON: {}", notificationJson);
-        byte[] serializedTransaction = Base64.getUrlEncoder().encode(notificationJson.getBytes());
-        paymentBuilder.data(serializedTransaction);
-        CodecContext context = CodecContextFactory.interledger();
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        context.write(InterledgerPayment.class, paymentBuilder.build(), outputStream);
-        return Base64.getUrlEncoder().encodeToString(outputStream.toByteArray());
-    }
+    // Older commented-out method for reference
+    // public String getILPPacket(String ilpAddress, String amount, Transaction transaction) throws IOException {
+    //     InterledgerAddress address = InterledgerAddress.builder().value(ilpAddress).build();
+    //     InterledgerPayment.Builder paymentBuilder = InterledgerPayment.builder();
+    //     paymentBuilder.destinationAccount(address);
+    //     paymentBuilder.destinationAmount(Long.valueOf(amount));
+    //     mapper.setSerializationInclusion(Include.NON_NULL);
+    //     String notificationJson = mapper.writeValueAsString(transaction);
+    //     logger.info("Notification JSON: {}", notificationJson);
+    //     byte[] serializedTransaction = Base64.getUrlEncoder().encode(notificationJson.getBytes());
+    //     paymentBuilder.data(serializedTransaction);
+    //     CodecContext context = CodecContextFactory.interledger();
+    //     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+    //     context.write(InterledgerPayment.class, paymentBuilder.build(), outputStream);
+    //     return Base64.getUrlEncoder().encodeToString(outputStream.toByteArray());
+    // }
 
     /**
-     * Generates an ILPv1 Payment packet as per IL-RFC-15 and ilp-packet:2.2.0.
+     * Generates an ILPv1 Payment packet as per IL-RFC-15 and node ilp-packet:2.2.0.
      * Packet structure:
      * - [type: 1 byte]                - 0x01 for ILP_PAYMENT
      * - [contents length: VLQ]        - Variable-Length Quantity (VLQ) for total contents length
@@ -81,8 +80,8 @@ public class IlpConditionHandlerImpl {
      * - [data: N bytes]               - Base64-encoded JSON transaction data
      * - [extensions: 1 byte]          - 0x00 for no extensions
      */
-    public String grok3_getILPPacket(String ilpAddress, String amount, Transaction transaction) throws IOException {
-        logger.info("grok3_getILPPacket: ilpAddress: {}, amount: {}, transaction: {}", ilpAddress, amount, transaction);
+    public String vNextGetILPPacket(String ilpAddress, String amount, Transaction transaction) throws IOException {
+        logger.info("vNextGetILPPacket: ilpAddress: {}, amount: {}, transaction: {}", ilpAddress, amount, transaction);
 
         // Validate ILP address
         // Ensures address matches g.<fspId>.msisdn.<identifier> format
@@ -128,7 +127,7 @@ public class IlpConditionHandlerImpl {
         logger.info("JSON bytes length: {}", jsonBytes.length);
         logger.info("JSON raw bytes (first 100): {}", Arrays.toString(Arrays.copyOf(jsonBytes, Math.min(100, jsonBytes.length))));
 
-        // IMPORTANT: Use standard Base64 encoding (with padding) to match GrokIlpv1v2.java and Node.js decoder expectation
+        // IMPORTANT: Use standard Base64 encoding (with padding) to match node ilp-2.2.0 decoder expectation
         byte[] dataBytes = Base64.getEncoder().encode(jsonBytes);
         logger.info("Data bytes length (Base64 encoded): {}, hex (first 100): {}", dataBytes.length, toHexString(Arrays.copyOf(dataBytes, Math.min(100, dataBytes.length))));
 
@@ -153,7 +152,7 @@ public class IlpConditionHandlerImpl {
         // Adding address
         contentsStream.write(addressBytes);
 
-        // IMPORTANT: Use custom length prefix logic to match GrokIlpv1v2.java
+        // IMPORTANT: Use custom length prefix logic to match node ilp-packet:2.2.0
         writeCustomLengthPrefix(contentsStream, dataBytes.length);
         logger.info("Data length prefix written for length: {}", dataBytes.length);
 
@@ -204,7 +203,8 @@ public class IlpConditionHandlerImpl {
     }
 
     /**
-     * Writes a custom length prefix to the stream, mimicking GrokIlpv1v2.java's behavior.
+     * TOMD TODO : this approach needs verification for robustness 
+     * Writes a custom length prefix to the stream
      * For lengths <= 127, it's a single byte.
      * For lengths > 127, it's a 3-byte sequence: 0x82 followed by the 2-byte big-endian length.
      * This is NOT a standard ILP-RFC-15 VLQ, but matches the provided working example.
@@ -401,13 +401,6 @@ public class IlpConditionHandlerImpl {
         }
     }
 
-    // Keeping these methods as they are used by getTransactionFromIlpPacket,
-    // though they implement a different VLQ scheme than the one used for packet generation.
-    private void writeVarOctetString(ByteArrayOutputStream stream, byte[] data) throws IOException {
-        writeVarUInt(stream, data.length);
-        stream.write(data);
-    }
-
     private void writeVarUInt(ByteArrayOutputStream stream, long value) throws IOException {
         if (value < 0) throw new IOException("Negative length not allowed: " + value);
         if (value <= 0x7F) {
@@ -424,26 +417,6 @@ public class IlpConditionHandlerImpl {
         }
     }
 
-    private long readVarUInt(ByteArrayInputStream stream) throws IOException {
-        int firstByte = stream.read();
-        if (firstByte < 0) throw new IOException("Unexpected end of stream");
-        if ((firstByte & 0x80) == 0) {
-            return firstByte;
-        }
-        long value = firstByte & 0x7F;
-        int shift = 7;
-        for (int i = 0; i < 2; i++) {
-            int nextByte = stream.read();
-            if (nextByte < 0) throw new IOException("Unexpected end of stream");
-            value |= (long) (nextByte & 0x7F) << shift;
-            if ((nextByte & 0x80) == 0) {
-                return value;
-            }
-            shift += 7;
-        }
-        throw new IOException("Invalid variable-length integer");
-    }
-
     private String toHexString(byte[] bytes) {
         StringBuilder sb = new StringBuilder();
         for (byte b : bytes) {
@@ -452,10 +425,4 @@ public class IlpConditionHandlerImpl {
         return sb.toString();
     }
 
-    private byte[] longToBytes(long value) {
-        return new byte[] {
-            (byte) (value >> 56), (byte) (value >> 48), (byte) (value >> 40), (byte) (value >> 32),
-            (byte) (value >> 24), (byte) (value >> 16), (byte) (value >> 8), (byte) value
-        };
-    }
 }

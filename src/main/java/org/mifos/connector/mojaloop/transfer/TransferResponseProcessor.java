@@ -28,7 +28,6 @@ public class TransferResponseProcessor implements Processor {
 
     @Override
     public void process(Exchange exchange) {
-        logger.info("TOMD in TransferResponseProcessor");
         Map<String, Object> variables = new HashMap<>();
         Object isPayeeTransferFailed = exchange.getProperty(TRANSFER_FAILED);
         String error = exchange.getIn().getBody(String.class);
@@ -41,7 +40,6 @@ public class TransferResponseProcessor implements Processor {
         }
 
         if(zeebeClient != null) {
-            logger.info("TOMD about to send xfer response ");
             zeebeClient.newPublishMessageCommand()
                     .messageName(TRANSFER_RESPONSE)
                     .correlationKey(exchange.getProperty(CACHED_TRANSACTION_ID, String.class))
