@@ -44,10 +44,10 @@ public class IlpBuilder {
 
     public Ilp build(Transaction transaction, BigDecimal amount) throws IOException {
         String ilpAddress = buildIlpAddress(transaction);
-        String ilpPacket = ilpConditionHandlerImpl.grok3_getILPPacket(ilpAddress, ContextUtil.formatAmount(amount), transaction); 
+        String ilpPacket = ilpConditionHandlerImpl.vNextGetILPPacket(ilpAddress, ContextUtil.formatAmount(amount), transaction); 
         String ilpCondition = ilpConditionHandlerImpl.generateCondition(ilpPacket, conectorIlpSecret.getBytes());
         String fulfillment = ilpConditionHandlerImpl.generateFulfillment(ilpPacket, conectorIlpSecret.getBytes());
-        //TOMD TODO verify this against master branch or v1.5.0 tag
+        //TOMD TODO verify this against master branch and or v1.5.0 tag
         Ilp tomdIlp = new Ilp(ilpPacket, ilpCondition, fulfillment, transaction);
         return tomdIlp;
     }

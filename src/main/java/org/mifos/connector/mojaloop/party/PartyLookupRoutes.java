@@ -80,7 +80,7 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                     .otherwise()
                         .process(e -> {
                             String host = e.getIn().getHeader("Host", String.class).split(":")[0];
-                            log.info("TOMD1 route entry /switch/parties   Host: {} ", host  );
+                            log.info("GAZELLE-DBG1 route entry /switch/parties   Host: {} ", host  );
                             
                             //log.info("HOST: {}", host);
                             log.info("Headers: {}", e.getIn().getHeaders());
@@ -117,13 +117,13 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
 
         from("rest:PUT:/switch/parties/" + MSISDN + "/{partyId}")
                 .process(e -> {
-                    log.info("TOMD CALLBACK-OK from vNext switch/parties/{} ", e.getIn().getHeader(PARTY_ID));
+                    log.info("GAZELLE-DBG CALLBACK-OK from vNext switch/parties/{} ", e.getIn().getHeader(PARTY_ID));
                 })
                 .setProperty(CLASS_TYPE, constant(PartySwitchResponseDTO.class))
                 .to("direct:body-unmarshling")
                 .process(getCachedTransactionIdProcessor)
                 .process(e -> {
-                    log.info("TOMD-API-PUT-switch/parties/{} ", e.getIn().getHeader(PARTY_ID));
+                    log.info("GAZELLE-DBG-API-PUT-switch/parties/{} ", e.getIn().getHeader(PARTY_ID));
                 })
                 .to("direct:parties-step4");
 
@@ -131,7 +131,7 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                 .log(LoggingLevel.DEBUG, "######## SWITCH -> PAYER - response for parties request  - STEP 4")
                 .process(partiesResponseProcessor)
                 .process(e -> {
-                    log.info("TOMD-parties-step4 ");
+                    log.info("GAZELLE-DBG-parties-step4 ");
                 })
                 .setBody(constant(null))
                 .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(200));
@@ -142,7 +142,7 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                 .setProperty(PARTY_LOOKUP_FAILED, constant(true))
                 .process(partiesResponseProcessor)
                 .process(e -> {
-                    log.info("TOMD-parties-step4-error ");
+                    log.info("GAZELLE-DBG-parties-step4-error ");
                 })
                 .setBody(constant(null))
                 .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(200));
@@ -168,20 +168,20 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                 .log(LoggingLevel.INFO, "######## PAYEE -> SWITCH - party lookup response - STEP 3")
                 .id("send-parties-response")
                 .process(exchange -> {
-                    log.info("TOMD-send-parties-response-start  step3 "); 
+                    log.info("GAZELLE-DBG-send-parties-response-start  step3 "); 
                     Party party = objectMapper.readValue(exchange.getProperty(PAYEE_PARTY_RESPONSE, String.class), Party.class);
                     exchange.setProperty(PARTY_ID, party.getPartyIdInfo().getPartyIdentifier());
                     exchange.setProperty(PARTY_ID_TYPE, party.getPartyIdInfo().getPartyIdType().name());
                     exchange.getIn().setBody(new PartySwitchResponseDTO(party));
-                    log.info("TOMD: step3 host  {}", exchange.getProperty(HOST));
-                    log.info("TOMD: step3 request {}", exchange.getIn().getHeaders() );
-                    log.info("TOMD: step3 body {}", exchange.getIn().getBody() ) ;
+                    log.info("GAZELLE-DBG: step3 host  {}", exchange.getProperty(HOST));
+                    log.info("GAZELLE-DBG: step3 request {}", exchange.getIn().getHeaders() );
+                    log.info("GAZELLE-DBG: step3 body {}", exchange.getIn().getBody() ) ;
                     
                     mojaloopUtil.setPartyHeadersResponse(exchange);
-                    log.info("TOMD-send-parties-response-end step3a"); 
+                    log.info("GAZELLE-DBG-send-parties-response-end step3a"); 
                 })
                 .process(pojoToString)
-                .log(LoggingLevel.INFO, "TOMD-Party response from payee: ${body}")
+                .log(LoggingLevel.INFO, "GAZELLE-DBG-Party response from payee: ${body}")
                 .setHeader(Exchange.HTTP_METHOD, constant("PUT"))
                 .setProperty(ENDPOINT, simple("/parties/${exchangeProperty." + PARTY_ID_TYPE + "}/${exchangeProperty." + PARTY_ID + "}"))
                 .to("direct:external-api-call");
@@ -192,7 +192,6 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                 .process(exchange -> {
                     exchange.getIn().setBody(exchange.getProperty(ERROR_INFORMATION));
                     mojaloopUtil.setPartyHeadersResponse(exchange);
-                    log.info("TDDEBUG15: error response path" ); 
                 })
                 .setHeader(Exchange.HTTP_METHOD, constant("PUT"))
                 .setProperty(HOST, simple("{{switch.als-host}}"))
@@ -208,30 +207,30 @@ public class PartyLookupRoutes extends ErrorHandlerRouteBuilder {
                     PartyIdInfo requestedParty = e.getProperty(IS_RTP_REQUEST, Boolean.class) ? channelRequest.getPayer().getPartyIdInfo() : channelRequest.getPayee().getPartyIdInfo();
                     e.setProperty(PARTY_ID_TYPE, requestedParty.getPartyIdType());
                     e.setProperty(PARTY_ID, requestedParty.getPartyIdentifier());
-                    log.info("TOMD all parties:");
-                    partyProperties.listAllParties().forEach(party -> {
-                        log.info("Party / tenantId : {}", party.getTenantId());
-                        log.info("Party / fspId : {}", party.getFspId());
-                        log.info("Domain/ fspId : {}", party.getDomain());
-                    });
+                    // log.info("GAZELLE-DBG all parties:");
+                    // partyProperties.listAllParties().forEach(party -> {
+                    //     log.info("Party / tenantId : {}", party.getTenantId());
+                    //     log.info("Party / fspId : {}", party.getFspId());
+                    //     log.info("Domain/ fspId : {}", party.getDomain());
+                    // });
                     
                     e.getIn().setHeader(FSPIOP_SOURCE.headerName(), partyProperties.getPartyByTenant(e.getProperty(TENANT_ID, String.class)).getFspId());
-                    // TOMD : remove this when we have a proper way to set the fspiop-source header
+                    // GAZELLE-DBG TODO : remove this when we have a proper way to set the fspiop-source header
                     e.getIn().setHeader(FSPIOP_SOURCE.headerName(), "greenbank");
-                    log.info("TOMD fspiop-source: {}", e.getIn().getHeader(FSPIOP_SOURCE.headerName()));
-                    log.info("TOMD-SEND_PARTY_LOOKUP: headers : {}", e.getIn().getHeaders()); 
-                    log.info("TOMD-SEND host from properties  : {}", e.getProperty(HOST)); 
+                    log.info("GAZELLE-DBG fspiop-source: {}", e.getIn().getHeader(FSPIOP_SOURCE.headerName()));
+                    log.info("GAZELLE-DBG-SEND_PARTY_LOOKUP: headers : {}", e.getIn().getHeaders()); 
+                    log.info("GAZELLE-DBG-SEND host from properties  : {}", e.getProperty(HOST)); 
                     mojaloopUtil.setPartyHeadersRequest(e);
-                    log.info("TOMD-SEND_PARTY_LOOKUP: after setting  headers in mojaloopUtils : {}", e.getIn().getHeaders()); 
+                    log.info("GAZELLE-DBG-SEND_PARTY_LOOKUP: after setting  headers in mojaloopUtils : {}", e.getIn().getHeaders()); 
                 })
                 .process(addTraceHeaderProcessor)
                 .setHeader(Exchange.HTTP_METHOD, constant("GET"))
                 .process(e -> log.info("Mojaloop headers : {}", e.getIn().getHeaders()))
                 .setProperty(HOST, simple("{{switch.als-host}}"))
                 .setProperty(ENDPOINT, simple("/parties/${exchangeProperty." + PARTY_ID_TYPE + "}/${exchangeProperty." + PARTY_ID + "}"))
-                .process(e -> log.info("TOMD sendparty-lookup host from header : {}", e.getIn().getHeader(HOST)))
-                .process(e -> log.info("TOMD sendparty-lookup host from properties  : {}", e.getProperty(HOST)))
+                .process(e -> log.info("GAZELLE-DBG sendparty-lookup host from header : {}", e.getIn().getHeader(HOST)))
+                .process(e -> log.info("GAZELLE-DBG sendparty-lookup host from properties  : {}", e.getProperty(HOST)))
                 .to("direct:external-api-call")
-                .log(LoggingLevel.INFO,"FRED-RESP Response body: ${body}");
+                .log(LoggingLevel.INFO,"direct-send-party-lookup Response body: ${body}");
     }
 }
