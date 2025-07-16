@@ -121,8 +121,9 @@ public class TransferRoutes extends ErrorHandlerRouteBuilder {
                 .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(202));
         //@formatter:on
 
-        // TODO TOMD to check this with Pedro as it seems to be a difference with vNext 
-        //           the old vNow seemed to use a put here as indicated by existing mojaloop connector code 
+        // Note this PATCH callback from vNext seems to be a difference with vNext 
+        //           the old vNow seemed to use a put here as indicated by existing phee mojaloop connector code 
+        //           it seems fine and reliable but it does seem to be a difference
         from("rest:PATCH:/switch/transfers/{"+TRANSACTION_ID+"}")
                 .setProperty(CLASS_TYPE, constant(TransferSwitchResponseDTO.class))
                 .to("direct:body-unmarshling")

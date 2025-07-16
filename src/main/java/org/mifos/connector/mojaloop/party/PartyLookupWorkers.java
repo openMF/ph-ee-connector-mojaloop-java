@@ -71,8 +71,8 @@ public class PartyLookupWorkers {
 
     @PostConstruct
     public void setupWorkers() {
-        logger.info("Logging all dfspids:");
-        dfspids.forEach(dfspId -> logger.info("TOMD dfspid: {}", dfspId));
+        // logger.info("Logging all dfspids:");
+        // dfspids.forEach(dfspId -> logger.info("TOMD dfspid: {}", dfspId));
         for (String dfspId : dfspids) {
             logger.info("## generating " + WORKER_PARTY_LOOKUP_REQUEST + "{} zeebe worker", dfspId);
             zeebeClient.newWorker()

@@ -48,8 +48,8 @@ public class IlpBuilder {
         String ilpCondition = ilpConditionHandlerImpl.generateCondition(ilpPacket, conectorIlpSecret.getBytes());
         String fulfillment = ilpConditionHandlerImpl.generateFulfillment(ilpPacket, conectorIlpSecret.getBytes());
         //TOMD TODO verify this against master branch and or v1.5.0 tag
-        Ilp tomdIlp = new Ilp(ilpPacket, ilpCondition, fulfillment, transaction);
-        return tomdIlp;
+        Ilp Ilp = new Ilp(ilpPacket, ilpCondition, fulfillment, transaction);
+        return Ilp;
     }
 
     public Ilp parse(String packet, String condition)  {

@@ -31,7 +31,6 @@ public class PartiesResponseProcessor implements Processor {
     public void process(Exchange exchange) {
         Map<String, Object> variables = new HashMap<>();
         Object isPayeePartyLookupFailed = exchange.getProperty(PARTY_LOOKUP_FAILED);
-        logger.info("TOMD-RESP1a isPayeePartyLookupFailed: {}", isPayeePartyLookupFailed);
         String error = exchange.getIn().getBody(String.class);
         if (isPayeePartyLookupFailed != null && (boolean) isPayeePartyLookupFailed) {
             variables.put(ERROR_INFORMATION, error);
@@ -40,7 +39,6 @@ public class PartiesResponseProcessor implements Processor {
             PartySwitchResponseDTO response = exchange.getIn().getBody(PartySwitchResponseDTO.class);
             variables.put(PARTY_LOOKUP_FSP_ID, response.getParty().getPartyIdInfo().getFspId());
             variables.put(PARTY_LOOKUP_FAILED, false);
-            logger.info("TOMD-RESP1 party lookup worked ok for fspId: {}", response.getParty().getPartyIdInfo().getFspId());
         }
 
         if(zeebeClient != null) {
