@@ -58,6 +58,11 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter:$springBootVersion"
     implementation "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
     implementation "org.springframework.boot:spring-boot-starter-actuator:$springBootVersion"
+
+    configurations {
+        // all*.exclude group: 'org.json', module: 'json'
+        all*.exclude group: 'com.vaadin.external.google', module: 'android-json'
+    }
 }
 
 group = 'org.mifos'

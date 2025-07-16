@@ -30,9 +30,12 @@ import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.ERROR_INFORMATIO
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.SWITCH_TRANSFER_REQUEST;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.TRANSACTION_ID;
 import static org.mifos.connector.mojaloop.zeebe.ZeebeVariables.TRANSFER_FAILED;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Component
 public class TransferRoutes extends ErrorHandlerRouteBuilder {
+    private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Value("${mojaloop.perf-mode}")
     private boolean mojaPerfMode;
@@ -113,10 +116,19 @@ public class TransferRoutes extends ErrorHandlerRouteBuilder {
                         })
                     .endChoice()
                 .end()
-                .log(LoggingLevel.INFO, "TOMD ######## SWITCH -> PAYEE - forward transfer request ${exchangeProperty."+TRANSACTION_ID+"} - XFER STEP 2")
+                .log(LoggingLevel.INFO, "######## SWITCH -> PAYEE - forward transfer request ${exchangeProperty."+TRANSACTION_ID+"} - XFER STEP 2")
                 .setBody(constant(null))
                 .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(202));
         //@formatter:on
+
+        // Note this PATCH callback from vNext seems to be a difference with vNext 
+        //           the old vNow seemed to use a put here as indicated by existing phee mojaloop connector code 
+        //           it seems fine and reliable but it does seem to be a difference
+        from("rest:PATCH:/switch/transfers/{"+TRANSACTION_ID+"}")
+                .setProperty(CLASS_TYPE, constant(TransferSwitchResponseDTO.class))
+                .to("direct:body-unmarshling")
+                .process(getCachedTransactionIdProcessor)
+                .to("direct:transfers-step4");
 
         from("rest:PUT:/switch/transfers/{"+TRANSACTION_ID+"}")
                 .setProperty(CLASS_TYPE, constant(TransferSwitchResponseDTO.class))
@@ -193,7 +205,6 @@ public class TransferRoutes extends ErrorHandlerRouteBuilder {
                 .process(exchange -> {
                     QuoteSwitchResponseDTO quoteResponse = exchange.getIn().getBody(QuoteSwitchResponseDTO.class);
                     Ilp ilp = ilpBuilder.parse(quoteResponse.getIlpPacket(), quoteResponse.getCondition());
-
                     Transaction transaction = ilp.getTransaction();
                     TransferSwitchRequestDTO request = new TransferSwitchRequestDTO(
                             transaction.getTransactionId(),
@@ -210,9 +221,8 @@ public class TransferRoutes extends ErrorHandlerRouteBuilder {
                 })
                 .process(pojoToString)
                 .process(addTraceHeaderProcessor)
-                .log(LoggingLevel.INFO, "TOMD Transfer body: ${body}")
                 .setHeader(Exchange.HTTP_METHOD, constant("POST"))
-                // TOMDO TODO hardcoded for debug the HOST gere should be set in the properties 
+                // TOMD  TODO hardcoded for debug the HOST should be set in the properties 
                 //       or otherwise in the workflow
                 //.setProperty(HOST, simple("{{switch.transfers-host}}"))
                 .setProperty(HOST, constant("http://fspiop-api-svc.vnext.svc.cluster.local:4000"))

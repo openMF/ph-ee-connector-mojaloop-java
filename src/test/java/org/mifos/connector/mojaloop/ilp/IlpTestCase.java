@@ -1,7 +1,12 @@
-package org.mifos.connector.mojaloop;
+package org.mifos.connector.mojaloop.ilp;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ilp.conditions.models.pdp.*;
+//import com.ilp.conditions.models.pdp.*;
+import com.ilp.conditions.models.pdp.Money;
+import com.ilp.conditions.models.pdp.Party;
+import com.ilp.conditions.models.pdp.PartyIdInfo;
+import com.ilp.conditions.models.pdp.Transaction;
+import com.ilp.conditions.models.pdp.TransactionType;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -88,7 +93,7 @@ public class IlpTestCase {
     // generate ILP
     @Test
     public void checkIfIlpPacketIsNotNull() {
-        logger.debug("ILP Packet: {}", this.ilpPacket);
+        logger.info("ILP Packet: {}", this.ilpPacket);
         assert !ilpPacket.isEmpty();
     }
 
@@ -96,7 +101,7 @@ public class IlpTestCase {
     @Test
     public void secretNotNull() {
         assert ilpSecret != null;
-        logger.debug("Secret: {}", ilpSecret);
+        logger.info("Secret: {}", ilpSecret);
     }
 
     // get condition from ILP packet
@@ -104,7 +109,7 @@ public class IlpTestCase {
     public void getConditionFromIlpPacket() throws IOException {
         String condition = ilpConditionHandler.generateCondition(
                 this.ilpPacket, ilpSecret.getBytes());
-        logger.debug("Condition is {}", condition);
+        logger.info("Condition is {}", condition);
         this.condition = condition;
         assert !condition.isEmpty();
     }
@@ -114,7 +119,7 @@ public class IlpTestCase {
     public void getFulfillmentFromIlpPacket() throws IOException {
         String fulfillment = ilpConditionHandler.generateFulfillment(
                 this.ilpPacket, ilpSecret.getBytes());
-        logger.debug("Fulfillment is {}", condition);
+        logger.info("Fulfillment is {}", condition);
         this.fulfillment = fulfillment;
         assert !this.fulfillment.isEmpty();
     }
@@ -122,10 +127,10 @@ public class IlpTestCase {
     // extract transaction from ilpPacket
     @Test
     public void extractTxnFromIlpPacket() throws IOException {
-        logger.debug("Using ilppacket: {}", this.ilpPacket);
+        logger.info("Using ilppacket: {}", this.ilpPacket);
         Transaction transaction = ilpConditionHandler.getTransactionFromIlpPacket(this.ilpPacket);
         assert transaction != null;
-        logger.debug("Transaction extracted: {}", objectMapper.writeValueAsString(transaction));
+        logger.info("Transaction extracted: {}", objectMapper.writeValueAsString(transaction));
     }
 
 

@@ -27,7 +27,7 @@ public class IlpBuilder {
 
     private Logger logger = LoggerFactory.getLogger(this.getClass());
     //private static final String ILP_ADDRESS_TEMPLATE = "g.tz.%s.%s.%s";
-    // TOMD drop the .tz from the ILP address template
+    //TOMD TODO drop the .tz from the ILP address template (why?? need to verify this ) 
     private static final String ILP_ADDRESS_TEMPLATE = "g.%s.%s.%s";
 
     @Autowired
@@ -39,23 +39,17 @@ public class IlpBuilder {
     public Ilp build(String transactionId, String quoteId, BigDecimal transactionAmount, String currency, Party payer,
                      Party payee, BigDecimal transferAmount) throws IOException {
         Transaction transaction = mapToTransaction(transactionId, quoteId, transactionAmount, currency, payer, payee);
-        logger.info("TOMD-ILP Building ILP for transaction: {}", transaction);
-
         return build(transaction, transferAmount);
     }
 
     public Ilp build(Transaction transaction, BigDecimal amount) throws IOException {
         String ilpAddress = buildIlpAddress(transaction);
-        logger.info("TOMD-ILPa1 Building ILP for transaction: {}, ilpAddress: {}", transaction, ilpAddress);
-        String ilpPacket = ilpConditionHandlerImpl.getILPPacketGrok(ilpAddress, ContextUtil.formatAmount(amount), transaction);
-        //String ilpPacket = ilpConditionHandlerImpl.getILPPacketExactV2(ilpAddress, ContextUtil.formatAmount(amount), transaction);
-        logger.info("TOMD-ILP2 Built ILP packet: {}", ilpPacket);
+        String ilpPacket = ilpConditionHandlerImpl.vNextGetILPPacket(ilpAddress, ContextUtil.formatAmount(amount), transaction); 
         String ilpCondition = ilpConditionHandlerImpl.generateCondition(ilpPacket, conectorIlpSecret.getBytes());
         String fulfillment = ilpConditionHandlerImpl.generateFulfillment(ilpPacket, conectorIlpSecret.getBytes());
-        Ilp tomdIlp = new Ilp(ilpPacket, ilpCondition, fulfillment, transaction);
-        //logger.info("TOMD-ILP1 Built ILP: {}", tomdIlp);
-        //return new Ilp(ilpPacket, ilpCondition, fulfillment, transaction);
-        return tomdIlp;
+        //TOMD TODO verify this against master branch and or v1.5.0 tag
+        Ilp Ilp = new Ilp(ilpPacket, ilpCondition, fulfillment, transaction);
+        return Ilp;
     }
 
     public Ilp parse(String packet, String condition)  {
@@ -89,7 +83,8 @@ public class IlpBuilder {
         transaction.setPayer(payer.getIlpParty());
         transaction.setPayee(payee.getIlpParty());
 
-        // TOMD : Add transaction type (required by vNext)
+        //TOMD: TODO Add transaction type (required by vNext)
+        //      but verify that this is the correct way to do it
         TransactionType transactionType = new TransactionType();
         transactionType.setScenario("DEPOSIT");        // or get from request
         transactionType.setInitiator("PAYER");
