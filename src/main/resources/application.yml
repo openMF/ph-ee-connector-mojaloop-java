@@ -46,8 +46,8 @@ mojaloop:
 switch:
   quotes-host: http://fspiop-api-svc.vnext.svc.cluster.local:4000
   quote-service:  http://fspiop-api-svc.vnext.svc.cluster.local:4000
-  als-host: http://fspiop-api-svc:4000
-  account-lookup-service: http://fspiop-api-svc:4000
+  als-host: http://fspiop-api-svc.vnext.svc.cluster.local:4000
+  account-lookup-service: http://fspiop-api-svc.vnext.svc.cluster.local:4000
   transfers-host: http://fspiop-api-svc.vnext.svc.cluster.local:4000
   transfer-service:  http://fspiop-api-svc.vnext.svc.cluster.local:4000
   transactions-host: http://fspiop-api-svc.vnext.svc.cluster.local:4000
