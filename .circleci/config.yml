@@ -36,20 +36,20 @@ jobs:
             apt-cache madison docker-ce-cli | grep 20.10
             apt-get install -y docker-ce-cli=5:20.10.24~3-0~debian-bullseye
       - docker-buildx/install
-      - run:
-          name: Check if Docker image tag exists
-          command: |
-            IMAGE_TAG=$CIRCLE_TAG
-            # Using lowercase variables defined above
-            IMAGE_NAME="$DOCKER_ORG_LOWER/$DOCKER_REPO_LOWER"
-            echo "Checking for Docker image: $IMAGE_NAME:$IMAGE_TAG"
-            # Ensure DOCKERHUB_USERNAME and DOCKERHUB_PASSWORD are set in your CircleCI Context or Project Environment Variables
-            if curl -s -f -u "$DOCKERHUB_USERNAME":"$DOCKERHUB_PASSWORD" "https://hub.docker.com/v2/repositories/$IMAGE_NAME/tags/$IMAGE_TAG" > /dev/null; then
-              echo "Skipping the build and push as the tag $IMAGE_TAG already exists in Docker Hub for image $IMAGE_NAME."
-              circleci-agent step halt
-            else
-              echo "Tag $IMAGE_TAG does not exist for image $IMAGE_NAME. Proceeding with build."
-            fi
+      # - run:
+      #     name: Check if Docker image tag exists
+      #     command: |
+      #       IMAGE_TAG=$CIRCLE_TAG
+      #       # Using lowercase variables defined above
+      #       IMAGE_NAME="$DOCKER_ORG_LOWER/$DOCKER_REPO_LOWER"
+      #       echo "Checking for Docker image: $IMAGE_NAME:$IMAGE_TAG"
+      #       # Ensure DOCKERHUB_USERNAME and DOCKERHUB_PASSWORD are set in your CircleCI Context or Project Environment Variables
+      #       if curl -s -f -u "$DOCKERHUB_USERNAME":"$DOCKERHUB_PASSWORD" "https://hub.docker.com/v2/repositories/$IMAGE_NAME/tags/$IMAGE_TAG" > /dev/null; then
+      #         echo "Skipping the build and push as the tag $IMAGE_TAG already exists in Docker Hub for image $IMAGE_NAME."
+      #         circleci-agent step halt
+      #       else
+      #         echo "Tag $IMAGE_TAG does not exist for image $IMAGE_NAME. Proceeding with build."
+      #       fi
       - run:
           name: Build Application
           command: ./gradlew bootJar
