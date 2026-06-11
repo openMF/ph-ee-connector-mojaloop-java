@@ -194,6 +194,7 @@ public class TransferRoutes extends ErrorHandlerRouteBuilder {
                 .process(pojoToString)
                 .log(LoggingLevel.DEBUG, "Transfer response from payee: ${body}")
                 .setHeader(Exchange.HTTP_METHOD, constant("PUT"))
+                .setProperty(HOST, simple("{{switch.transfers-host}}"))
                 .setProperty(ENDPOINT, simple("transfers/${exchangeProperty." + TRANSACTION_ID + "}"))
                 .to("direct:external-api-call");
 

@@ -7,10 +7,9 @@
 plugins {
     id 'java'
     id 'maven-publish'
-    id 'org.springframework.boot' version '2.7.3'
+    id 'org.springframework.boot' version '3.4.4'
+    id 'io.spring.dependency-management' version '1.1.6'
 }
-apply plugin: 'java'
-apply plugin: 'io.spring.dependency-management'
 
 repositories {
     mavenCentral()
@@ -20,44 +19,52 @@ repositories {
     }
     maven {
         url = uri('https://mifos.jfrog.io/artifactory/phee-gradle-local')
-    }    
+    }
     maven {
         url = uri('https://mifos.jfrog.io/artifactory/mifosx-gradle-local')
     }
-}
 
-ext {
-    camelVersion = '3.18.1'
-    zeebClientVersion = '8.1.23'
-    springBootVersion = '2.7.3'
-}
-
-configurations.all {
-    resolutionStrategy {
-        force 'com.fasterxml.jackson.core:jackson-databind:2.4.6'
+    // Mifos Platform BOM + ph-ee-connector-common 2.0.0-SNAPSHOT are consumed
+    // from the local JFrog Artifactory sandbox (Docker Compose in
+    // proposal/local-jfrog/). Swap this host for the production Mifos JFrog
+    // when the official BOM is ready.
+    maven {
+        name = 'LocalJFrog'
+        url = uri('http://localhost:8081/artifactory/mifos-platform-snapshot')
+        allowInsecureProtocol = true
+        credentials {
+            username = findProperty('localJfrog.user') ?: System.getenv('LOCAL_JFROG_USER')
+            password = findProperty('localJfrog.key') ?: System.getenv('LOCAL_JFROG_KEY')
+        }
     }
 }
 
 dependencies {
-    implementation 'org.mifos:ph-ee-connector-common:1.8.1-gazelle'
+    // Mifos Platform BOM pins Spring Boot 3.4, Camel 4, Zeebe 8, Jakarta EE 10
+    // and every other shared library version (including Jackson — the old
+    // resolutionStrategy forcing jackson-databind 2.4.6 was removed).
+    // This is a deployable application (leaf node), so use enforcedPlatform().
+    implementation enforcedPlatform('org.mifos.platform:mifos-platform-bom:1.0.0-SNAPSHOT')
+
+    implementation 'org.mifos:ph-ee-connector-common:2.0.0-SNAPSHOT'
     implementation 'org.mifos:interop-ilp-conditions:1.7.1'
-    implementation "org.apache.camel.springboot:camel-spring-boot-starter:$camelVersion"
-    implementation "org.apache.camel:camel-undertow:$camelVersion"
-    implementation 'org.apache.camel.springboot:camel-jackson-starter:3.16.0'
-    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.7.9'
-    implementation "org.apache.camel:camel-http:$camelVersion"
-    implementation "org.apache.camel:camel-endpointdsl:$camelVersion"
-    implementation "org.apache.camel:camel-jetty:$camelVersion"
-    implementation("io.camunda:zeebe-client-java:$zeebClientVersion")
+    implementation 'org.apache.camel.springboot:camel-spring-boot-starter'
+    implementation 'org.apache.camel:camel-undertow'
+    implementation 'org.apache.camel.springboot:camel-jackson-starter'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+    implementation 'org.apache.camel:camel-http'
+    implementation 'org.apache.camel:camel-endpointdsl'
+    implementation 'org.apache.camel:camel-jetty'
+    implementation 'io.camunda:zeebe-client-java'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.0'
-    testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.9.0'
-    implementation 'org.json:json:20210307'
-    compileOnly 'org.projectlombok:lombok:1.18.24'
-    annotationProcessor 'org.projectlombok:lombok:1.18.24'
-    implementation "org.springframework.boot:spring-boot-starter:$springBootVersion"
-    implementation "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
-    implementation "org.springframework.boot:spring-boot-starter-actuator:$springBootVersion"
+    testImplementation 'org.junit.jupiter:junit-jupiter-api'
+    testImplementation 'org.junit.jupiter:junit-jupiter-engine'
+    implementation 'org.json:json'
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    implementation 'org.springframework.boot:spring-boot-starter'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
     configurations {
         // all*.exclude group: 'org.json', module: 'json'
@@ -68,7 +75,7 @@ dependencies {
 group = 'org.mifos'
 version = '2.0.0.mifos-SNAPSHOT'
 description = 'ph-ee-connector-mojaloop-java'
-java.sourceCompatibility = "17"
+java.sourceCompatibility = JavaVersion.VERSION_21
 
 publishing {
     publications {

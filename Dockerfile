@@ -1,4 +1,4 @@
-FROM eclipse-temurin:17-jdk
+FROM eclipse-temurin:21-jre
 EXPOSE 5000
 
 COPY build/libs/*.jar .
