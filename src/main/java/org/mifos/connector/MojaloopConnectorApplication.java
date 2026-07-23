@@ -15,7 +15,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.web.servlet.ServletRegistrationBean;
 import org.springframework.context.annotation.Bean;
+// import org.wildfly.common.ref.Log_.logger;
+
 import javax.annotation.PostConstruct;
 import static org.mifos.connector.mojaloop.camel.config.CamelProperties.CUSTOM_HEADER_FILTER_STRATEGY;
 
@@ -36,6 +39,8 @@ public class MojaloopConnectorApplication {
     public void setup() {
         if(mojaPerfMode) {
             logger.info("----- PERF mode is turned on, no AMS and ZEEBE is running! -----");
+        } else {
+            logger.info("----- PERF mode is turned off, AMS and ZEEBE are running! -----");
         }
     }
 
@@ -65,4 +70,5 @@ public class MojaloopConnectorApplication {
     public CustomHeaderFilterStrategy headerFilterStrategy() {
         return new CustomHeaderFilterStrategy();
     }
+
 }

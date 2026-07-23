@@ -1,3 +1,11 @@
+# parties:
+#   - tenantId: greenbank
+#     fspId: greenbank
+#     domain: ph-ee-connector-mojaloop-java.paymenthub.svc.cluster.local
+#   - tenantId: bluebank
+#     fspId: bluebank
+#     domain: ph-ee-connector-mojaloop-java.paymenthub.svc.cluster.local
+
 camel:
   server-port: 5000
   springboot:
@@ -9,8 +17,10 @@ camel:
 bpmn:
   flows:
     party-lookup: "PayeePartyLookup-{tenant}"
+    #party-lookup: "PartyLookup-{tenant}" #party-lookup-DFSPID.bpmn
+    #party-lookup: "PayerFundTransfer-{dfspid}"
     quote: "PayeeQuoteTransfer-{tenant}"
-    transaction-request: "PayerTransactionRequest-{tenant}"
+    transaction-request: "PayerTransactionRequest-{tenant}" #payer-transaction-request-DFSPID.bpmn
 
 zeebe:
   client:
@@ -21,7 +31,8 @@ zeebe:
 #    number-of-workers: 15
 #    evenly-allocated-max-jobs: "#{${zeebe.client.max-execution-threads} / ${zeebe.client.number-of-workers}}"
   broker:
-    contactpoint: "ph-ee-zeebe:26500"
+    #contactpoint: "ph-ee-zeebe:26500"
+    contactpoint: "zeebe-gateway.mifos.gazelle.test:80"
 
 connector:
   ilp-secret: h4on38bsDjKiat2783gnklgafikmeuu5123kpobb7jm99
@@ -33,26 +44,34 @@ mojaloop:
   perf-resp-delay: 100
 
 switch:
-  quotes-host: ""
-  quote-service: quoting-service.local
-  als-host: ""
-  account-lookup-service: account-lookup-service.local
-  transfers-host: ""
-  transfer-service: ml-api-adapter.local
-  transactions-host: ""
-  transaction-request-service: transaction-request-service.local
+  quotes-host: http://fspiop-api-svc.vnext.svc.cluster.local:4000
+  quote-service:  http://fspiop-api-svc.vnext.svc.cluster.local:4000
+  als-host: http://fspiop-api-svc.vnext.svc.cluster.local:4000
+  account-lookup-service: http://fspiop-api-svc.vnext.svc.cluster.local:4000
+  transfers-host: http://fspiop-api-svc.vnext.svc.cluster.local:4000
+  transfer-service:  http://fspiop-api-svc.vnext.svc.cluster.local:4000
+  transactions-host: http://fspiop-api-svc.vnext.svc.cluster.local:4000
+  transaction-request-service: http://fspiop-api-svc.vnext.svc.cluster.local:4000
   oracle-host: ""
 
-dfspids: "DFSPID"
+dfspids: greenbank, bluebank
 
-logging:
-  level:
-    root: ERROR
+# logging:
+#   level:
+#     root: DEBUG
+#     org:
+#       apache:
+#         camel: DEBUG
+
+
 
 server:
   port: 8080
 management:
   endpoint:
+    web:
+      exposure:
+        include: health,info,camelroutes
     health:
       enabled: true
       probes:
@@ -62,3 +81,8 @@ management:
       readiness:
         enabled: true
 
+security:
+  jws:
+    enable: false
+    response:
+      enable: false

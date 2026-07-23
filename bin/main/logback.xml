@@ -17,13 +17,8 @@
 <!--    <logger name="io.zeebe.client.job.poller" level="TRACE"/>-->
 <!--    <logger name="hu.dpc" level="TRACE"/>-->
 <!--    <logger name="org.eclipse" level="TRACE"/>-->
-    <root level="INFO">
-        <appender-ref ref="CONSOLE"/>
-    </root>
 
-    <!-- <logger name="org.apache.camel" level="INFO"/>
-    <logger name="myLogger" level="INFO"/> -->
-    <!-- <root level="INFO">
+    <root level="INFO">
         <appender-ref ref="CONSOLE"/>
     </root>
 
@@ -33,7 +28,7 @@
 
     <logger name="myLogger" level="INFO">
         <appender-ref ref="CONSOLE" />
-    </logger> -->
+    </logger>
 
 </configuration>
 

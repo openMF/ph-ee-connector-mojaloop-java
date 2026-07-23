@@ -3,6 +3,7 @@ HELP.md
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
+bin/**/*.class
 .gradle
 build/
 !gradle/wrapper/gradle-wrapper.jar

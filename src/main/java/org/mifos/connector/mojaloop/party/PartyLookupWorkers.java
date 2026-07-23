@@ -71,20 +71,25 @@ public class PartyLookupWorkers {
 
     @PostConstruct
     public void setupWorkers() {
+        // logger.info("Logging all dfspids:");
+        // dfspids.forEach(dfspId -> logger.info("TOMD dfspid: {}", dfspId));
         for (String dfspId : dfspids) {
             logger.info("## generating " + WORKER_PARTY_LOOKUP_REQUEST + "{} zeebe worker", dfspId);
             zeebeClient.newWorker()
                     .jobType(WORKER_PARTY_LOOKUP_REQUEST + dfspId)
                     .handler((client, job) -> {
-                        logger.info("Job '{}' started from process '{}' with key {}", job.getType(), job.getBpmnProcessId(), job.getKey());
+                        //logger.info("DEBUG Job '{}' started from process '{}' ProcessKey {} with Jobkey {}", job.getType(), job.getBpmnProcessId(), job.getProcessInstanceKey(), job.getKey());
                         Map<String, Object> existingVariables = job.getVariablesAsMap();
+                        
                         existingVariables.put(PARTY_LOOKUP_RETRY_COUNT, 1 + (Integer) existingVariables.getOrDefault(PARTY_LOOKUP_RETRY_COUNT, -1));
-
+                        logger.info("Logging existing variables:");
+                        //existingVariables.forEach((key, value) -> logger.info("DEBUG LOOKUP WORKER VARS {}: {}", key, value));
                         boolean isTransactionRequest = (boolean) existingVariables.get(IS_RTP_REQUEST);
                         String tenantId = (String) existingVariables.get(TENANT_ID);
                         Object channelRequest = existingVariables.get(CHANNEL_REQUEST);
                         // only saved for operations to identify workflow
                         if (existingVariables.get(INITIATOR_FSP_ID) == null) {
+                            //TOMD TODO why this change to the initiatorFspId? Check against master branch and v1.5.0 tag 
 //                            TransactionChannelRequestDTO channelRequestObject = objectMapper.readValue((String) channelRequest, TransactionChannelRequestDTO.class);
 //                            PartyIdInfo initiatorParty = isTransactionRequest ? channelRequestObject.getPayee().getPartyIdInfo() : channelRequestObject.getPayer().getPartyIdInfo();
                             String initiatorFspId = partyProperties.getPartyByTenant(tenantId).getFspId();
@@ -123,7 +128,6 @@ public class PartyLookupWorkers {
                     .handler((client, job) -> {
                         logger.info("Job '{}' started from process '{}' with key {}", job.getType(), job.getBpmnProcessId(), job.getKey());
                         Map<String, Object> existingVariables = job.getVariablesAsMap();
-
                         Exchange exchange = new DefaultExchange(camelContext);
                         Object errorInformation = existingVariables.get(ERROR_INFORMATION);
 
@@ -132,24 +136,18 @@ public class PartyLookupWorkers {
                                 HEADER_TRACEPARENT,
                                 HEADER_DATE
                         );
-
                         if (errorInformation != null) {
-
                             exchange.setProperty(ERROR_INFORMATION, errorInformation);
                             exchange.setProperty(PARTY_ID_TYPE, existingVariables.get(PARTY_ID_TYPE));
                             exchange.setProperty(PARTY_ID, existingVariables.get(PARTY_ID));
 
-                            logger.debug("Error info: {}", objectMapper.writeValueAsString(errorInformation));
-                            logger.debug("Zeebe variables: {}", existingVariables);
+                            logger.info("Error info: {}", objectMapper.writeValueAsString(errorInformation));
                             producerTemplate.send("direct:send-parties-error-response", exchange);
                         } else {
-
                             exchange.setProperty(PAYEE_PARTY_RESPONSE, existingVariables.get(PAYEE_PARTY_RESPONSE));
                             exchange.setProperty(HOST, existingVariables.get("X-Lookup-Callback-Url"));
-
                             producerTemplate.send("direct:send-parties-response", exchange);
                         }
-
                         client.newCompleteCommand(job.getKey())
                                 .send()
                         ;

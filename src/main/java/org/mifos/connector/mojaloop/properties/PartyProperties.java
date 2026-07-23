@@ -52,4 +52,7 @@ public class PartyProperties {
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("Party with domain: " + domain + " and payeeFsp: " + fspId + ", not configured!"));
     }
+    public List<Party> listAllParties() {
+        return new ArrayList<>(parties);
+    }
 }

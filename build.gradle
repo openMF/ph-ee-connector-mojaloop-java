@@ -13,14 +13,17 @@ apply plugin: 'java'
 apply plugin: 'io.spring.dependency-management'
 
 repositories {
-    mavenLocal()
+    mavenCentral()
+    // mavenLocal()
     maven {
         url = uri('https://repo.maven.apache.org/maven2/')
     }
     maven {
-        url = uri('https://jfrog.sandbox.fynarfin.io/artifactory/fyn-libs-snapshot')
+        url = uri('https://mifos.jfrog.io/artifactory/phee-gradle-local')
+    }    
+    maven {
+        url = uri('https://mifos.jfrog.io/artifactory/mifosx-gradle-local')
     }
-    mavenCentral()
 }
 
 ext {
@@ -36,8 +39,8 @@ configurations.all {
 }
 
 dependencies {
-    implementation 'org.mifos:ph-ee-connector-common:1.2.2-SNAPSHOT'
-    implementation 'org.mifos:interop-ilp-conditions:1.7.1-SNAPSHOT'
+    implementation 'org.mifos:ph-ee-connector-common:1.8.1-gazelle'
+    implementation 'org.mifos:interop-ilp-conditions:1.7.1'
     implementation "org.apache.camel.springboot:camel-spring-boot-starter:$camelVersion"
     implementation "org.apache.camel:camel-undertow:$camelVersion"
     implementation 'org.apache.camel.springboot:camel-jackson-starter:3.16.0'
@@ -55,10 +58,15 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter:$springBootVersion"
     implementation "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
     implementation "org.springframework.boot:spring-boot-starter-actuator:$springBootVersion"
+
+    configurations {
+        // all*.exclude group: 'org.json', module: 'json'
+        all*.exclude group: 'com.vaadin.external.google', module: 'android-json'
+    }
 }
 
 group = 'org.mifos'
-version = '1.0.0-SNAPSHOT'
+version = '2.0.0.mifos-SNAPSHOT'
 description = 'ph-ee-connector-mojaloop-java'
 java.sourceCompatibility = "17"
 
@@ -76,4 +84,10 @@ tasks.withType(JavaCompile) {
 
 test {
     useJUnitPlatform()
+}
+
+bootRun {
+    systemProperty "logging.level.root", "ERROR"
+    systemProperty "spring.profiles.active", "med"
+    
 }

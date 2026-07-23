@@ -10,17 +10,25 @@ package org.mifos.connector.mojaloop.ilp;
 import com.ilp.conditions.models.pdp.Money;
 import com.ilp.conditions.models.pdp.PartyIdInfo;
 import com.ilp.conditions.models.pdp.Transaction;
+import com.ilp.conditions.models.pdp.TransactionType;
 import org.mifos.connector.common.util.ContextUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+
+
 import java.io.IOException;
 import java.math.BigDecimal;
 
 @Component
 public class IlpBuilder {
 
-    private static final String ILP_ADDRESS_TEMPLATE = "g.tz.%s.%s.%s";
+    private Logger logger = LoggerFactory.getLogger(this.getClass());
+    //private static final String ILP_ADDRESS_TEMPLATE = "g.tz.%s.%s.%s";
+    //TOMD TODO drop the .tz from the ILP address template (why?? need to verify this ) 
+    private static final String ILP_ADDRESS_TEMPLATE = "g.%s.%s.%s";
 
     @Autowired
     private IlpConditionHandlerImpl ilpConditionHandlerImpl;
@@ -36,11 +44,12 @@ public class IlpBuilder {
 
     public Ilp build(Transaction transaction, BigDecimal amount) throws IOException {
         String ilpAddress = buildIlpAddress(transaction);
-        String ilpPacket = ilpConditionHandlerImpl.getILPPacket(ilpAddress, ContextUtil.formatAmount(amount), transaction);
+        String ilpPacket = ilpConditionHandlerImpl.vNextGetILPPacket(ilpAddress, ContextUtil.formatAmount(amount), transaction); 
         String ilpCondition = ilpConditionHandlerImpl.generateCondition(ilpPacket, conectorIlpSecret.getBytes());
         String fulfillment = ilpConditionHandlerImpl.generateFulfillment(ilpPacket, conectorIlpSecret.getBytes());
-
-        return new Ilp(ilpPacket, ilpCondition, fulfillment, transaction);
+        //TOMD TODO verify this against master branch and or v1.5.0 tag
+        Ilp Ilp = new Ilp(ilpPacket, ilpCondition, fulfillment, transaction);
+        return Ilp;
     }
 
     public Ilp parse(String packet, String condition)  {
@@ -53,7 +62,7 @@ public class IlpBuilder {
 
     public String buildIlpAddress(Transaction transaction) {
         PartyIdInfo partyIdInfo = transaction.getPayee().getPartyIdInfo();
-        return String.format(ILP_ADDRESS_TEMPLATE, partyIdInfo.getFspId(), partyIdInfo.getPartyIdType(), partyIdInfo.getPartyIdentifier());
+        return String.format(ILP_ADDRESS_TEMPLATE, partyIdInfo.getFspId(), partyIdInfo.getPartyIdType(), partyIdInfo.getPartyIdentifier()).toLowerCase();
     }
 
     private Transaction mapToTransaction(String transactionId, String quoteId, BigDecimal transactionAmount, String currency,
@@ -74,6 +83,13 @@ public class IlpBuilder {
         transaction.setPayer(payer.getIlpParty());
         transaction.setPayee(payee.getIlpParty());
 
+        //TOMD: TODO Add transaction type (required by vNext)
+        //      but verify that this is the correct way to do it
+        TransactionType transactionType = new TransactionType();
+        transactionType.setScenario("DEPOSIT");        // or get from request
+        transactionType.setInitiator("PAYER");
+        transactionType.setInitiatorType("BUSINESS");  // or get from request
+        transaction.setTransactionType(transactionType);
         return transaction;
     }
 }

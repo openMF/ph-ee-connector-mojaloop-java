@@ -24,6 +24,10 @@ public class CamelContextConfig {
                 camelContext.disableJMX();
 
                 RestConfiguration rest = new RestConfiguration();
+                // rest.setComponent("servlet"); // ✅ Use Spring Boot's servlet container
+                // rest.setBindingMode(RestConfiguration.RestBindingMode.json);
+                // rest.setContextPath("/");     // optional
+                // camelContext.setRestConfiguration(rest);
                 rest.setComponent("undertow");
                 rest.setProducerComponent("undertow");
                 rest.setPort(serverPort);

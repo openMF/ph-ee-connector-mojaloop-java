@@ -1,10 +1,10 @@
 parties:
   - tenantId: greenbank
     fspId: greenbank
-    domain: ph-ee-connector-mojaloop-java.paymenthub.svc.cluster.local
+    domain: mojaloop.mifos.gazelle.test
   - tenantId: bluebank
     fspId: bluebank
-    domain: ph-ee-connector-mojaloop-java.paymenthub.svc.cluster.local
+    domain: mojaloop.mifos.gazelle.test
 # parties:
 #   - tenantId: tn05
 #     fspId: in03tn05
